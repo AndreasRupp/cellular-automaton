@@ -8,10 +8,12 @@
 namespace CAM
 {
 
+template <unsigned int nx, unsigned int ny = nx>
 class particle
 {
  private:
   unsigned int number_;
+  double jump_const_;
   bool deprecated_;
   std::vector<unsigned int> fields_;
   const domain& environment_;
@@ -26,7 +28,7 @@ class particle
   {
     std::vector<int> possible_moves = stencil_moves();
     std::vector<double> best_moves(1, 0);
-    double attraction;
+    double attraction = 0.;
     for_each(possible_moves.begin(), possible_moves.end(),
              [&](int move)
              {
@@ -51,9 +53,26 @@ class particle
 
   std::vector<int> stencil_moves() const
   {
-    return ...  // return all possible moves (only considering the stencil size) here.
-    // Start with smallest stencil and add other stencils around it.
-    // Start at the bottom and go counter-clockwise
+    unsigned int layers = jump_const_ / std::sqrt(fields_.size());
+  std:
+    vectorz<int> stencil(1, 0);
+    unsigned int index = 0 : unsigned int old_size =
+                               stencil.size() for (unsigned int lay = 0; lay < layers; ++lay)
+    {
+      for (; index < old_size; ++index)
+      {
+        if (std::find(stencil.begin(), stencil.end(), stencil[index] - nx) == stencil.end())
+          stencil.push_back(stencil[index] - nx);
+        if (std::find(stencil.begin(), stencil.end(), stencil[index] + 1) == stencil.end())
+          stencil.push_back(stencil[index] + 1);
+        if (std::find(stencil.begin(), stencil.end(), stencil[index] + nx) == stencil.end())
+          stencil.push_back(stencil[index] + nx);
+        if (std::find(stencil.begin(), stencil.end(), stencil[index] - 1) == stencil.end())
+          stencil.push_back(stencil[index] - 1);
+      }
+      old_size = stencil.size();
+    }
+    return stencil;
   }
 
   double check_move(const int move) const
@@ -66,8 +85,8 @@ class particle
       if (domain_fields[aim] != number_ && domain_fields[aim] != 0)
         return -DBL_MAX;
       attraction += (domain_fields[aim(aim, -1)] != number_ && domain_fields[aim(aim, -1)] != 0) +
-                    (domain_fields[aim(aim, -NX)] != number_ && domain_fields[aim(aim, -NX)] != 0) +
-                    (domain_fields[aim(aim, +NX)] != number_ && domain_fields[aim(aim, -NX)] != 0) +
+                    (domain_fields[aim(aim, -nx)] != number_ && domain_fields[aim(aim, -nx)] != 0) +
+                    (domain_fields[aim(aim, +nx)] != number_ && domain_fields[aim(aim, -nx)] != 0) +
                     (domain_fields[aim(aim, +1)] != number_ && domain_fields[aim(aim, +1)] != 0);
     }
     return attraction;
