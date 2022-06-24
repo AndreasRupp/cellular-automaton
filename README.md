@@ -9,8 +9,8 @@ It contains the C++ based library CAM implementing a simple cellular automaton m
 
 This will be your job when everything works, Simon and Joona.
 
-Currently, run `g++ -Wall -Wextra -pedantic -fstack-protector-all -g -I. -std=gnu++20 cam_test.cxx
--o test; ./test`
+Currently, run `g++ -Wall -Wextra -pedantic -fstack-protector-all -g -Iinclude cam_test.cxx -o test;
+./test`
 
 
 # Copyright, License, and Contribution Policy

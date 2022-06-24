@@ -1,7 +1,7 @@
 #include <iomanip>
 #include <iostream>
 
-#include <cellular_automaton.hxx>
+#include <CAM/cellular_automaton.hxx>
 
 template <std::size_t size>
 void print_array(const std::array<unsigned int, size> particles)
