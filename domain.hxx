@@ -2,56 +2,64 @@
 
 #include <algorithm>
 #include <array>
-#include <cmath>
 #include <cfloat>
+#include <cmath>
+#include <random>
 #include <vector>
 
-namespace CAM
-{
-
 template <unsigned int nx, unsigned int ny = nx>
-class domain
+class cellular_automaton
 {
  private:
-
   // -----------------------------------------------------------------------------------------------
 
   class particle
   {
    private:
-    static constexpr std::array<int, 4> direct_neigh_ = {-nx, 1, nx, -1};
-    const double jump_const_;
+    static constexpr std::array<int, 4> direct_neigh_ = {-1 * (int)nx, 1, nx, -1};
     unsigned int number_;
     bool deprecated_;
     std::vector<unsigned int> fields_;
-    domain<nx, ny>& environment_;
+    cellular_automaton<nx, ny>& domain_;
 
    public:
     particle(const unsigned int location,
-             domain<nx,ny>& environment,
-             const double jump_const,
+             cellular_automaton<nx, ny>& domain,
              const unsigned int number)
-    : jump_const_(jump_const),
-      number_(number),
-      deprecated_(false),
-      fields_(1, location),
-      environment_(environment)
+    : number_(number), deprecated_(false), fields_(1, location), domain_(domain)
     {
     }
 
-    bool is_depreacted() { return deprecated_; }
+    particle(particle&& other) noexcept
+    : number_(other.number_),
+      deprecated_(other.deprecated_),
+      fields_(std::move(other.fields_)),
+      domain_(other.domain_)
+    {
+    }
+
+    particle& operator=(particle&& other) noexcept
+    {
+      number_ = other.number_;
+      deprecated_ = other.deprecated_;
+      std::swap(fields_, other.fields_);
+      // domain_ = other.domain_;
+      return *this;
+    }
+
+    bool is_deprecated() const { return deprecated_; }
 
     inline unsigned int aim(const int position, const int move) const
     {
-      const unsigned int x_coord = (nx + position % nx + move % nx) % nx;
-      const unsigned int y_coord = (ny + position / nx + move / nx) % ny;
+      const unsigned int x_coord = (position % nx + (nx + move) % nx) % nx;
+      const unsigned int y_coord = (position / nx + (nx + move) / nx - 1 + ny) % ny;
       return y_coord * nx + x_coord;
     }
 
     void move_all()
     {
       std::vector<int> possible_moves = stencil_moves_all();
-      std::vector<double> best_moves(1, 0);
+      std::vector<int> best_moves(1, 0);
       double attraction = 0.;
       std::for_each(possible_moves.begin(), possible_moves.end(),
                     [&](int move)
@@ -70,7 +78,7 @@ class domain
 
     std::vector<int> stencil_moves_all() const
     {
-      unsigned int layers = std::max(1., jump_const_ / std::sqrt(fields_.size()));
+      unsigned int layers = std::max(1., domain_.jump_parameter_ / std::sqrt(fields_.size()));
       std::vector<int> stencil(1, 0);
       unsigned int index = 0;
       unsigned int old_size = stencil.size();
@@ -90,11 +98,11 @@ class domain
     double check_move_all(const int move) const
     {
       double attraction = 0.;
-      const std::vector<unsigned int>& domain_fields =
-        environment_.fields(); for (unsigned int i = 0; i < fields_.size(); ++i)
+      const std::array<unsigned int, nx* ny>& domain_fields = domain_.fields();
+      for (unsigned int i = 0; i < fields_.size(); ++i)
       {
         unsigned int aiming = aim(fields_[i], move);
-        if (domain_fields[aim] != number_ && domain_fields[aim] != 0)
+        if (domain_fields[aiming] != number_ && domain_fields[aiming] != 0)
           return -DBL_MAX;
         for (unsigned int i = 0; i < 4; ++i)
           attraction += domain_fields[aim(aiming, direct_neigh_[i])] != number_ &&
@@ -105,47 +113,46 @@ class domain
 
     void do_move_all(const int move)
     {
-      std::vector<unsigned int>& domain_fields = environment_.fields();
+      std::array<unsigned int, nx* ny>& domain_fields = domain_.fields();
       std::vector<unsigned int> particle_merges;
       std::for_each(
         fields_.begin(), fields_.end(),
-        [&](unsigned int index)
+        [&](unsigned int& field)
         {
-          domain_fields[fields_[index]] -= number_;
-          unsigned int aiming = aim(fields_[index], move);
-          domain_fields[aiming] += number_;
+          domain_fields[field] -= number_;
+          field = aim(field, move);
+          domain_fields[field] += number_;
 
           for (unsigned int i = 0; i < 4; ++i)
-            if (domain_fields[aim(aiming, direct_neigh_[i])] != number_ &&
-                domain_fields[aim(aiming, direct_neigh_[i])] != 0 &&
+          {
+            if (domain_fields[aim(field, direct_neigh_[i])] != number_ &&
+                domain_fields[aim(field, direct_neigh_[i])] != 0 &&
                 std::find(particle_merges.begin(), particle_merges.end(),
-                          domain_fields[aim(aiming, direct_neigh_[i])]) == particle_merges.end())
-              particle_merges.push_back(domain_fields[aim(aiming, direct_neigh_[i])]);
+                          domain_fields[aim(field, direct_neigh_[i])]) == particle_merges.end())
+              particle_merges.push_back(domain_fields[aim(field, direct_neigh_[i])]);
+          }
         });
       if (particle_merges.empty())
         return;
-      // unsigned int max_ind = std::distance(
-      //   particle_merges.begin(), std::max_element(particle_merges.begin(),
-      //   particle_merges.end()));
-      std::vector<particle> particles = environment_.particles();
-      std::for_each(
-        particle_merges.begin(), particle_merges.end(), [&](unsigned int index) {
-          auto other_particle = std::find(particles.begin(), particles.end(), index);
-          std::vector<unsigned int>& other_fields = other_particle->fields_;
-          for_each(other_fields.begin(), other_fields.end(),
-                   [&](unsigned int ind) { domain_fields[ind] = number_; });
-          other_particle->deprecated_ = true;
+      std::vector<particle>& particles = domain_.particles();
+      std::for_each(particle_merges.begin(), particle_merges.end(),
+                    [&](unsigned int index)
+                    {
+                      auto other_particle = std::find(particles.begin(), particles.end(), index);
+                      std::vector<unsigned int>& other_fields = other_particle->fields_;
+                      for_each(other_fields.begin(), other_fields.end(),
+                               [&](unsigned int ind) { domain_fields[ind] = number_; });
+                      other_particle->deprecated_ = true;
 
-          fields_.insert(fields_.end(), other_fields.begin(), other_fields.end());
-        });
+                      fields_.insert(fields_.end(), other_fields.begin(), other_fields.end());
+                    });
     }
+
+    bool operator==(const unsigned int number) const { return number_ == number; }
 
     bool operator==(const particle& other) const { return number_ == other.number_; }
 
-    bool operator<(const particle& other) const
-    {
-      return fields_.size() < other.fields_.size();
-    }
+    bool operator<(const particle& other) const { return fields_.size() < other.fields_.size(); }
   };
 
   // -----------------------------------------------------------------------------------------------
@@ -154,12 +161,14 @@ class domain
   unsigned int n_particles;
   std::array<unsigned int, nx * ny> fields_;
   std::vector<particle> particles_;
+  std::mt19937 random_seed;
 
  public:
-  std::vector<unsigned int>& fields() { return fields; }
+  std::array<unsigned int, nx * ny>& fields() { return fields_; }
   std::vector<particle>& particles() { return particles_; }
 
-  domain(const double porosity, const double jump_parameter) : jump_parameter_(jump_parameter)
+  cellular_automaton(const double porosity, const double jump_parameter)
+  : jump_parameter_(jump_parameter)
   {
     n_particles = (1. - porosity) * nx * ny;
     fields_.fill(0);
@@ -169,28 +178,26 @@ class domain
       while (fields_[position] != 0)
         position = std::rand() % (nx * ny);
 
-      particles_.push_back(particle(position, *this, jump_parameter_, i + 1));
+      particles_.push_back(particle(position, *this, i + 1));
       fields_[position] = i + 1;
     }
-
-    // auto rd = std::random_device{};
-    // rng = std::default_random_engine{rd()};  // Comment /* rd() */ to get same random numbers!
+    std::random_device rd;
+    random_seed = std::mt19937(rd());
   }
 
-  void move_particles()
+  const std::array<unsigned int, nx * ny>& move_particles()
   {
-    std::shuffle(particles_.begin(), particles_.end());//, rng);
+    std::shuffle(particles_.begin(), particles_.end(), random_seed);
     std::for_each(particles_.begin(), particles_.end(),
                   [&](particle& part)
                   {
                     if (!part.is_deprecated())
-                      part.move();
+                      part.move_all();
                   });
-    particles_.erase(std::remove_if(particles_.begin(), particles_.end(),
-                                    [&](const particle& particle) -> bool
-                                    { return particle.is_deprecated(); }),
-                     particles_.end());
+    particles_.erase(
+      std::remove_if(particles_.begin(), particles_.end(),
+                     [&](const particle& particle) -> bool { return particle.is_deprecated(); }),
+      particles_.end());
+    return fields_;
   }
 };
-
-}  // namespace CAM
