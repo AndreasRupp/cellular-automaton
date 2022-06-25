@@ -7,7 +7,7 @@
 template <std::size_t size>
 void print_array(const std::array<unsigned int, size> particles)
 {
-  static constexpr unsigned int len_numbers = std::log10(size - 1) + 1;
+  const unsigned int len_numbers = std::log10(size - 1) + 1;
   const unsigned int nx = std::sqrt(size);
   for (unsigned int y = 0; y < nx; ++y)
   {
