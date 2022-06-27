@@ -15,25 +15,25 @@ class MexFunction : public matlab::mex::Function
   void operator()(matlab::mex::ArgumentList outputs, matlab::mex::ArgumentList inputs)
   {
     checkArguments(outputs, inputs);
-
+    
     const unsigned int n_moves = inputs[0][0];
     const double porosity = inputs[1][0];
     const double jump_param = inputs[2][0];
-    const unsigned int output_rate = inputs[4][0];
+    const unsigned int output_rate = inputs[3][0];
 
-    matlab::data::TypedArray<double> results = std::move(inputs[1]);
-
+    matlab::data::TypedArray<double> results = std::move(inputs[4]);
     cellular_automaton<nx, ny> domain(porosity, jump_param);
 
-    for (unsigned int k = 0; k < nx * ny; ++k)
-      results[k] = (domain.fields())[k];
-
+    for (unsigned int k = 0; k < nx * ny; ++k){
+        results[k][0] = (domain.fields())[k];
+    }
     for (unsigned int i = 0; i < n_moves; ++i)
     {
       domain.move_particles();
       if ((i + 1) % output_rate == 0)
         for (unsigned int k = 0; k < nx * ny; ++k)
-          results[(i + 1) * nx * ny + k] = (domain.fields())[k];
+          //results[(i + 1) * nx * ny + k] = (domain.fields())[k];
+            results[k][i + 1] = (domain.fields())[k];
     }
     outputs[0] = std::move(results);
   }
