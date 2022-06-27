@@ -54,12 +54,12 @@ class cellular_automaton
       return *this;
     }
 
-    bool is_deprecated() const { return deprecated_; }
-
-    inline unsigned int aim(const unsigned int position, const int move) const
+    static constexpr unsigned int aim(const unsigned int position, const int move)
     {
       return (nx * ny + position + move) % (nx * ny);
     }
+
+    bool is_deprecated() const { return deprecated_; }
 
     void move_all()
     {
@@ -272,7 +272,8 @@ class cellular_automaton
   const std::array<unsigned int, nx * ny>& move_particles()
   {
     // std::shuffle(particles_.begin(), particles_.end(), random_seed);
-    // std::for_each(particles_.begin(), particles_.end(), [&](particle& part) { part.move_all(); });
+    // std::for_each(particles_.begin(), particles_.end(), [&](particle& part) { part.move_all();
+    // });
     std::shuffle(particles_.begin(), particles_.end(), random_seed);
     std::for_each(particles_.begin(), particles_.end(),
                   [&](particle& part) { part.move_singles(); });
