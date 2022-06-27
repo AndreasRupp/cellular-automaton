@@ -65,6 +65,8 @@ class cellular_automaton
 
     void move_all()
     {
+      if (fields_.size() == 1)
+        return;
       std::vector<int> possible_moves = stencil_moves_all();
       std::vector<int> best_moves(1, 0);
       double attraction = 0.;
@@ -83,27 +85,33 @@ class cellular_automaton
       do_move_all(best_moves[std::rand() % best_moves.size()]);
     }
 
-    // void move_singles()
-    // {
-    //   std::vector<int> possible_moves = stencil_moves_single();
-    //   std::vector<int> best_moves(1, 0);
-    //   double attraction = 0.;
-    //   // shuffle vector of fields
-    //   // do move for all of them
-    //   std::for_each(possible_moves.begin(), possible_moves.end(),
-    //                 [&](int move)
-    //                 {
-    //                   double current_attraction = check_move_single(move);
-    //                   if (current_attraction > attraction)
-    //                   {
-    //                     best_moves = std::vector<int>(1, move);
-    //                     attraction = current_attraction;
-    //                   }
-    //                   else if (current_attraction == attraction)
-    //                     best_moves.push_back(move);
-    //                 });
-    //   do_move_single(best_moves[std::rand() % best_moves.size()]);
-    // }
+    void move_singles()
+    {
+      std::vector<int> possible_moves = stencil_moves_single();
+      std::shuffle(fields_.begin(), fields_.end(), domain_.random_seed);
+      std::vector<int> best_moves(1, 0);
+      double attraction;
+
+      std::for_each(fields_.begin(), fields_.end(),
+                    [&](unsigned int& field)
+                    {
+                      attraction = 0.;
+                      best_moves.clear();
+                      std::for_each(possible_moves.begin(), possible_moves.end(),
+                                    [&](int move)
+                                    {
+                                      double current_attraction = check_move_single(field, move);
+                                      if (current_attraction > attraction)
+                                      {
+                                        best_moves = std::vector<int>(1, move);
+                                        attraction = current_attraction;
+                                      }
+                                      else if (current_attraction == attraction)
+                                        best_moves.push_back(move);
+                                    });
+                      do_move_single(field, best_moves[std::rand() % best_moves.size()]);
+                    });
+    }
 
     std::vector<int> stencil_moves_all() const
     {
@@ -124,24 +132,24 @@ class cellular_automaton
       return stencil;
     }
 
-    // std::vector<int> stencil_moves_single() const
-    // {
-    //   unsigned int layers = std::max(1., domain_.jump_parameter_);
-    //   std::vector<int> stencil(1, 0);
-    //   unsigned int index = 0;
-    //   unsigned int old_size = stencil.size();
+    std::vector<int> stencil_moves_single() const
+    {
+      unsigned int layers = std::max(1., domain_.jump_parameter_);
+      std::vector<int> stencil(1, 0);
+      unsigned int index = 0;
+      unsigned int old_size = stencil.size();
 
-    //   for (unsigned int lay = 0; lay < layers; ++lay)
-    //   {
-    //     for (; index < old_size; ++index)
-    //       for (unsigned int i = 0; i < 4; ++i)
-    //         if (std::find(stencil.begin(), stencil.end(), stencil[index] + direct_neigh_[i]) ==
-    //             stencil.end())
-    //           stencil.push_back(stencil[index] + direct_neigh_[i]);
-    //     old_size = stencil.size();
-    //   }
-    //   return stencil;
-    // }
+      for (unsigned int lay = 0; lay < layers; ++lay)
+      {
+        for (; index < old_size; ++index)
+          for (unsigned int i = 0; i < 4; ++i)
+            if (std::find(stencil.begin(), stencil.end(), stencil[index] + direct_neigh_[i]) ==
+                stencil.end())
+              stencil.push_back(stencil[index] + direct_neigh_[i]);
+        old_size = stencil.size();
+      }
+      return stencil;
+    }
 
     double check_move_all(const int move) const
     {
@@ -159,58 +167,75 @@ class cellular_automaton
       return attraction;
     }
 
-    // double check_move_single(const unsigned int particle, const int move) const
-    // {
-    //   // Check move only for single particle
-    //   double attraction = 0.;
-    //   const std::array<unsigned int, nx* ny>& domain_fields = domain_.fields();
-    //   for (unsigned int i = 0; i < fields_.size(); ++i)
-    //   {
-    //     unsigned int aiming = aim(fields_[i], move);
-    //     if (domain_fields[aiming] != number_ && domain_fields[aiming] != 0)
-    //       return -DBL_MAX;
-    //     for (unsigned int i = 0; i < 4; ++i)
-    //       attraction += domain_fields[aim(aiming, direct_neigh_[i])] != number_ &&
-    //                     domain_fields[aim(aiming, direct_neigh_[i])] != 0;
-    //   }
-    //   return attraction;
-    // }
+    inline double check_move_single(const unsigned int field, const int move) const
+    {
+      double attraction = 0.;
+      const std::array<unsigned int, nx* ny>& domain_fields = domain_.fields();
+      unsigned int aiming = aim(field, move);
+      if (domain_fields[aiming] != 0)
+        return -DBL_MAX;
+      for (unsigned int i = 0; i < 4; ++i)
+        attraction += domain_fields[aim(aiming, direct_neigh_[i])] != number_ &&
+                      domain_fields[aim(aiming, direct_neigh_[i])] != 0;
+      return attraction;
+    }
 
     void do_move_all(const int move)
     {
       std::array<unsigned int, nx* ny>& domain_fields = domain_.fields();
-      std::vector<unsigned int> particle_merges;
 
       std::for_each(fields_.begin(), fields_.end(),
-                    [&](unsigned int& field) { domain_fields[field] -= number_; });
-      std::for_each(
-        fields_.begin(), fields_.end(),
-        [&](unsigned int& field)
-        {
-          field = aim(field, move);
-          domain_fields[field] += number_;
-
-          for (unsigned int i = 0; i < 4; ++i)
-            if (domain_fields[aim(field, direct_neigh_[i])] != number_ &&
-                domain_fields[aim(field, direct_neigh_[i])] != 0 &&
-                std::find(particle_merges.begin(), particle_merges.end(),
-                          domain_fields[aim(field, direct_neigh_[i])]) == particle_merges.end())
-              particle_merges.push_back(domain_fields[aim(field, direct_neigh_[i])]);
-        });
-      if (particle_merges.empty())
-        return;
-      std::vector<particle>& particles = domain_.particles();
-      std::for_each(particle_merges.begin(), particle_merges.end(),
-                    [&](unsigned int index)
+                    [&](unsigned int& field)
                     {
-                      auto other_particle = std::find(particles.begin(), particles.end(), index);
-                      std::vector<unsigned int>& other_fields = other_particle->fields_;
-                      for_each(other_fields.begin(), other_fields.end(),
-                               [&](unsigned int ind) { domain_fields[ind] = number_; });
-                      other_particle->deprecated_ = true;
-
-                      fields_.insert(fields_.end(), other_fields.begin(), other_fields.end());
+                      domain_fields[field] -= number_;
+                      field = aim(field, move);
+                      domain_fields[field] += number_;
                     });
+    }
+
+    inline void do_move_single(unsigned int& field, const int move)
+    {
+      std::array<unsigned int, nx* ny>& domain_fields = domain_.fields();
+
+      domain_fields[field] -= number_;
+      field = aim(field, move);
+      domain_fields[field] += number_;
+    }
+
+    void update_particle()
+    {
+      std::array<unsigned int, nx* ny>& domain_fields = domain_.fields();
+
+      if (domain_fields[fields_[0]] != number_)
+      {
+        deprecated_ = true;
+        return;
+      }
+
+      unsigned int neigh_num, field;
+      unsigned int fields_size = fields_.size();
+      std::vector<particle>& particles = domain_.particles();
+
+      for (unsigned int k = 0; k < fields_size; ++k, fields_size = fields_.size())
+      {
+        field = fields_[k];
+        for (unsigned int i = 0; i < 4; ++i)
+        {
+          neigh_num = domain_fields[aim(field, direct_neigh_[i])];
+          if (neigh_num == number_ || neigh_num == 0)
+            continue;
+
+          auto other_particle = std::find(particles.begin(), particles.end(), neigh_num);
+          std::vector<unsigned int>& other_fields = other_particle->fields_;
+
+          for_each(other_fields.begin(), other_fields.end(),
+                   [&](const unsigned int new_field)
+                   {
+                     domain_fields[new_field] = number_;
+                     fields_.insert(fields_.end(), other_fields.begin(), other_fields.end());
+                   });
+        }
+      }
     }
 
     bool operator==(const unsigned int number) const { return number_ == number; }
@@ -253,12 +278,12 @@ class cellular_automaton
   const std::array<unsigned int, nx * ny>& move_particles()
   {
     std::shuffle(particles_.begin(), particles_.end(), random_seed);
+    std::for_each(particles_.begin(), particles_.end(), [&](particle& part) { part.move_all(); });
+    std::shuffle(particles_.begin(), particles_.end(), random_seed);
     std::for_each(particles_.begin(), particles_.end(),
-                  [&](particle& part)
-                  {
-                    if (!part.is_deprecated())
-                      part.move_all();
-                  });
+                  [&](particle& part) { part.move_singles(); });
+    std::for_each(particles_.begin(), particles_.end(),
+                  [&](particle& part) { part.update_particle(); });
     particles_.erase(
       std::remove_if(particles_.begin(), particles_.end(),
                      [&](const particle& particle) -> bool { return particle.is_deprecated(); }),

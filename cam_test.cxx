@@ -26,7 +26,7 @@ int main()
 {
   constexpr unsigned int nx = 5;
   constexpr unsigned int ny = 5;
-  const unsigned int n_moves = 3;
+  const unsigned int n_moves = 100;
   const double porosity = 0.4;
   const double jump_param = 4.;
   cellular_automaton<nx, ny> domain(porosity, jump_param);
