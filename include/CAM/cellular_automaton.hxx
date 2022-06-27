@@ -56,11 +56,9 @@ class cellular_automaton
 
     bool is_deprecated() const { return deprecated_; }
 
-    inline unsigned int aim(const int position, const int move) const
+    inline unsigned int aim(const unsigned int position, const int move) const
     {
-      const unsigned int x_coord = (position % nx + (nx * ny + move) % nx) % nx;
-      const unsigned int y_coord = (position / nx + (nx * ny + move) / nx) % ny;
-      return y_coord * nx + x_coord;
+      return (nx * ny + position + move) % (nx * ny);
     }
 
     void move_all()
@@ -96,7 +94,7 @@ class cellular_automaton
                     [&](unsigned int& field)
                     {
                       attraction = 0.;
-                      best_moves.clear();
+                      best_moves = std::vector<int>(1, 0);
                       std::for_each(possible_moves.begin(), possible_moves.end(),
                                     [&](int move)
                                     {
@@ -229,11 +227,8 @@ class cellular_automaton
           std::vector<unsigned int>& other_fields = other_particle->fields_;
 
           for_each(other_fields.begin(), other_fields.end(),
-                   [&](const unsigned int new_field)
-                   {
-                     domain_fields[new_field] = number_;
-                     fields_.insert(fields_.end(), other_fields.begin(), other_fields.end());
-                   });
+                   [&](const unsigned int new_field) { domain_fields[new_field] = number_; });
+          fields_.insert(fields_.end(), other_fields.begin(), other_fields.end());
         }
       }
     }
