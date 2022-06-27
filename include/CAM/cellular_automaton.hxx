@@ -170,11 +170,10 @@ class cellular_automaton
       double attraction = 0.;
       const std::array<unsigned int, nx* ny>& domain_fields = domain_.fields();
       unsigned int aiming = aim(field, move);
-      if (domain_fields[aiming] != 0)
+      if (domain_fields[aiming] != 0 && move != 0)
         return -DBL_MAX;
       for (unsigned int i = 0; i < 4; ++i)
-        attraction += domain_fields[aim(aiming, direct_neigh_[i])] != number_ &&
-                      domain_fields[aim(aiming, direct_neigh_[i])] != 0;
+        attraction += domain_fields[aim(aiming, direct_neigh_[i])] != 0;
       return attraction;
     }
 
@@ -204,7 +203,7 @@ class cellular_automaton
     {
       std::array<unsigned int, nx* ny>& domain_fields = domain_.fields();
 
-      if (domain_fields[fields_[0]] != number_)
+      if (std::find(domain_fields.begin(), domain_fields.end(), number_) == domain_fields.end())
       {
         deprecated_ = true;
         return;
@@ -272,8 +271,8 @@ class cellular_automaton
 
   const std::array<unsigned int, nx * ny>& move_particles()
   {
-    std::shuffle(particles_.begin(), particles_.end(), random_seed);
-    std::for_each(particles_.begin(), particles_.end(), [&](particle& part) { part.move_all(); });
+    // std::shuffle(particles_.begin(), particles_.end(), random_seed);
+    // std::for_each(particles_.begin(), particles_.end(), [&](particle& part) { part.move_all(); });
     std::shuffle(particles_.begin(), particles_.end(), random_seed);
     std::for_each(particles_.begin(), particles_.end(),
                   [&](particle& part) { part.move_singles(); });
