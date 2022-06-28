@@ -9,10 +9,10 @@ current_folder = pwd;
 path = strcat(path, '/../..');
 cd(path)
 
-if ~exist('Build', 'dir')
-    mkdir Build;
-end  % not exists directory
-cd Build
+if not(isfolder('build'))
+    mkdir('build')
+end  % not is folder
+cd build
 
 file_name = strcat('m_run_cam_', string(nx), '_', string(ny));
 if ~isfile(strcat(file_name, '.mexa64'))
@@ -29,7 +29,7 @@ if ~isfile(strcat(file_name, '.mexa64'))
 end  % not exists file
 
 command = strcat(file_name, '(numSteps, porosity, jump_param, ', ...
-    'output_rate, zeros(nx * ny, numSteps + 1)');
+    'output_rate, zeros(nx * ny, numSteps + 1))');
 outputData = eval(command);
 
 cd(current_folder)
