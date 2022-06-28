@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <array>
 #include <cfloat>
+#include <chrono>
 #include <cmath>
 #include <random>
 #include <vector>
@@ -93,7 +94,7 @@ class cellular_automaton
     void move_singles()
     {
       std::vector<int> possible_moves = stencil_moves_single();
-      std::shuffle(fields_.begin(), fields_.end(), domain_.random_seed);
+      std::shuffle(fields_.begin(), fields_.end(), std::default_random_engine(std::rand()));
       std::vector<int> best_moves(1, 0);
       double attraction;
 
@@ -276,7 +277,7 @@ class cellular_automaton
   unsigned int n_particles;
   std::array<unsigned int, nx * ny> fields_;
   std::vector<particle> particles_;
-  std::mt19937 random_seed;
+  unsigned int random_seed;
 
  public:
   std::array<unsigned int, nx * ny>& fields() { return fields_; }
@@ -299,21 +300,21 @@ class cellular_automaton
     }
     if (rand_seed == 0)
     {
-      std::random_device rd;
-      random_seed = std::mt19937(rd());
+      random_seed = std::chrono::system_clock::now().time_since_epoch().count();
     }
     else
       random_seed = rand_seed;
+    std::srand(random_seed);
 
     std::cout << "The random seed is set to be: " << rand_seed << std::endl;
   }
 
   const std::array<unsigned int, nx * ny>& move_particles()
   {
-    // std::shuffle(particles_.begin(), particles_.end(), random_seed);
+    // std::shuffle(particles_.begin(), particles_.end(), std::default_random_engine(std::rand()));
     // std::for_each(particles_.begin(), particles_.end(), [&](particle& part) { part.move_all();
     // });
-    std::shuffle(particles_.begin(), particles_.end(), random_seed);
+    std::shuffle(particles_.begin(), particles_.end(), std::default_random_engine(std::rand()));
     std::for_each(particles_.begin(), particles_.end(),
                   [&](particle& part) { part.move_singles(); });
     std::for_each(particles_.begin(), particles_.end(),
