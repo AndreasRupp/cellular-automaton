@@ -29,16 +29,17 @@ class MexFunction : public matlab::mex::Function
       cellular_automaton<nx, ny> domain(porosity, jump_param);
 
     for (unsigned int k = 0; k < nx * ny; ++k)
-    {
       results[k][0] = (domain.fields())[k];
-    }
+
     for (unsigned int i = 0; i < n_moves; ++i)
     {
       domain.move_particles();
+
       if (output_rate != 0 && (i + 1) % output_rate == 0)
         for (unsigned int k = 0; k < nx * ny; ++k)
           results[k][i + 1] = (domain.fields())[k];
     }
+
     outputs[0] = std::move(results);
   }
 
