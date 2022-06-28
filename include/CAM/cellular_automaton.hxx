@@ -56,7 +56,10 @@ class cellular_automaton
 
     static constexpr unsigned int aim(const unsigned int position, const int move)
     {
-      return (nx * ny + position + move) % (nx * ny);
+      //return (nx * ny + position + move) % (nx * ny);
+      const unsigned int x_coord = (position % nx + (nx * ny + move) % nx) % nx;
+      const unsigned int y_coord = (position / nx + (move / (int) nx)  + nx * ny) % ny;
+      return y_coord * nx + x_coord;	
     }
 
     bool is_deprecated() const { return deprecated_; }
