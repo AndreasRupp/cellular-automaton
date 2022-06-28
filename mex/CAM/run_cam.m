@@ -1,5 +1,5 @@
 function [ outputData ] = run_cam( ...
-    nx, ny, numSteps, porosity, jump_param, output_rate, inputData )
+    nx, ny, numSteps, porosity, jump_param, output_rate )
 %UNTITLED Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -28,8 +28,8 @@ if ~isfile(strcat(file_name, '.mexa64'))
         'COMPFLAGS=$COMPFLAGS -O3')
 end  % not exists file
 
-command = strcat(file_name, ...
-    '(numSteps, porosity, jump_param, output_rate, inputData)');
+command = strcat(file_name, '(numSteps, porosity, jump_param, ', ...
+    'output_rate, zeros(nx * ny, numSteps + 1)');
 outputData = eval(command);
 
 cd(current_folder)
