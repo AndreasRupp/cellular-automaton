@@ -7,6 +7,8 @@
 #include <random>
 #include <vector>
 
+#include <iostream>
+
 template <unsigned int nx, unsigned int ny = nx>
 class cellular_automaton
 {
@@ -28,6 +30,7 @@ class cellular_automaton
              const unsigned int number)
     : number_(number), deprecated_(false), fields_(1, location), domain_(domain)
     {
+      domain_.fields_[fields_[0]] = number_;
     }
 
     particle(const std::vector<unsigned int>& fields,
@@ -35,6 +38,8 @@ class cellular_automaton
              const unsigned int number)
     : number_(number), deprecated_(false), fields_(fields), domain_(domain)
     {
+      std::for_each(fields_.begin(), fields_.end(),
+                    [&](const unsigned int field) { domain_.fields_[field] = number_; });
     }
 
     particle(particle&& other) noexcept
@@ -56,10 +61,9 @@ class cellular_automaton
 
     static constexpr unsigned int aim(const unsigned int position, const int move)
     {
-      //return (nx * ny + position + move) % (nx * ny);
       const unsigned int x_coord = (position % nx + (nx * ny + move) % nx) % nx;
-      const unsigned int y_coord = (position / nx + (move / (int) nx)  + nx * ny) % ny;
-      return y_coord * nx + x_coord;	
+      const unsigned int y_coord = (position / nx + (move / (int)nx) + ny) % ny;
+      return y_coord * nx + x_coord;
     }
 
     bool is_deprecated() const { return deprecated_; }
@@ -205,7 +209,8 @@ class cellular_automaton
     void update_particle()
     {
       std::array<unsigned int, nx* ny>& domain_fields = domain_.fields();
-      auto start = std::find(domain_fields.begin(), domain_fields.end(), number_);
+      auto start =
+        std::find(domain_fields.begin(), domain_fields.end(), number_);  // first entry with number_
 
       if (start == domain_fields.end())
       {
@@ -213,25 +218,47 @@ class cellular_automaton
         return;
       }
 
-      unsigned int neigh_num, field;
-      unsigned int fields_size = fields_.size();
-      std::vector<particle>& particles = domain_.particles();
+      std::vector<unsigned int> new_fields(1, *start);
+      unsigned int neigh_field, neigh_num, field;
+      unsigned int fields_size = new_fields.size();
+
+      for (unsigned int k = 0; k < fields_size; ++k, fields_size = new_fields.size())
+      {
+        field = new_fields[k];
+        for (unsigned int i = 0; i < 4; ++i)
+        {
+          neigh_field = aim(field, direct_neigh_[i]);
+          if (domain_fields[field] == number_)
+            new_fields.push_back(field);
+        }
+      }
+
+      if (new_fields.size() != fields_.size())
+      {
+        std::vector<unsigned int> lost_fields(fields_.size() - new_fields.size());
+        std::sort(fields_.begin(), fields_.end());
+        std::sort(new_fields.begin(), new_fields.end());
+        std::set_difference(fields_.begin(), fields_.end(), new_fields.begin(), new_fields.end(),
+                            lost_fields.begin());
+
+        domain_.add_particle(lost_fields);
+        std::swap(fields_, new_fields);
+      }
+
+      fields_size = fields_.size();
 
       for (unsigned int k = 0; k < fields_size; ++k, fields_size = fields_.size())
       {
         field = fields_[k];
         for (unsigned int i = 0; i < 4; ++i)
         {
-          neigh_num = domain_fields[aim(field, direct_neigh_[i])];
+          neigh_field = aim(field, direct_neigh_[i]);
+          neigh_num = domain_fields[neigh_field];
           if (neigh_num == number_ || neigh_num == 0)
             continue;
 
-          auto other_particle = std::find(particles.begin(), particles.end(), neigh_num);
-          std::vector<unsigned int>& other_fields = other_particle->fields_;
-
-          for_each(other_fields.begin(), other_fields.end(),
-                   [&](const unsigned int new_field) { domain_fields[new_field] = number_; });
-          fields_.insert(fields_.end(), other_fields.begin(), other_fields.end());
+          fields_.push_back(neigh_field);
+          domain_fields[neigh_field] = number_;
         }
       }
     }
@@ -255,7 +282,9 @@ class cellular_automaton
   std::array<unsigned int, nx * ny>& fields() { return fields_; }
   std::vector<particle>& particles() { return particles_; }
 
-  cellular_automaton(const double porosity, const double jump_parameter)
+  cellular_automaton(const double porosity,
+                     const double jump_parameter,
+                     const unsigned int rand_seed = 0)
   : jump_parameter_(jump_parameter)
   {
     n_particles = (1. - porosity) * nx * ny;
@@ -267,10 +296,16 @@ class cellular_automaton
         position = std::rand() % (nx * ny);
 
       particles_.push_back(particle(position, *this, i + 1));
-      fields_[position] = i + 1;
     }
-    std::random_device rd;
-    random_seed = std::mt19937(rd());
+    if (rand_seed == 0)
+    {
+      std::random_device rd;
+      random_seed = std::mt19937(rd());
+    }
+    else
+      random_seed = rand_seed;
+
+    std::cout << "The random seed is set to be: " << rand_seed << std::endl;
   }
 
   const std::array<unsigned int, nx * ny>& move_particles()
@@ -288,5 +323,10 @@ class cellular_automaton
                      [&](const particle& particle) -> bool { return particle.is_deprecated(); }),
       particles_.end());
     return fields_;
+  }
+
+  void add_particle(const std::vector<unsigned int>& fields)
+  {
+    particles_.push_back(particle(fields, *this, ++n_particles));
   }
 };
