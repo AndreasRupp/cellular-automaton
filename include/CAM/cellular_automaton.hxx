@@ -180,11 +180,6 @@ class cellular_automaton
       unsigned int aiming = aim(field, move);
       if (domain_fields[aiming] != 0 && move != 0)
         return -DBL_MAX;
-      if (domain_fields[field] != number_)
-      {
-        std::cout << "SIMON" << std::endl;
-        exit(1);
-      }
       domain_fields[field] = 0;
       for (unsigned int i = 0; i < 4; ++i)
         attraction += domain_fields[aim(aiming, direct_neigh_[i])] != 0;
@@ -250,8 +245,10 @@ class cellular_automaton
         std::sort(new_fields.begin(), new_fields.end());
         std::set_difference(fields_.begin(), fields_.end(), new_fields.begin(), new_fields.end(),
                             lost_fields.begin());
-
-        // std::cout << lost_fields.size() << " " << lost_fields[0] << std::endl;
+        lost_fields.erase(std::remove_if(lost_fields.begin(), lost_fields.end(),
+                                         [&](const unsigned int lost_field) -> bool
+                                         { return domain_fields[lost_field] != number_; }),
+                          lost_fields.end());
 
         domain_.add_particle(lost_fields);
         std::swap(fields_, new_fields);
@@ -327,8 +324,9 @@ class cellular_automaton
     std::shuffle(particles_.begin(), particles_.end(), std::default_random_engine(std::rand()));
     std::for_each(particles_.begin(), particles_.end(),
                   [&](particle& part) { part.move_singles(); });
-    std::for_each(particles_.begin(), particles_.end(),
-                  [&](particle& part) { part.update_particle(); });
+    unsigned int particles_size = particles_.size();
+    for (unsigned int k = 0; k < particles_size; ++k, particles_size = particles_.size())
+      particles_[k].update_particle();
     particles_.erase(
       std::remove_if(particles_.begin(), particles_.end(),
                      [&](const particle& particle) -> bool { return particle.is_deprecated(); }),
@@ -338,8 +336,6 @@ class cellular_automaton
 
   void add_particle(const std::vector<unsigned int>& fields)
   {
-    // std::cout << "add particle: " << n_particles + 1 << " " << fields.size() << " " << fields[0]
-    // << std::endl;
     particles_.push_back(particle(fields, *this, ++n_particles));
   }
 };
