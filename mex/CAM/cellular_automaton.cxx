@@ -20,9 +20,13 @@ class MexFunction : public matlab::mex::Function
     const double porosity = inputs[1][0];
     const double jump_param = inputs[2][0];
     const unsigned int output_rate = inputs[3][0];
-
+    unsigned int random_seed = 0;
     matlab::data::TypedArray<double> results = std::move(inputs[4]);
-    cellular_automaton<nx, ny> domain(porosity, jump_param);
+
+    if (inputs.size() == 6)
+      cellular_automaton<nx, ny> domain(porosity, jump_param, inputs[5][0]);
+    else
+      cellular_automaton<nx, ny> domain(porosity, jump_param);
 
     for (unsigned int k = 0; k < nx * ny; ++k)
     {
@@ -31,9 +35,8 @@ class MexFunction : public matlab::mex::Function
     for (unsigned int i = 0; i < n_moves; ++i)
     {
       domain.move_particles();
-      if ((i + 1) % output_rate == 0)
+      if (output_rate != 0 && (i + 1) % output_rate == 0)
         for (unsigned int k = 0; k < nx * ny; ++k)
-          // results[(i + 1) * nx * ny + k] = (domain.fields())[k];
           results[k][i + 1] = (domain.fields())[k];
     }
     outputs[0] = std::move(results);
@@ -44,7 +47,7 @@ class MexFunction : public matlab::mex::Function
     std::shared_ptr<matlab::engine::MATLABEngine> matlabPtr = getEngine();
     matlab::data::ArrayFactory factory;
 
-    if (inputs.size() != 5)
+    if (inputs.size() != 5 && inputs.size() != 6)
     {
       matlabPtr->feval(
         u"error", 0,
