@@ -2,6 +2,7 @@
 test
 .vscode/
 cellular_automaton.asv
-test_mex.asv
+*.asv
 test.cxx
 output/
+[Bb]uild/

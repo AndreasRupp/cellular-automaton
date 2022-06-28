@@ -1,4 +1,6 @@
-mex('mex/CAM/cellular_automaton.cxx', '-Iinclude', 'COMPFLAGS=$COMPFLAGS -O3')
+%mex('mex/CAM/run_cam.cxx', '-Iinclude', 'COMPFLAGS=$COMPFLAGS -O3')
+
+addpath('mex/CAM')
 
 numSteps = 50;
 porosity = 0.9;
@@ -8,7 +10,7 @@ nx = 10;
 ny = 10;
 domainSize = nx * ny;
 
-outputData = cellular_automaton(numSteps,porosity,jump_param,output_rate,zeros(domainSize,numSteps + 1));
+outputData = run_cam(nx, ny, numSteps,porosity,jump_param,output_rate,zeros(domainSize,numSteps + 1));
 
 if ~exist('output', 'dir')
     mkdir output;

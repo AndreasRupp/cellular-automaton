@@ -3,8 +3,8 @@
 
 #include <CAM/cellular_automaton.hxx>
 
-static constexpr unsigned int nx = 10;
-static constexpr unsigned int ny = nx;
+static constexpr unsigned int nx = NX_MATLAB_VAL;
+static constexpr unsigned int ny = NY_MATLAB_VAL;
 
 template <unsigned int nx, unsigned int ny>
 constexpr std::array<int, 4> cellular_automaton<nx, ny>::particle::direct_neigh_;
