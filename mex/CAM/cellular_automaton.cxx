@@ -23,7 +23,8 @@ class MexFunction : public matlab::mex::Function
     unsigned int random_seed = 0;
     matlab::data::TypedArray<double> results = std::move(inputs[4]);
 
-    cellular_automaton<nx, ny> domain(porosity, jump_param, inputs.size() == 6 ? inputs[5][0] : 0);
+    cellular_automaton<nx, ny> domain(porosity, jump_param,
+                                      inputs.size() == 6 ? (unsigned int)inputs[5][0] : 0U);
 
     for (unsigned int k = 0; k < nx * ny; ++k)
       results[k][0] = (domain.fields())[k];
