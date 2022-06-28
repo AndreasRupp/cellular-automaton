@@ -20,7 +20,6 @@ class MexFunction : public matlab::mex::Function
     const double porosity = inputs[1][0];
     const double jump_param = inputs[2][0];
     const unsigned int output_rate = inputs[3][0];
-    unsigned int random_seed = 0;
     matlab::data::TypedArray<double> results = std::move(inputs[4]);
 
     cellular_automaton<nx, ny> domain(porosity, jump_param,
