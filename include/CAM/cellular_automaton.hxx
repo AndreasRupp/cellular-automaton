@@ -60,7 +60,7 @@ class cellular_automaton
       return *this;
     }
 
-    static constexpr unsigned int aim(const unsigned int position, const int move)
+    static inline unsigned int aim(const unsigned int position, const int move)
     {
       const unsigned int x_coord = (position % nx + (nx * ny + move) % nx) % nx;
       const unsigned int y_coord = (position / nx + (move / (int)nx) + ny) % ny;
