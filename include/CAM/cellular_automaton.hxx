@@ -202,8 +202,9 @@ class cellular_automaton
     void update_particle()
     {
       std::array<unsigned int, nx* ny>& domain_fields = domain_.fields();
+      auto start = std::find(domain_fields.begin(), domain_fields.end(), number_);
 
-      if (std::find(domain_fields.begin(), domain_fields.end(), number_) == domain_fields.end())
+      if (start == domain_fields.end())
       {
         deprecated_ = true;
         return;
