@@ -173,15 +173,22 @@ class cellular_automaton
       return attraction;
     }
 
-    inline double check_move_single(const unsigned int field, const int move) const
+    inline double check_move_single(const unsigned int field, const int move)
     {
       double attraction = 0.;
-      const std::array<unsigned int, nx* ny>& domain_fields = domain_.fields();
+      std::array<unsigned int, nx* ny>& domain_fields = domain_.fields();
       unsigned int aiming = aim(field, move);
       if (domain_fields[aiming] != 0 && move != 0)
         return -DBL_MAX;
+      if (domain_fields[field] != number_)
+      {
+        std::cout << "SIMON" << std::endl;
+        exit(1);
+      }
+      domain_fields[field] = 0;
       for (unsigned int i = 0; i < 4; ++i)
         attraction += domain_fields[aim(aiming, direct_neigh_[i])] != 0;
+      domain_fields[field] = number_;
       return attraction;
     }
 
@@ -210,16 +217,17 @@ class cellular_automaton
     void update_particle()
     {
       std::array<unsigned int, nx* ny>& domain_fields = domain_.fields();
-      auto start =
-        std::find(domain_fields.begin(), domain_fields.end(), number_);  // first entry with number_
+      auto first_with_number = std::find_if(fields_.begin(), fields_.end(),
+                                            [&](const unsigned int field) -> bool
+                                            { return domain_fields[field] == number_; });
 
-      if (start == domain_fields.end())
+      if (first_with_number == fields_.end())
       {
         deprecated_ = true;
         return;
       }
 
-      std::vector<unsigned int> new_fields(1, *start);
+      std::vector<unsigned int> new_fields(1, *first_with_number);
       unsigned int neigh_field, neigh_num, field;
       unsigned int fields_size = new_fields.size();
 
@@ -229,8 +237,9 @@ class cellular_automaton
         for (unsigned int i = 0; i < 4; ++i)
         {
           neigh_field = aim(field, direct_neigh_[i]);
-          if (domain_fields[field] == number_)
-            new_fields.push_back(field);
+          if (domain_fields[neigh_field] == number_ &&
+              std::find(new_fields.begin(), new_fields.end(), neigh_field) == new_fields.end())
+            new_fields.push_back(neigh_field);
         }
       }
 
@@ -241,6 +250,8 @@ class cellular_automaton
         std::sort(new_fields.begin(), new_fields.end());
         std::set_difference(fields_.begin(), fields_.end(), new_fields.begin(), new_fields.end(),
                             lost_fields.begin());
+
+        // std::cout << lost_fields.size() << " " << lost_fields[0] << std::endl;
 
         domain_.add_particle(lost_fields);
         std::swap(fields_, new_fields);
@@ -288,6 +299,15 @@ class cellular_automaton
                      const unsigned int rand_seed = 0)
   : jump_parameter_(jump_parameter)
   {
+    if (rand_seed == 0)
+    {
+      random_seed = std::chrono::system_clock::now().time_since_epoch().count();
+    }
+    else
+      random_seed = rand_seed;
+    std::srand(random_seed);
+    std::cout << "The random seed is set to be: " << random_seed << std::endl;
+
     n_particles = (1. - porosity) * nx * ny;
     fields_.fill(0);
     unsigned int position = std::rand() % (nx * ny);
@@ -298,22 +318,12 @@ class cellular_automaton
 
       particles_.push_back(particle(position, *this, i + 1));
     }
-    if (rand_seed == 0)
-    {
-      random_seed = std::chrono::system_clock::now().time_since_epoch().count();
-    }
-    else
-      random_seed = rand_seed;
-    std::srand(random_seed);
-
-    std::cout << "The random seed is set to be: " << rand_seed << std::endl;
   }
 
   const std::array<unsigned int, nx * ny>& move_particles()
   {
-    // std::shuffle(particles_.begin(), particles_.end(), std::default_random_engine(std::rand()));
-    // std::for_each(particles_.begin(), particles_.end(), [&](particle& part) { part.move_all();
-    // });
+    std::shuffle(particles_.begin(), particles_.end(), std::default_random_engine(std::rand()));
+    std::for_each(particles_.begin(), particles_.end(), [&](particle& part) { part.move_all(); });
     std::shuffle(particles_.begin(), particles_.end(), std::default_random_engine(std::rand()));
     std::for_each(particles_.begin(), particles_.end(),
                   [&](particle& part) { part.move_singles(); });
@@ -328,6 +338,8 @@ class cellular_automaton
 
   void add_particle(const std::vector<unsigned int>& fields)
   {
+    // std::cout << "add particle: " << n_particles + 1 << " " << fields.size() << " " << fields[0]
+    // << std::endl;
     particles_.push_back(particle(fields, *this, ++n_particles));
   }
 };
