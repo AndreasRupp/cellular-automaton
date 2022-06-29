@@ -10,10 +10,10 @@ template <unsigned int nx, unsigned int ny>
 constexpr std::array<int, 4> cellular_automaton<nx, ny>::direct_neigh_;
 
 template <unsigned int nx, unsigned int ny>
-static constexpr unsigned int cellular_automaton<nx, ny>::uint_max;
+constexpr unsigned int cellular_automaton<nx, ny>::uint_max;
 
 template <unsigned int nx, unsigned int ny>
-static constexpr double cellular_automaton<nx, ny>::double_min;
+constexpr double cellular_automaton<nx, ny>::double_min;
 
 class MexFunction : public matlab::mex::Function
 {
