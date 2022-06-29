@@ -43,24 +43,23 @@ class MexFunction : public matlab::mex::Function
                                       inputs.size() == 8 ? (unsigned int)inputs[7][0] : 0U);
 
     if (print_random_seed)
-      std::cout << "The random seed is " << domain.random_seed()
-                << "." << std::endl;
+      std::cout << "The random seed is " << domain.random_seed() << "." << std::endl;
 
-        if (output_rate != 0)
+    if (output_rate != 0)
+    {
+      if (results.getNumberOfElements() != 0)
       {
-        if (results.getNumberOfElements() != 0)
-        {
-          const std::array<unsigned int, nx* ny>& domain_fields = domain.fields();
-          for (unsigned int k = 0; k < nx * ny; ++k)
-            results[k][0] = domain_fields[k];
-        }
-        if (measures.getNumberOfElements() != 0)
-        {
-          const std::array<double, 6> meas = domain.eval_measures();
-          for (unsigned int k = 0; k < 6; ++k)
-            measures[k][0] = meas[k];
-        }
+        const std::array<unsigned int, nx* ny>& domain_fields = domain.fields();
+        for (unsigned int k = 0; k < nx * ny; ++k)
+          results[k][0] = domain_fields[k];
       }
+      if (measures.getNumberOfElements() != 0)
+      {
+        const std::array<double, 6> meas = domain.eval_measures();
+        for (unsigned int k = 0; k < 6; ++k)
+          measures[k][0] = meas[k];
+      }
+    }
 
     for (unsigned int i = 0; i < n_moves; ++i)
     {
@@ -188,7 +187,7 @@ class MexFunction : public matlab::mex::Function
       std::cout << "Moves should be larger than 0" << std::endl, all_valid = false;
     }
 
-    if (0 < porosity && porosity < 1)
+    if (0 > porosity || porosity > 1)
     {
       std::cout << "Porosity should be larger than 0 and smaller than 1" << std::endl,
         all_valid = false;
