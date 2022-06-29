@@ -13,7 +13,7 @@ void print_array(const std::array<unsigned int, size> particles)
   {
     for (unsigned int x = 0; x < nx; ++x)
       if (particles[y * nx + x] == 0)
-        std::cout << std::setw(len_numbers) << std::setfill('0') << particles[y * nx + x] << " ";
+        std::cout << std::setw(len_numbers) << std::setfill('0') << particles[y * nx + x] << "  ";
       else
         std::cout << "\033[0;31m" << std::setw(len_numbers) << std::setfill('0')
                   << particles[y * nx + x] << "\033[0m"
