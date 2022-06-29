@@ -75,19 +75,19 @@ if output_rate ~= 0
 end  % if output rate not 0
 
 
-print_results  = true
-print_measures = true
+print_results  = true;
+print_measures = true;
 
 if print_results
-    results_matrix = zeros(nx * ny, n_outputs)
+    results_matrix = zeros(nx * ny, n_outputs);
 else
-    results_matrix = []
+    results_matrix = [];
 end  % if print_results
 
 if print_measures
-    measures_matrix = zeros(6, n_outputs)
+    measures_matrix = zeros(6, n_outputs);
 else
-    measures_matrix = []
+    measures_matrix = [];
 end  % if print measures
 
 command = strcat(file_name, '(num_steps, porosity, jump_parameter, ', ...
