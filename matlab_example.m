@@ -69,12 +69,12 @@ end  % not is folder
 num_solid_pixels = sum(outputData(:,1)>0);
 
 for i = 1 : num_steps + 1
-    if (output_rate ~= 0 && mod(i , output_rate) == 0)
-        if sum(outputData(:,floor(i / output_rate))>0) ~= num_solid_pixels
+    if (frame_rate ~= 0 && mod(i , frame_rate) == 0)
+        if sum(outputData(:,floor(i / frame_rate))>0) ~= num_solid_pixels
             error('Error. Number of solid pixels changed.')
         end
-        outputPic = reshape(outputData(:,floor(i / output_rate)), [nx ny]);
-        visualizeBinaryMatrix(outputPic, strcat(strcat('output/fig.',num2str(floor(i / output_rate) -1)),'.png')) 
+        outputPic = reshape(outputData(:,floor(i / frame_rate)), [nx ny]);
+        visualizeBinaryMatrix(outputPic, strcat(strcat('output/fig.',num2str(floor(i / frame_rate) -1)),'.png')) 
     end
 end
 
