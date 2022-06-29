@@ -13,3 +13,5 @@ jobs:
       uses: actions/checkout@v2
     - name: Conduct Clang-Format Test
       uses: HyperHDG/actions@clang-format
+      with:
+        format_files: STAR.hxx STAR.cxx STAR.cxx.in

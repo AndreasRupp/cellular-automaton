@@ -2,14 +2,12 @@
 
 #include <algorithm>
 #include <array>
-#include <cfloat>
+// #include <cfloat>
 #include <chrono>
-#include <cmath>
+// #include <cmath>
 #include <limits>
 #include <random>
 #include <vector>
-
-#include <iostream>
 
 template <unsigned int nx, unsigned int ny = nx>
 class cellular_automaton
@@ -305,24 +303,23 @@ class cellular_automaton
   unsigned int n_particles;
   std::array<unsigned int, nx * ny> fields_;
   std::vector<particle> particles_;
-  unsigned int random_seed;
+  unsigned int rand_seed;
 
  public:
   const std::array<unsigned int, nx * ny>& fields() const { return fields_; }
 
   cellular_automaton(const double porosity,
                      const double jump_parameter,
-                     const unsigned int rand_seed = 0)
+                     const unsigned int random_seed = 0)
   : jump_parameter_(jump_parameter)
   {
-    if (rand_seed == 0)
+    if (random_seed == 0)
     {
-      random_seed = std::chrono::system_clock::now().time_since_epoch().count();
+      rand_seed = std::chrono::system_clock::now().time_since_epoch().count();
     }
     else
-      random_seed = rand_seed;
-    std::srand(random_seed);
-    std::cout << "The random seed is set to be: " << random_seed << std::endl;
+      rand_seed = random_seed;
+    std::srand(rand_seed);
 
     n_particles = (1. - porosity) * nx * ny;
     fields_.fill(0);
@@ -357,6 +354,8 @@ class cellular_automaton
   {
     particles_.push_back(particle(fields, *this, ++n_particles));
   }
+
+  unsigned int random_seed() const { return rand_seed; }
 
   std::array<double, 6> eval_measures()
   {
@@ -414,11 +413,11 @@ class cellular_automaton
     }
 
     std::for_each(fields_.begin(), fields_.end(),
-             [](unsigned int& field)
-             {
-               if (field == uint_max)
-                 field = 0;
-             });
+                  [](unsigned int& field)
+                  {
+                    if (field == uint_max)
+                      field = 0;
+                  });
 
     return n_connected_fluids;
   }

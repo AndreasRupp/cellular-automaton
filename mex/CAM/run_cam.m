@@ -50,6 +50,7 @@ arguments
     output_rate int32
     options.print_results int8  = 1
     options.print_measures int8 = 1
+    options.print_random_seed int8 = 0
     options.random_seed int64 = 0
 end
 
@@ -100,7 +101,8 @@ else
 end  % if print measures
 
 command = strcat(file_name, '(num_steps, porosity, jump_parameter, ', ...
-    'output_rate, results_matrix, measures_matrix, options.random_seed)');
+    'output_rate, results_matrix, measures_matrix, ', ...
+    'options.print_random_seed, options.random_seed)');
 [outputData, measures] = eval(command);
 
 cd(current_folder)
