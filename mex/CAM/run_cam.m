@@ -83,8 +83,8 @@ if ~isfile(strcat(file_name, '.mexa64'))
 end  % not exists file
 
 n_outputs = 0;
-if output_rate ~= 0
-    n_outputs = 1 + floor(num_steps / output_rate);
+if options.output_rate ~= 0
+    n_outputs = 1 + floor(num_steps / options.output_rate);
 end  % if output rate not 0
 
 
