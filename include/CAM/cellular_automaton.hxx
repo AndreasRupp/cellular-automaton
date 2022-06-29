@@ -86,6 +86,7 @@ class cellular_automaton
                         if (domain_fields[aim(field, direct_neigh_[i])] == 0)
                           ++n_surfaces;
                     });
+      return n_surfaces;
     }
 
     void move_all()
@@ -412,11 +413,13 @@ class cellular_automaton
       ++n_connected_fluids;
     }
 
-    for_each(fields_.begin(), fields_.end(),
+    std::for_each(fields_.begin(), fields_.end(),
              [](unsigned int& field)
              {
                if (field == uint_max)
                  field = 0;
              });
+
+    return n_connected_fluids;
   }
 };
