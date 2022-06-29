@@ -1,7 +1,45 @@
+% TODO: Joona and Simon!
+
+%  ========================================================================
+%> @file  matlab_example.m
+%>
+%> @brief Brief example illustration how to run the cellular automaton,
+%         which is implemented in C++, in MATLAB.
+%  ========================================================================
+%>
+%> @brief Brief example illustration how to run the cellular automaton,
+%         which is implemented in C++, in MATLAB.
+%>
+%> TODO: Joona and Simon: Fill this.
+%> 
+%> The main loop repeatedly executes four steps until the parameter
+%> <code>problemData.isFinished</code> becomes <code>true</code>.
+%> These four steps are:
+%>
+%>  1. preprocessStep()
+%>  2. solveStep()
+%>  3. postprocessStep()
+%>  4. outputStep()
+%> 
+%> This routine is executed second in each loop iteration.
+%> It assembles the global system and solves it using the backslash-operator.
+%>
+%> @param  problemData  A struct with problem parameters, precomputed
+%>                      fields, and solution data structures (either filled
+%>                      with initial data or the solution from the previous
+%>                      loop iteration), as provided by configureProblem()  
+%>                      and preprocessProblem(). @f$[\text{struct}]@f$
+%> @param  nStep        The current iteration number of the main loop. 
+%>
+%> @retval problemData  The input struct enriched with solution data at
+%>                      the next step. @f$[\text{struct}]@f$
+%>
+%> This file is part of the GitHub repository
+%>   https://github.com/AndreasRupp/cellular-automaton
+%> Copyright and license conditions can be found there.
+
 function [ outputData ] = run_cam( ...
-    nx, ny, numSteps, porosity, jump_param, output_rate )
-%UNTITLED Summary of this function goes here
-%   Detailed explanation goes here
+    nx, ny, num_steps, porosity, jump_parameter, output_rate )
 
 current_folder = pwd;
 
@@ -19,17 +57,25 @@ if ~isfile(strcat(file_name, '.mexa64'))
     fid  = fopen('../mex/CAM/run_cam.cxx.in','r');
     text = fread(fid,'*char')';
     fclose(fid);
+
     text = strrep(text, 'NX_MATLAB_VAL', string(nx));
     text = strrep(text, 'NY_MATLAB_VAL', string(ny));
+    
     fid  = fopen(strcat(file_name, '.cxx'),'w');
     fprintf(fid,'%s',text);
     fclose(fid);
+    
     mex(strcat(file_name, '.cxx'), '-I../include', ...
         'COMPFLAGS=$COMPFLAGS -O3')
 end  % not exists file
 
-command = strcat(file_name, '(numSteps, porosity, jump_param, ', ...
-    'output_rate, zeros(nx * ny, numSteps + 1))');
+n_outputs = 0;
+if output_rate ~= 0
+    n_outputs = 1 + floor(num_steps / output_rate);
+end  % if output rate not 0
+
+command = strcat(file_name, '(num_steps, porosity, jump_parameter, ', ...
+    'output_rate, zeros(nx * ny, n_outputs))');
 outputData = eval(command);
 
 cd(current_folder)

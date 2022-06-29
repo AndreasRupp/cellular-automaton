@@ -25,8 +25,9 @@ class MexFunction : public matlab::mex::Function
     cellular_automaton<nx, ny> domain(porosity, jump_param,
                                       inputs.size() == 6 ? (unsigned int)inputs[5][0] : 0U);
 
-    for (unsigned int k = 0; k < nx * ny; ++k)
-      results[k][0] = (domain.fields())[k];
+    if (output_rate != 0)
+      for (unsigned int k = 0; k < nx * ny; ++k)
+        results[k][0] = (domain.fields())[k];
 
     for (unsigned int i = 0; i < n_moves; ++i)
     {
