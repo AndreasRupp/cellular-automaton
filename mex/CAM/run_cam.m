@@ -39,7 +39,7 @@
 %> Copyright and license conditions can be found there.
 
 function [ outputData, measures ] = run_cam( ...
-    nx, ny, num_steps, porosity, jump_parameter, output_rate, options )
+    nx, ny, num_steps, porosity, jump_parameter, options )
 
 arguments
     nx int32
@@ -47,7 +47,7 @@ arguments
     num_steps int32
     porosity double
     jump_parameter double
-    output_rate int32
+    options.output_rate int32 = 1
     options.print_results int8  = 1
     options.print_measures int8 = 1
     options.print_random_seed int8 = 0
@@ -83,8 +83,8 @@ if ~isfile(strcat(file_name, '.mexa64'))
 end  % not exists file
 
 n_outputs = 0;
-if output_rate ~= 0
-    n_outputs = 1 + floor(num_steps / output_rate);
+if options.output_rate ~= 0
+    n_outputs = 1 + floor(double(num_steps) / double(options.output_rate));
 end  % if output rate not 0
 
 
@@ -101,7 +101,7 @@ else
 end  % if print measures
 
 command = strcat(file_name, '(num_steps, porosity, jump_parameter, ', ...
-    'output_rate, results_matrix, measures_matrix, ', ...
+    'options.output_rate, results_matrix, measures_matrix, ', ...
     'options.print_random_seed, options.random_seed)');
 [outputData, measures] = eval(command);
 
