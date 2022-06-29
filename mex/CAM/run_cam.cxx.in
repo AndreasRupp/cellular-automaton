@@ -89,7 +89,7 @@ class MexFunction : public matlab::mex::Function
 
   void check_arguments(matlab::mex::ArgumentList outputs, matlab::mex::ArgumentList inputs) const
   {
-    // std::shared_ptr<matlab::engine::MATLABEngine> matlabPtr = getEngine();
+    /*std::shared_ptr<matlab::engine::MATLABEngine> matlabPtr = getEngine();
     matlab::data::ArrayFactory factory;
 
     if (inputs.size() != 5 && inputs.size() != 6)
@@ -174,7 +174,7 @@ class MexFunction : public matlab::mex::Function
                          std::vector<matlab::data::Array>({factory.createScalar(
                            "The sixth input argument must be a positive value")}));
       }
-    }
+    }*/
   }
 
   bool valid_arguments(const int n_moves,
