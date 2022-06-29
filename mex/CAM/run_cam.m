@@ -91,7 +91,7 @@ else
 end  % if print measures
 
 command = strcat(file_name, '(num_steps, porosity, jump_parameter, ', ...
-    'output_rate, zresults_matrix, measures_matrix)');
+    'output_rate, results_matrix, measures_matrix)');
 [outputData, measures] = eval(command);
 
 cd(current_folder)
