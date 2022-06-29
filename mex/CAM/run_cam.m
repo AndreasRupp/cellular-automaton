@@ -39,7 +39,19 @@
 %> Copyright and license conditions can be found there.
 
 function [ outputData, measures ] = run_cam( ...
-    nx, ny, num_steps, porosity, jump_parameter, output_rate )
+    nx, ny, num_steps, porosity, jump_parameter, output_rate, options )
+
+arguments
+    nx int32
+    ny int32
+    num_steps int32
+    porosity double
+    jump_parameter double
+    output_rate int32
+    options.print_results int8  = 1
+    options.print_measures int8 = 1
+    options.random_seed int64 = 0
+end
 
 current_folder = pwd;
 
@@ -75,24 +87,24 @@ if output_rate ~= 0
 end  % if output rate not 0
 
 
-print_results  = true;
-print_measures = true;
-
-if print_results
+if options.print_results
     results_matrix = zeros(nx * ny, n_outputs);
 else
     results_matrix = [];
 end  % if print_results
 
-if print_measures
+if options.print_measures
     measures_matrix = zeros(6, n_outputs);
 else
     measures_matrix = [];
 end  % if print measures
 
 command = strcat(file_name, '(num_steps, porosity, jump_parameter, ', ...
-    'output_rate, results_matrix, measures_matrix)');
-[outputData, measures] = eval(command);
+    'output_rate, results_matrix, measures_matrix, options.random_seed)');
+% [outputData, measures] = eval(command);
+
+outputData = results_matrix;
+measures = measures_matrix;
 
 cd(current_folder)
 
