@@ -55,7 +55,7 @@ cd build
 file_name = strcat('m_run_cam_', string(nx), '_', string(ny));
 if ~isfile(strcat(file_name, '.mexa64'))
     fid  = fopen('../mex/CAM/run_cam.cxx.in','r');
-    text = fread(fid,'*char');
+    text = fread(fid,'*char')';
     fclose(fid);
 
     text = strrep(text, 'NX_MATLAB_VAL', string(nx));
@@ -74,9 +74,25 @@ if output_rate ~= 0
     n_outputs = 1 + floor(num_steps / output_rate);
 end  % if output rate not 0
 
+
+print_results   = True
+print_measures = True
+
+if print_results
+    results_matrix = zeros(nx * ny, n_outputs)
+else
+    results_matrix = []
+end  % if print_results
+
+if print_measures
+    measures_matrix = zeros(6, n_outputs)
+else
+    measures_matrix = []
+end  % if print measures
+
 command = strcat(file_name, '(num_steps, porosity, jump_parameter, ', ...
-    'output_rate, zeros(nx * ny, n_outputs), zeros(6, n_outputs)');
-outputData = eval(command);
+    'output_rate, zresults_matrix, measures_matrix');
+[outputData, measure] = eval(command);
 
 cd(current_folder)
 
