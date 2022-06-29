@@ -26,16 +26,22 @@ class MexFunction : public matlab::mex::Function
                                       inputs.size() == 6 ? (unsigned int)inputs[5][0] : 0U);
 
     if (output_rate != 0)
+    {
+      const std::array<unsigned int, nx* ny>& domain_fields = domain.fields();
       for (unsigned int k = 0; k < nx * ny; ++k)
-        results[k][0] = (domain.fields())[k];
+        results[k][0] = domain_fields[k];
+    }
 
     for (unsigned int i = 0; i < n_moves; ++i)
     {
       domain.move_particles();
 
       if (output_rate != 0 && (i + 1) % output_rate == 0)
+      {
+        const std::array<unsigned int, nx* ny>& domain_fields = domain.fields();
         for (unsigned int k = 0; k < nx * ny; ++k)
-          results[k][i + 1] = (domain.fields())[k];
+          results[k][i + 1] = domain_fields[k];
+      }
     }
 
     outputs[0] = std::move(results);

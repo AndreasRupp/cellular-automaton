@@ -160,7 +160,7 @@ class cellular_automaton
     double check_move_all(const int move) const
     {
       double attraction = 0.;
-      const std::array<unsigned int, nx* ny>& domain_fields = domain_.fields();
+      const std::array<unsigned int, nx* ny>& domain_fields = domain_.fields_;
       for (unsigned int i = 0; i < fields_.size(); ++i)
       {
         unsigned int aiming = aim(fields_[i], move);
@@ -176,7 +176,7 @@ class cellular_automaton
     inline double check_move_single(const unsigned int field, const int move)
     {
       double attraction = 0.;
-      std::array<unsigned int, nx* ny>& domain_fields = domain_.fields();
+      std::array<unsigned int, nx* ny>& domain_fields = domain_.fields_;
       unsigned int aiming = aim(field, move);
       if (domain_fields[aiming] != 0 && move != 0)
         return -DBL_MAX;
@@ -189,7 +189,7 @@ class cellular_automaton
 
     void do_move_all(const int move)
     {
-      std::array<unsigned int, nx* ny>& domain_fields = domain_.fields();
+      std::array<unsigned int, nx* ny>& domain_fields = domain_.fields_;
 
       std::for_each(fields_.begin(), fields_.end(),
                     [&](unsigned int& field)
@@ -202,7 +202,7 @@ class cellular_automaton
 
     inline void do_move_single(unsigned int& field, const int move)
     {
-      std::array<unsigned int, nx* ny>& domain_fields = domain_.fields();
+      std::array<unsigned int, nx* ny>& domain_fields = domain_.fields_;
 
       domain_fields[field] -= number_;
       field = aim(field, move);
@@ -211,7 +211,7 @@ class cellular_automaton
 
     void update_particle()
     {
-      std::array<unsigned int, nx* ny>& domain_fields = domain_.fields();
+      std::array<unsigned int, nx* ny>& domain_fields = domain_.fields_;
       auto first_with_number = std::find_if(fields_.begin(), fields_.end(),
                                             [&](const unsigned int field) -> bool
                                             { return domain_fields[field] == number_; });
@@ -288,8 +288,7 @@ class cellular_automaton
   unsigned int random_seed;
 
  public:
-  std::array<unsigned int, nx * ny>& fields() { return fields_; }
-  std::vector<particle>& particles() { return particles_; }
+  const std::array<unsigned int, nx * ny>& fields() const { return fields_; }
 
   cellular_automaton(const double porosity,
                      const double jump_parameter,
