@@ -32,7 +32,7 @@ class MexFunction : public matlab::mex::Function
     matlab::data::TypedArray<double> measures = std::move(inputs[5]);
     const unsigned int print_random_seed = inputs[6][0];
 
-    if (!valid_arguments(n_moves, porosity, jump_param, output rate))
+    if (!valid_arguments(n_moves, porosity, jump_param, output_rate))
     {
       outputs[0] = std::move(results);
       outputs[1] = std::move(measures);
@@ -72,13 +72,13 @@ class MexFunction : public matlab::mex::Function
         {
           const std::array<unsigned int, nx* ny>& domain_fields = domain.fields();
           for (unsigned int k = 0; k < nx * ny; ++k)
-            results[k][1 + floor(i / output_rate)] = domain_fields[k];
+            results[k][(1 + i) / output_rate] = domain_fields[k];
         }
         if (measures.getNumberOfElements() != 0)
         {
           const std::array<double, 6> meas = domain.eval_measures();
           for (unsigned int k = 0; k < 6; ++k)
-            measures[k][1 + floor(i / output_rate)] = meas[k];
+            measures[k][(1 + i) / output_rate] = meas[k];
         }
       }
     }
@@ -180,7 +180,7 @@ class MexFunction : public matlab::mex::Function
   bool valid_arguments(const int n_moves,
                        const double porosity,
                        const double jump_param,
-                       const int output rate) const
+                       const int output_rate) const
   {
     bool all_valid = true;
     if (n_moves < 0)
