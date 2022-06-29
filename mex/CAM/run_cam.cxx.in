@@ -9,6 +9,9 @@ static constexpr unsigned int ny = NY_MATLAB_VAL;
 template <unsigned int nx, unsigned int ny>
 constexpr std::array<int, 4> cellular_automaton<nx, ny>::particle::direct_neigh_;
 
+static constexpr unsigned int uint_max;
+static constexpr double double_min;
+
 class MexFunction : public matlab::mex::Function
 {
  public:
