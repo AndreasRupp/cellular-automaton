@@ -44,7 +44,7 @@ class MexFunction : public matlab::mex::Function
 
     if (print_random_seed)
       std::cout << "The random seed is " << domain.random_seed()
-                << ".' << std::endl;
+                << "." << std::endl;
 
         if (output_rate != 0)
       {
