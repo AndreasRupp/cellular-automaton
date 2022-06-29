@@ -61,7 +61,7 @@ jump_parameter = 1;
 output_rate    = 1;
 
 
-outputData = run_cam(nx, ny, num_steps,porosity,jump_parameter,output_rate);
+[outputData, measures] = run_cam(nx, ny, num_steps,porosity,jump_parameter,output_rate);
 
 if ~exist('output', 'dir')
     mkdir output;

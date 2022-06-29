@@ -21,15 +21,19 @@ class MexFunction : public matlab::mex::Function
     const double jump_param = inputs[2][0];
     const unsigned int output_rate = inputs[3][0];
     matlab::data::TypedArray<double> results = std::move(inputs[4]);
+    matlab::data::TypedArray<double> measures = std::move(inputs[5]);
 
     cellular_automaton<nx, ny> domain(porosity, jump_param,
-                                      inputs.size() == 6 ? (unsigned int)inputs[5][0] : 0U);
+                                      inputs.size() == 7 ? (unsigned int)inputs[6][0] : 0U);
 
     if (output_rate != 0)
     {
       const std::array<unsigned int, nx* ny>& domain_fields = domain.fields();
+      const std::array<double, 6> meas = domain.eval_measures();
       for (unsigned int k = 0; k < nx * ny; ++k)
         results[k][0] = domain_fields[k];
+      for (unsigned int k = 0; k < 6; ++k)
+        measures[k][0] = meas[k];
     }
 
     for (unsigned int i = 0; i < n_moves; ++i)
@@ -39,12 +43,16 @@ class MexFunction : public matlab::mex::Function
       if (output_rate != 0 && (i + 1) % output_rate == 0)
       {
         const std::array<unsigned int, nx* ny>& domain_fields = domain.fields();
+        const std::array<double, 6> meas = domain.eval_measures();
         for (unsigned int k = 0; k < nx * ny; ++k)
           results[k][i + 1] = domain_fields[k];
+        for (unsigned int k = 0; k < 6; ++k)
+          measures[k][i + 1] = meas[k];
       }
     }
 
     outputs[0] = std::move(results);
+    outputs[1] = std::move(measures);
   }
 
   void checkArguments(matlab::mex::ArgumentList outputs, matlab::mex::ArgumentList inputs)
@@ -52,12 +60,12 @@ class MexFunction : public matlab::mex::Function
     std::shared_ptr<matlab::engine::MATLABEngine> matlabPtr = getEngine();
     matlab::data::ArrayFactory factory;
 
-    if (inputs.size() != 5 && inputs.size() != 6)
-    {
-      matlabPtr->feval(
-        u"error", 0,
-        std::vector<matlab::data::Array>({factory.createScalar("Four inputs required")}));
-    }
+    // if (inputs.size() != 5 && inputs.size() != 6)
+    //{
+    //   matlabPtr->feval(
+    //     u"error", 0,
+    //     std::vector<matlab::data::Array>({factory.createScalar("Four inputs required")}));
+    // }
 
     // if (inputs[0].getNumberOfElements() != 1) {
     //     matlabPtr->feval(u"error",

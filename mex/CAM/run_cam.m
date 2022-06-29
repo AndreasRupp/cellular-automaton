@@ -38,7 +38,7 @@
 %>   https://github.com/AndreasRupp/cellular-automaton
 %> Copyright and license conditions can be found there.
 
-function [ outputData ] = run_cam( ...
+function [ outputData, measures ] = run_cam( ...
     nx, ny, num_steps, porosity, jump_parameter, output_rate )
 
 current_folder = pwd;
@@ -55,7 +55,7 @@ cd build
 file_name = strcat('m_run_cam_', string(nx), '_', string(ny));
 if ~isfile(strcat(file_name, '.mexa64'))
     fid  = fopen('../mex/CAM/run_cam.cxx.in','r');
-    text = fread(fid,'*char')';
+    text = fread(fid,'*char');
     fclose(fid);
 
     text = strrep(text, 'NX_MATLAB_VAL', string(nx));
@@ -75,7 +75,7 @@ if output_rate ~= 0
 end  % if output rate not 0
 
 command = strcat(file_name, '(num_steps, porosity, jump_parameter, ', ...
-    'output_rate, zeros(nx * ny, n_outputs))');
+    'output_rate, zeros(nx * ny, n_outputs), zeros(6, n_outputs)');
 outputData = eval(command);
 
 cd(current_folder)

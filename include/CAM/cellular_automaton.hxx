@@ -5,6 +5,7 @@
 #include <cfloat>
 #include <chrono>
 #include <cmath>
+#include <limits>
 #include <random>
 #include <vector>
 
@@ -14,12 +15,22 @@ template <unsigned int nx, unsigned int ny = nx>
 class cellular_automaton
 {
  private:
+  static constexpr std::array<int, 4> direct_neigh_ = {-1 * (int)nx, 1, nx, -1};
+  static constexpr unsigned int uint_max = std::numeric_limits<unsigned int>::max();
+  static constexpr double double_min = std::numeric_limits<double>::lowest();
+
+  static inline unsigned int aim(const unsigned int position, const int move)
+  {
+    const unsigned int x_coord = (position % nx + (nx * ny + move) % nx) % nx;
+    const unsigned int y_coord = (position / nx + (move / (int)nx) + ny) % ny;
+    return y_coord * nx + x_coord;
+  }
+
   // -----------------------------------------------------------------------------------------------
 
   class particle
   {
    private:
-    static constexpr std::array<int, 4> direct_neigh_ = {-1 * (int)nx, 1, nx, -1};
     unsigned int number_;
     bool deprecated_;
     std::vector<unsigned int> fields_;
@@ -56,18 +67,26 @@ class cellular_automaton
       number_ = other.number_;
       deprecated_ = other.deprecated_;
       std::swap(fields_, other.fields_);
-      // domain_ = other.domain_;
       return *this;
     }
 
-    static inline unsigned int aim(const unsigned int position, const int move)
-    {
-      const unsigned int x_coord = (position % nx + (nx * ny + move) % nx) % nx;
-      const unsigned int y_coord = (position / nx + (move / (int)nx) + ny) % ny;
-      return y_coord * nx + x_coord;
-    }
-
     bool is_deprecated() const { return deprecated_; }
+
+    unsigned int size() const { return fields_.size(); }
+
+    unsigned int n_surfaces() const
+    {
+      unsigned int n_surfaces = 0;
+      const std::array<unsigned int, nx* ny>& domain_fields = domain_.fields_;
+
+      std::for_each(fields_.begin(), fields_.end(),
+                    [&](const unsigned int field)
+                    {
+                      for (unsigned int i = 0; i < 4; ++i)
+                        if (domain_fields[aim(field, direct_neigh_[i])] == 0)
+                          ++n_surfaces;
+                    });
+    }
 
     void move_all()
     {
@@ -165,7 +184,7 @@ class cellular_automaton
       {
         unsigned int aiming = aim(fields_[i], move);
         if (domain_fields[aiming] != number_ && domain_fields[aiming] != 0)
-          return -DBL_MAX;
+          return double_min;
         for (unsigned int i = 0; i < 4; ++i)
           attraction += domain_fields[aim(aiming, direct_neigh_[i])] != number_ &&
                         domain_fields[aim(aiming, direct_neigh_[i])] != 0;
@@ -179,7 +198,7 @@ class cellular_automaton
       std::array<unsigned int, nx* ny>& domain_fields = domain_.fields_;
       unsigned int aiming = aim(field, move);
       if (domain_fields[aiming] != 0 && move != 0)
-        return -DBL_MAX;
+        return double_min;
       domain_fields[field] = 0;
       for (unsigned int i = 0; i < 4; ++i)
         attraction += domain_fields[aim(aiming, direct_neigh_[i])] != 0;
@@ -336,5 +355,68 @@ class cellular_automaton
   void add_particle(const std::vector<unsigned int>& fields)
   {
     particles_.push_back(particle(fields, *this, ++n_particles));
+  }
+
+  std::array<double, 6> eval_measures() const
+  {
+    unsigned int n_single_cells =
+      std::count_if(particles_.begin(), particles_.end(),
+                    [](const particle& part) -> bool { return part.size() == 1; });
+
+    unsigned int n_particles = particles_.size();
+
+    unsigned int n_solids = 0;
+    unsigned int n_surfaces = 0;
+
+    std::for_each(particles_.begin(), particles_.end(),
+                  [&](const particle& part)
+                  {
+                    n_solids += part.size();
+                    n_surfaces += part.n_surfaces();
+                  });
+
+    double mean_particle_size = (double)n_solids / (double)n_particles;
+
+    unsigned int n_connected_fluids = n_fluid_comp();
+
+    return {(double)n_single_cells, (double)n_particles, (double)n_solids,
+            (double)n_surfaces,     mean_particle_size,  (double)n_connected_fluids};
+  }
+
+  unsigned int n_fluid_comp()
+  {
+    unsigned int n_connected_fluids = 0;
+    unsigned int fluids_size, field, neigh_field;
+    std::vector<unsigned int> found_fluids;
+    // auto first_fluid = std::find(particles_.begin(), particles_.end(), 0);
+
+    for (auto first_fluid = std::find(fields_.begin(), fields_.end(), 0);
+         first_fluid != fields_.end(); first_fluid = std::find(first_fluid, fields_.end(), 0))
+    {
+      found_fluids = std::vector<unsigned int>(1, std::distance(fields_.begin(), first_fluid));
+      fields_[found_fluids[0]] = uint_max;
+      fluids_size = 1;
+      for (unsigned int k = 0; k < fluids_size; ++k, fluids_size = found_fluids.size())
+      {
+        field = found_fluids[k];
+        for (unsigned int i = 0; i < 4; ++i)
+        {
+          neigh_field = aim(field, direct_neigh_[i]);
+          if (fields_[neigh_field] == 0)
+          {
+            fields_[neigh_field] = uint_max;
+            found_fluids.push_back(neigh_field);
+          }
+        }
+      }
+      ++n_connected_fluids;
+    }
+
+    for_each(fields_.begin(), fields_.end(),
+             [](unsigned int& field)
+             {
+               if (field == uint_max)
+                 field = 0;
+             });
   }
 };
