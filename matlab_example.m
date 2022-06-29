@@ -63,18 +63,20 @@ output_rate    = 1;
 
 [outputData, measures] = run_cam(nx, ny, num_steps,porosity,jump_parameter,output_rate);
 
-if ~exist('output', 'dir')
-    mkdir output;
-end
+if not(isfolder('output'))
+    mkdir('output')
+end  % not is folder
 
-numSolidPixels = sum(outputData(:,1)>0);
+num_solid_pixels = sum(outputData(:,1)>0);
 
 for i = 1 : num_steps + 1
-    if sum(outputData(:,i)>0) ~= numSolidPixels
-        error('Error. Number of solid pixels changed.')
+    if (output_rate ~= 0 && mod(i + 1, output_rate) == 0)
+        if sum(outputData(:,1 + floor(i / output_rate))>0) ~= num_solid_pixels
+            error('Error. Number of solid pixels changed.')
+        end
+        outputPic = reshape(outputData(:,1 + floor(i / output_rate)), [nx ny]);
+        visualizeBinaryMatrix(outputPic, strcat(strcat('output/fig.',num2str(floor(i / output_rate))),'.png')) 
     end
-    outputPic = reshape(outputData(:,i), [nx ny]);
-    visualizeBinaryMatrix(outputPic, strcat(strcat('output/fig.',num2str(i-1)),'.png')) 
 end
 
 

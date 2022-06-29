@@ -58,13 +58,13 @@ class MexFunction : public matlab::mex::Function
         {
           const std::array<unsigned int, nx* ny>& domain_fields = domain.fields();
           for (unsigned int k = 0; k < nx * ny; ++k)
-            results[k][i + 1] = domain_fields[k];
+            results[k][1 + floor(i / output_rate)] = domain_fields[k];
         }
         if (measures.getNumberOfElements() != 0)
         {
           const std::array<double, 6> meas = domain.eval_measures();
           for (unsigned int k = 0; k < 6; ++k)
-            measures[k][i + 1] = meas[k];
+            measures[k][1 + floor(i / output_rate)] = meas[k];
         }
       }
     }
