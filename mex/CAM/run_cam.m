@@ -101,10 +101,7 @@ end  % if print measures
 
 command = strcat(file_name, '(num_steps, porosity, jump_parameter, ', ...
     'output_rate, results_matrix, measures_matrix, options.random_seed)');
-% [outputData, measures] = eval(command);
-
-outputData = results_matrix;
-measures = measures_matrix;
+[outputData, measures] = eval(command);
 
 cd(current_folder)
 
