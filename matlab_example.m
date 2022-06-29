@@ -58,10 +58,9 @@ ny             = 10;
 num_steps      = 50;
 porosity       = 0.9;
 jump_parameter = 1;
-output_rate    = 1;
+frame_rate     = 1;
 
-
-[outputData, measures] = run_cam(nx, ny, num_steps,porosity,jump_parameter,output_rate);
+[outputData, measures] = run_cam(nx, ny, num_steps,porosity,jump_parameter,output_rate=frame_rate);
 
 if not(isfolder('output'))
     mkdir('output')
