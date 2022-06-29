@@ -84,7 +84,7 @@ end  % not exists file
 
 n_outputs = 0;
 if options.output_rate ~= 0
-    n_outputs = 1 + floor(num_steps / options.output_rate);
+    n_outputs = 1 + floor(double(num_steps) / double(options.output_rate));
 end  % if output rate not 0
 
 
