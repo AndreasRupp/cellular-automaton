@@ -358,7 +358,7 @@ class cellular_automaton
     particles_.push_back(particle(fields, *this, ++n_particles));
   }
 
-  std::array<double, 6> eval_measures() const
+  std::array<double, 6> eval_measures()
   {
     unsigned int n_single_cells =
       std::count_if(particles_.begin(), particles_.end(),
