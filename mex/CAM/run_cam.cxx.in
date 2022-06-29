@@ -1,6 +1,8 @@
 #include "mex.hpp"
 #include "mexAdapter.hpp"
 
+#include <iostream>
+
 #include <CAM/cellular_automaton.hxx>
 
 static constexpr unsigned int nx = NX_MATLAB_VAL;
@@ -18,9 +20,9 @@ constexpr double cellular_automaton<nx, ny>::double_min;
 class MexFunction : public matlab::mex::Function
 {
  public:
-  void operator()(matlab::mex::ArgumentList outputs, matlab::mex::ArgumentList inputs)
+  void operator()(matlab::mex::ArgumentList outputs, matlab::mex::ArgumentList inputs) const
   {
-    checkArguments(outputs, inputs);
+    check_arguments(outputs, inputs);
 
     const unsigned int n_moves = inputs[0][0];
     const double porosity = inputs[1][0];
@@ -28,25 +30,37 @@ class MexFunction : public matlab::mex::Function
     const unsigned int output_rate = inputs[3][0];
     matlab::data::TypedArray<double> results = std::move(inputs[4]);
     matlab::data::TypedArray<double> measures = std::move(inputs[5]);
+    const unsigned int print_random_seed = inputs[6][0];
+
+    if (!valid_arguments(n_moves, porosity, jump_param, output rate))
+    {
+      outputs[0] = std::move(results);
+      outputs[1] = std::move(measures);
+      return;
+    }
 
     cellular_automaton<nx, ny> domain(porosity, jump_param,
-                                      inputs.size() == 7 ? (unsigned int)inputs[6][0] : 0U);
+                                      inputs.size() == 8 ? (unsigned int)inputs[7][0] : 0U);
 
-    if (output_rate != 0)
-    {
-      if (results.getNumberOfElements() != 0)
+    if (print_random_seed)
+      std::cout << "The random seed is " << domain.random_seed()
+                << ".' << std::endl;
+
+        if (output_rate != 0)
       {
-        const std::array<unsigned int, nx* ny>& domain_fields = domain.fields();
-        for (unsigned int k = 0; k < nx * ny; ++k)
-          results[k][0] = domain_fields[k];
+        if (results.getNumberOfElements() != 0)
+        {
+          const std::array<unsigned int, nx* ny>& domain_fields = domain.fields();
+          for (unsigned int k = 0; k < nx * ny; ++k)
+            results[k][0] = domain_fields[k];
+        }
+        if (measures.getNumberOfElements() != 0)
+        {
+          const std::array<double, 6> meas = domain.eval_measures();
+          for (unsigned int k = 0; k < 6; ++k)
+            measures[k][0] = meas[k];
+        }
       }
-      if (measures.getNumberOfElements() != 0)
-      {
-        const std::array<double, 6> meas = domain.eval_measures();
-        for (unsigned int k = 0; k < 6; ++k)
-          measures[k][0] = meas[k];
-      }
-    }
 
     for (unsigned int i = 0; i < n_moves; ++i)
     {
@@ -73,42 +87,123 @@ class MexFunction : public matlab::mex::Function
     outputs[1] = std::move(measures);
   }
 
-  void checkArguments(matlab::mex::ArgumentList outputs, matlab::mex::ArgumentList inputs)
+  void check_arguments(matlab::mex::ArgumentList outputs, matlab::mex::ArgumentList inputs) const
   {
     std::shared_ptr<matlab::engine::MATLABEngine> matlabPtr = getEngine();
     matlab::data::ArrayFactory factory;
 
-    // if (inputs.size() != 5 && inputs.size() != 6)
-    //{
-    //   matlabPtr->feval(
-    //     u"error", 0,
-    //     std::vector<matlab::data::Array>({factory.createScalar("Four inputs required")}));
-    // }
+    if (inputs.size() != 5 && inputs.size() != 6)
+    {
+      matlabPtr->feval(
+        u"error", 0,
+        std::vector<matlab::data::Array>({factory.createScalar("Five or six inputs required")}));
+    }
 
-    // if (inputs[0].getNumberOfElements() != 1) {
-    //     matlabPtr->feval(u"error",
-    //         0, std::vector<matlab::data::Array>({ factory.createScalar("Input multiplier must be
-    //         a scalar") }));
-    // }
+    if (inputs[0].getNumberOfElements() != 1)
+    {
+      matlabPtr->feval(u"error", 0,
+                       std::vector<matlab::data::Array>(
+                         {factory.createScalar("The first input argument must be a scalar")}));
+    }
 
-    // if (inputs[0].getType() != matlab::data::ArrayType::DOUBLE ||
-    //     inputs[0].getType() == matlab::data::ArrayType::COMPLEX_DOUBLE) {
-    //     matlabPtr->feval(u"error",
-    //         0, std::vector<matlab::data::Array>({ factory.createScalar("Input multiplier must be
-    //         a noncomplex scalar double") }));
-    // }
+    if (inputs[0].getType() != matlab::data::ArrayType::UINT8 &&
+        inputs[0].getType() != matlab::data::ArrayType::UINT16 &&
+        inputs[0].getType() != matlab::data::ArrayType::UINT32 &&
+        inputs[0].getType() != matlab::data::ArrayType::UINT64 &&
+        inputs[0].getType() != matlab::data::ArrayType::INT8 &&
+        inputs[0].getType() != matlab::data::ArrayType::INT16 &&
+        inputs[0].getType() != matlab::data::ArrayType::INT32 &&
+        inputs[0].getType() != matlab::data::ArrayType::INT64 &&
+        inputs[0].getType() != matlab::data::ArrayType::DOUBLE)
+    {
+      matlabPtr->feval(u"error", 0,
+                       std::vector<matlab::data::Array>({factory.createScalar(
+                         "The first input argument must be a positive value")}));
+    }
 
-    // if (inputs[1].getType() != matlab::data::ArrayType::DOUBLE ||
-    //     inputs[1].getType() == matlab::data::ArrayType::COMPLEX_DOUBLE) {
-    //     matlabPtr->feval(u"error",
-    //         0, std::vector<matlab::data::Array>({ factory.createScalar("Input matrix must be type
-    //         double") }));
-    // }
+    if (inputs[1].getType() != matlab::data::ArrayType::DOUBLE)
+    {
+      matlabPtr->feval(u"error", 0,
+                       std::vector<matlab::data::Array>(
+                         {factory.createScalar("The second argument must be a double")}));
+    }
 
-    // if (inputs[1].getDimensions().size() != 2) {
-    //     matlabPtr->feval(u"error",
-    //         0, std::vector<matlab::data::Array>({ factory.createScalar("Input must be m-by-n
-    //         dimension") }));
-    // }
+    if (inputs[2].getType() != matlab::data::ArrayType::DOUBLE)
+    {
+      matlabPtr->feval(u"error", 0,
+                       std::vector<matlab::data::Array>(
+                         {factory.createScalar("The third argument must be a double")}));
+    }
+
+    if (inputs[3].getType() != matlab::data::ArrayType::UINT8 &&
+        inputs[3].getType() != matlab::data::ArrayType::UINT16 &&
+        inputs[3].getType() != matlab::data::ArrayType::UINT32 &&
+        inputs[3].getType() != matlab::data::ArrayType::UINT64 &&
+        inputs[3].getType() != matlab::data::ArrayType::INT8 &&
+        inputs[3].getType() != matlab::data::ArrayType::INT16 &&
+        inputs[3].getType() != matlab::data::ArrayType::INT32 &&
+        inputs[3].getType() != matlab::data::ArrayType::INT64 &&
+        inputs[3].getType() != matlab::data::ArrayType::DOUBLE)
+    {
+      matlabPtr->feval(u"error", 0,
+                       std::vector<matlab::data::Array>({factory.createScalar(
+                         "The fourth input argument must be a positive value")}));
+    }
+
+    if (inputs[4].getDimensions().size() != 2)
+    {
+      matlabPtr->feval(u"error", 0,
+                       std::vector<matlab::data::Array>(
+                         {factory.createScalar("The fifth input argument must be a m-by-n matrix. "
+                                               "Where m is domain size and n is steps + 1")}));
+    }
+
+    if (inputs.size() == 6)
+    {
+      if (inputs[5].getType() != matlab::data::ArrayType::UINT8 &&
+          inputs[5].getType() != matlab::data::ArrayType::UINT16 &&
+          inputs[5].getType() != matlab::data::ArrayType::UINT32 &&
+          inputs[5].getType() != matlab::data::ArrayType::UINT64 &&
+          inputs[5].getType() != matlab::data::ArrayType::INT8 &&
+          inputs[5].getType() != matlab::data::ArrayType::INT16 &&
+          inputs[5].getType() != matlab::data::ArrayType::INT32 &&
+          inputs[5].getType() != matlab::data::ArrayType::INT64 &&
+          inputs[5].getType() != matlab::data::ArrayType::DOUBLE)
+      {
+        matlabPtr->feval(u"error", 0,
+                         std::vector<matlab::data::Array>({factory.createScalar(
+                           "The sixth input argument must be a positive value")}));
+      }
+    }
+  }
+
+  bool valid_arguments(const int n_moves,
+                       const double porosity,
+                       const double jump_param,
+                       const int output rate) const
+  {
+    bool all_valid = true;
+    if (n_moves < 0)
+    {
+      std::cout << "Moves should be larger than 0" << std::endl, all_valid = false;
+    }
+
+    if (0 < porosity && porosity < 1)
+    {
+      std::cout << "Porosity should be larger than 0 and smaller than 1" << std::endl,
+        all_valid = false;
+    }
+
+    if (jump_param < 0)
+    {
+      std::cout << "Jump should be larger than 0" << std::endl, all_valid = false;
+    }
+
+    if (output_rate < 0)
+    {
+      std::cout << "Output rate should be larger than 0" << std::endl, all_valid = false;
+    }
+
+    return all_valid;
   }
 };
