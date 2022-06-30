@@ -2,16 +2,28 @@
 
 by **Andreas Rupp**, **Simon Zech**, and **Joona Lappalainen**.
 
-It contains the C++ based library CAM implementing a simple cellular automaton method.
+It contains the C++ based library CAM implementing a simple [cellular automaton method (CAM)](
+https://en.wikipedia.org/wiki/Cellular_automaton). In this CAM, single cells/pixels are allowed to
+move within a [von Neumann neighborhood (VNN)](
+https://en.wikipedia.org/wiki/Von_Neumann_neighborhood) of range `jump_parameter` and larger
+particles, which are edge-connected sets of pixels) are allowed to move in a VNN depending on their
+size, i.e., the number of the edge-connected pixels. The range of the VNN of larger particles can be
+calculated as `jump_parameter` over the square-root of the larger particle's size. All particles,
+i.e., single pixels and larger particles, move in such a way that the amount of their particle
+neighbors is maximized.
 
 
 # How to use cellular-automaton / CAM
 
-This will be your job when everything works, Simon and Joona.
+There is two ways of using CAM:
 
-Currently, run `g++ -std=gnu++20 -Wall -Wextra -pedantic -fstack-protector-all -g -Iinclude 
-cam_test.cxx -o test; ./test` or `clang++-12 -std=gnu++20 -Wall -Wextra -pedantic 
--fstack-protector-all -g -Iinclude cam_test.cxx -o test; ./test`
+- In `MATLAB`, one has to add the path of the `mex/CAM/` directory using MATLAB's `addpath`
+  function. Then, one can run the CAM using `run_cam.m` as illustrated in `matlab_example.m`.
+- In `C++`, one has to include the file `include/CAM/cellular_automaton.hxx`. Then, you can run the
+  CAM as shown in `cpp_example.cxx` provided that you compile it using `-std=gnu++20`. A possible
+  compilation command for the `cpp_example.cxx` is `clang++-12 -std=gnu++20 -Wall -Wextra -pedantic 
+  -Iinclude -O3 cpp_example.cxx -o test`. Here, `clang++-12` can be replaced by any suitable
+  compiler implementing C++20.
 
 
 # Copyright, License, and Contribution Policy
@@ -43,8 +55,12 @@ DeveloperCertificateOfOrigin.txt).
 In addition to the terms imposed by the LGPL v2.1 or later, we ask for the following courtesy:
 
 > Every publication presenting numerical results obtained with the help of CAM should state the name
-> of the library and cite one or more of the following references
-> - No references at the moment :D
+> of the library and cite one or more of the following references  
+> N. Ray, A. Rupp, and A. Prechtel
+> **Discrete-continuum multiscale model for transport, biomass development and solid restructuring
+  in porous media**
+> Advances in Water Resources, doi: [10.1016/j.advwatres.2017.04.001](
+  https://doi.org/10.1016/j.advwatres.2017.04.001)
 
 This is the usual, fair way of giving credit to contributors to a scientific result. In addition, it
 helps us justify our effort in developing CAM as an academic undertaking.
