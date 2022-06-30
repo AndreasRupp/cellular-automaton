@@ -8,14 +8,44 @@
 #include <random>
 #include <vector>
 
+/*!*************************************************************************************************
+ * \brief   This class implements a cellular automaton.
+ *
+ * TODO: Detailed description goes here.
+ *
+ * \tparam  nx       Number of rows of the matrix.
+ * \tparam  ny       Number of columns of the matrix. Defaults to create square matrix.
+ *
+ * \authors   Andreas Rupp, Lappeenranta-Lahti University of Technology LUT, 2022.
+ * \authors   Joona Lappalainen, Lappeenranta-Lahti University of Technology LUT, 2022.
+ * \authors   Simon Zech, University of Erlangen–Nuremberg, 2022.
+ **************************************************************************************************/
 template <unsigned int nx, unsigned int ny = nx>
 class cellular_automaton
 {
  private:
+  /*!***********************************************************************************************
+   * \brief   Array containing tentative index shifts of direct neighbors.
+   ************************************************************************************************/
   static constexpr std::array<int, 4> direct_neigh_ = {-1 * (int)nx, 1, nx, -1};
+  /*!***********************************************************************************************
+   * \brief   Maximum unsigned integer.
+   ************************************************************************************************/
   static constexpr unsigned int uint_max = std::numeric_limits<unsigned int>::max();
+  /*!***********************************************************************************************
+   * \brief   Smallest (negative) double.
+   ************************************************************************************************/
   static constexpr double double_min = std::numeric_limits<double>::lowest();
 
+  /*!***********************************************************************************************
+   * \brief   Find field if one moves from position to move.
+   *
+   * TODO: Detailed description goes here.
+   *
+   * \param   position  Current position of field that may move.
+   * \param   move      Index shift inuced by possible move.
+   * \retval  index     Index of move target.
+   ************************************************************************************************/
   static inline unsigned int aim(const unsigned int position, const int move)
   {
     const unsigned int x_coord = (position % nx + (nx * ny + move) % nx) % nx;
@@ -24,6 +54,11 @@ class cellular_automaton
   }
 
   // -----------------------------------------------------------------------------------------------
+
+  // TODO: Do the same for the subclas and all functions, member variables, static variables, etc.
+  //       Beware of the formatting, cf.
+  //       https://github.com/HyperHDG/HyperHDG/blob/main/include/HyperHDG/dense_la.hxx
+  //       for even more examples. Do not changes anything in the functions.
 
   class particle
   {

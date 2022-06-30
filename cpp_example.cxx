@@ -4,6 +4,8 @@
 
 #include <CAM/cellular_automaton.hxx>
 
+// TODO: Do everything that you did in the cellular_automaton.hxx in this file, too.
+
 template <std::size_t size>
 void print_array(const std::array<unsigned int, size> particles)
 {
