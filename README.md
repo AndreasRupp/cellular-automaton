@@ -6,7 +6,7 @@ It contains the C++ based library CAM implementing a simple [cellular automaton 
 https://en.wikipedia.org/wiki/Cellular_automaton). In this CAM, single cells/pixels are allowed to
 move within a [von Neumann neighborhood (VNN)](
 https://en.wikipedia.org/wiki/Von_Neumann_neighborhood) of range `jump_parameter` and larger
-particles, which are edge-connected sets of pixels) are allowed to move in a VNN depending on their
+particles, which are edge-connected sets of pixels, are allowed to move in a VNN depending on their
 size, i.e., the number of the edge-connected pixels. The range of the VNN of larger particles can be
 calculated as `jump_parameter` over the square-root of the larger particle's size. All particles,
 i.e., single pixels and larger particles, move in such a way that the amount of their particle
@@ -56,11 +56,11 @@ In addition to the terms imposed by the LGPL v2.1 or later, we ask for the follo
 
 > Every publication presenting numerical results obtained with the help of CAM should state the name
 > of the library and cite one or more of the following references  
-> N. Ray, A. Rupp, and A. Prechtel  
-> **Discrete-continuum multiscale model for transport, biomass development and solid restructuring
-  in porous media**  
-> Advances in Water Resources, doi: [10.1016/j.advwatres.2017.04.001](
-  https://doi.org/10.1016/j.advwatres.2017.04.001)
+> - N. Ray, A. Rupp, and A. Prechtel  
+>   ***Discrete-continuum multiscale model for transport, biomass development and solid
+    restructuring in porous media***  
+>   Advances in Water Resources, doi: [10.1016/j.advwatres.2017.04.001](
+    https://doi.org/10.1016/j.advwatres.2017.04.001)
 
 This is the usual, fair way of giving credit to contributors to a scientific result. In addition, it
 helps us justify our effort in developing CAM as an academic undertaking.
