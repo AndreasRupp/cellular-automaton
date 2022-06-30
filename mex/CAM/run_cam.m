@@ -1,44 +1,85 @@
-% TODO: Joona and Simon!
-
 %  ========================================================================
-%> @file  matlab_example.m
+%> @file  run_cam.m
 %>
-%> @brief Brief example illustration how to run the cellular automaton,
-%         which is implemented in C++, in MATLAB.
+%> @brief This function compiles the C++ implementation of the cellular
+%>        automaton, if necessary. It then executes the cellular automaton
+%>        for the given input parameters. If opted for, it returns the
+%>        resulting data of the domain and calculated geometric measures.
 %  ========================================================================
 %>
-%> @brief Brief example illustration how to run the cellular automaton,
-%         which is implemented in C++, in MATLAB.
-%>
-%> TODO: Joona and Simon: Fill this.
+%> @brief This function compiles the C++ implementation of the cellular
+%>        automaton, if necessary. It then executes the cellular automaton
+%>        for the given input parameters. If opted for, it returns the
+%>        resulting data of the domain and calculated geometric measures.
 %> 
-%> The main loop repeatedly executes four steps until the parameter
-%> <code>problemData.isFinished</code> becomes <code>true</code>.
-%> These four steps are:
+%> This function first checks if the C++ implementation of the cellular
+%> automaton has already been compiled for the given domain size. If not,
+%> the C++ Code is compiled. The number of ouputs is then calculated and
+%> the result matrices are created. Then the C++ function for executing the
+%> cellular automaton is called. The resulting data of the domain and
+%> calculated geometric measures are returned, if opted for. 
 %>
-%>  1. preprocessStep()
-%>  2. solveStep()
-%>  3. postprocessStep()
-%>  4. outputStep()
-%> 
-%> This routine is executed second in each loop iteration.
-%> It assembles the global system and solves it using the backslash-operator.
+%> @param nx              The number of rows of the domain.
+%> @param ny              The number of columns of the domain.
+%> @param num_steps       The number of iterations of the CAM.
+%> @param porosity        The porosity, i.e. the percentage of void
+%>                        space, not occupied by solid.
+%> @param jump_parameter  The jump parameter, telling how far individual
+%>                        particles are allowed to jump. It is also
+%>                        included as a factor in the calculation, how far 
+%>                        larger particles are allowed to jump.
 %>
-%> @param  problemData  A struct with problem parameters, precomputed
-%>                      fields, and solution data structures (either filled
-%>                      with initial data or the solution from the previous
-%>                      loop iteration), as provided by configureProblem()  
-%>                      and preprocessProblem(). @f$[\text{struct}]@f$
-%> @param  nStep        The current iteration number of the main loop. 
+%> @param options                    Optional parameters, that are set to 
+%>                                   default values if not specified.
+%> @param options.output_rate        An integer indicating after how many 
+%>                                   steps an output shall be returned.
+%>                                   Default value of 1.
+%> @param options.print_results      An integer indicating if the domain
+%>                                   results shall be returned or not. 
+%>                                   Default value of 1 (true).
+%> @param options.print_measures     An integer indicating if the
+%>                                   calculated measures shall be returned 
+%>                                   or not. Default value of 1 (true).
+%> @param options.print_random_seed  An integer indicating if the
+%>                                   number of the random seed shall be 
+%>                                   printed or not. Default value of 0 
+%>                                   (false).
+%> @param options.random_seed        An integer that allows to choose 
+%>                                   between a random seed, depending on 
+%>                                   the clock time (if set to 0), or a 
+%>                                   given seed. Default value of 0.
 %>
-%> @retval problemData  The input struct enriched with solution data at
-%>                      the next step. @f$[\text{struct}]@f$
+%> @retval domain_data  A matrix with nx*ny rows and a column for
+%>                      every step with output. The entries of domain_data 
+%>                      are either 0, corresponding to void cells, i.e. 
+%>                      non-solid cells, or positive integers corresponding 
+%>                      to solid cells.
+%>
+%> @retval measures     A matrix with 6 rows and a column for every step 
+%>                      with output. Every row corresponds to a certain 
+%>                      geometric measure of the domain_data at the given 
+%>                      step: 
+%>                      - row 1: Number of single solid pixels without 
+%>                               solid neighbours.
+%>                      - row 2: Number of solid particles, including 
+%>                               single solid pixels and agglomorates of 
+%>                               solid pixels.
+%>                      - row 3: Total number of solid pixels. This is 
+%>                               constant over the run of one simulation.
+%>                      - row 4: Total solid surface, i.e. the sum over all
+%>                               solid pixels of neighboring void pixels.
+%>                      - row 5: Mean particle size, i.e. the total number 
+%>                               of solid pixels divided by the number of
+%>                               solid particles.
+%>                      - row 6: Number of connected fluid, i.e. void, 
+%>                               components.
+%>
 %>
 %> This file is part of the GitHub repository
 %>   https://github.com/AndreasRupp/cellular-automaton
 %> Copyright and license conditions can be found there.
 
-function [ outputData, measures ] = run_cam( ...
+function [ domain_data, measures ] = run_cam( ...
     nx, ny, num_steps, porosity, jump_parameter, options )
 
 arguments
@@ -60,11 +101,14 @@ current_folder = pwd;
 path = strcat(path, '/../..');
 cd(path)
 
+%  Create the build directory, if it does not exist yet.
 if not(isfolder('build'))
     mkdir('build')
 end  % not is folder
 cd build
 
+%  Check if the C++ Code for the given parameters nx and ny has already 
+%  been compiled. If not, the C++ Code is compiled.
 file_name = strcat('m_run_cam_', string(nx), '_', string(ny));
 if ~isfile(strcat(file_name, '.mexa64'))
     fid  = fopen('../mex/CAM/run_cam.cxx.in','r');
@@ -82,12 +126,14 @@ if ~isfile(strcat(file_name, '.mexa64'))
         'COMPFLAGS=$COMPFLAGS -O3')
 end  % not exists file
 
+%  Calculate the number of outputs for the given number of steps of the
+%  cellular automaton and output_rate.  
 n_outputs = 0;
 if options.output_rate ~= 0
     n_outputs = 1 + floor(double(num_steps) / double(options.output_rate));
 end  % if output rate not 0
 
-
+%  Create the output matrices.
 if options.print_results
     results_matrix = zeros(nx * ny, n_outputs);
 else
@@ -100,10 +146,11 @@ else
     measures_matrix = [];
 end  % if print measures
 
+%  Call the C++ function for the cellular automaton.
 command = strcat(file_name, '(num_steps, porosity, jump_parameter, ', ...
     'options.output_rate, results_matrix, measures_matrix, ', ...
     'options.print_random_seed, options.random_seed)');
-[outputData, measures] = eval(command);
+[domain_data, measures] = eval(command);
 
 cd(current_folder)
 
