@@ -79,77 +79,78 @@ class MexFunction : public matlab::mex::Function
     outputs[1] = std::move(measures);
   }
 
-  void check_arguments(matlab::mex::ArgumentList outputs, matlab::mex::ArgumentList inputs) const
+  void check_arguments(matlab::mex::ArgumentList outputs, matlab::mex::ArgumentList inputs)
   {
     std::shared_ptr<matlab::engine::MATLABEngine> matlabPtr = getEngine();
     matlab::data::ArrayFactory factory;
 
-    if (inputs.size() != 5 && inputs.size() != 6)
+    if (inputs.size() < 6 && inputs.size() > 9)
     {
       matlabPtr->feval(
         u"error", 0,
-        std::vector<matlab::data::Array>({factory.createScalar("Five or six inputs required")}));
+        std::vector<matlab::data::Array>({factory.createScalar("6 - 9 inputs required")}));
     }
 
-    if (inputs[0].getNumberOfElements() != 1)
+    if (inputs[0].getNumberOfElements() != 1) // Is this necessary?
     {
       matlabPtr->feval(u"error", 0,
                        std::vector<matlab::data::Array>(
                          {factory.createScalar("The first input argument must be a scalar")}));
     }
 
-    if ((inputs[0].getType() != matlab::data::ArrayType::UINT8 &&
-         inputs[0].getType() != matlab::data::ArrayType::UINT16 &&
-         inputs[0].getType() != matlab::data::ArrayType::UINT32 &&
-         inputs[0].getType() != matlab::data::ArrayType::UINT64 &&
-         inputs[0].getType() != matlab::data::ArrayType::INT8 &&
-         inputs[0].getType() != matlab::data::ArrayType::INT16 &&
-         inputs[0].getType() != matlab::data::ArrayType::INT32 &&
-         inputs[0].getType() != matlab::data::ArrayType::INT64 &&
-         inputs[0].getType() != matlab::data::ArrayType::DOUBLE) ||
+    if (inputs[0].getType() != matlab::data::ArrayType::INT32 ||
         (int)inputs[0][0] < 0)
     {
       matlabPtr->feval(u"error", 0,
                        std::vector<matlab::data::Array>({factory.createScalar(
-                         "The first input argument must be a positive value")}));
+                         "The first input argument must be a positive integer")}));
     }
 
     if (inputs[1].getType() != matlab::data::ArrayType::DOUBLE || (double)inputs[1][0] < 0 ||
-        (double)inputs[1][0] > 0)
+        (double)inputs[1][0] > 1)
     {
       matlabPtr->feval(u"error", 0,
                        std::vector<matlab::data::Array>(
-                         {factory.createScalar("The second argument must be a double")}));
+                         {factory.createScalar("The second argument must be a double in range from 0 to 1")}));
     }
 
     if (inputs[2].getType() != matlab::data::ArrayType::DOUBLE || (double)inputs[2][0] < 0)
     {
       matlabPtr->feval(u"error", 0,
                        std::vector<matlab::data::Array>(
-                         {factory.createScalar("The third argument must be a double")}));
+                         {factory.createScalar("The third argument must be a positive double")}));
     }
 
-    if ((inputs[3].getType() != matlab::data::ArrayType::UINT8 &&
-        inputs[3].getType() != matlab::data::ArrayType::UINT16 &&
-        inputs[3].getType() != matlab::data::ArrayType::UINT32 &&
-        inputs[3].getType() != matlab::data::ArrayType::UINT64 &&
-        inputs[3].getType() != matlab::data::ArrayType::INT8 &&
-        inputs[3].getType() != matlab::data::ArrayType::INT16 &&
-        inputs[3].getType() != matlab::data::ArrayType::INT32 &&
-        inputs[3].getType() != matlab::data::ArrayType::INT64 &&
-        inputs[3].getType() != matlab::data::ArrayType::DOUBLE) || (int)inputs[3]][0] < 0 )
+    if (inputs[3].getType() != matlab::data::ArrayType::INT32 ||
+        (int)inputs[3][0] < 0 )
     {
       matlabPtr->feval(u"error", 0,
                        std::vector<matlab::data::Array>({factory.createScalar(
-                         "The fourth input argument must be a positive value")}));
+                         "The fourth input argument must be a positive integer")}));
     }
 
     if (inputs[4].getDimensions().size() != 2)
     {
-      matlabPtr->feval(u"error", 0,
-                       std::vector<matlab::data::Array>(
-                         {factory.createScalar("The fifth input argument must be a m-by-n matrix. "
-                                               "Where m is domain size and n is steps + 1")}));
+      if (inputs[4].getDimensions()[0] != nx * ny &&
+          inputs[4].getDimensions()[1] != (int)inputs[0][0] + 1)
+      {
+        matlabPtr->feval(u"error", 0,
+                        std::vector<matlab::data::Array>(
+                          {factory.createScalar("The fifth input argument must be a m-by-n matrix. "
+                                                "Where m is domain size and n is steps + 1")}));
+      }
+    }
+
+    if (inputs[5].getDimensions().size() != 2)
+    {
+      if (inputs[5].getDimensions()[0] != nx * ny &&
+          inputs[5].getDimensions()[1] != (int)inputs[0][0] + 1)
+      {
+        matlabPtr->feval(u"error", 0,
+                        std::vector<matlab::data::Array>(
+                          {factory.createScalar("The sixth input argument must be a m-by-n matrix. "
+                                                "Where m is domain size and n is steps + 1")}));
+      }
     }
 
     // TODO: Check dimensions of [4] and [5]
@@ -158,19 +159,21 @@ class MexFunction : public matlab::mex::Function
 
     if (inputs.size() > 6)
     {
-      if (inputs[6].getType() != matlab::data::ArrayType::UINT8 &&
-          inputs[6].getType() != matlab::data::ArrayType::UINT16 &&
-          inputs[6].getType() != matlab::data::ArrayType::UINT32 &&
-          inputs[6].getType() != matlab::data::ArrayType::UINT64 &&
-          inputs[6].getType() != matlab::data::ArrayType::INT8 &&
-          inputs[6].getType() != matlab::data::ArrayType::INT16 &&
-          inputs[6].getType() != matlab::data::ArrayType::INT32 &&
-          inputs[6].getType() != matlab::data::ArrayType::INT64 &&
-          inputs[6].getType() != matlab::data::ArrayType::DOUBLE)
+      if (inputs[6].getType() != matlab::data::ArrayType::INT8)
       {
         matlabPtr->feval(u"error", 0,
-                         std::vector<matlab::data::Array>({factory.createScalar(
-                           "The sixth input argument must be a positive value")}));
+                       std::vector<matlab::data::Array>(
+                         {factory.createScalar("The seventh input argument must be 1 (true) or 0 (false)")}));
+      }
+
+      if (inputs.size() == 7)
+      {
+        if (inputs[7].getType() != matlab::data::ArrayType::INT64)
+        {
+          matlabPtr->feval(u"error", 0,
+                          std::vector<matlab::data::Array>({factory.createScalar(
+                            "The eigth input argument must be a positive integer")}));
+        }
       }
     }
   }
