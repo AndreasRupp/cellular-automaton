@@ -25,7 +25,7 @@ addpath('mex/CAM')
 
 %% Define the arguments of the run_cam function.
 %  This example illustrates how to run the run_cam function, see the file
-%  mex/CAM/run_cam.m. It runs a celular automaton method on a grid of size
+%  mex/CAM/run_cam.m. It runs a cellular automaton method on a grid of size
 %  'nx * ny' for 'num_steps' steps. Moreover, we set the porosity (i.e.the
 %  percentage of void space---not occupied by solid) and the jump parameter
 %  (telling how far individual cells are allowd to jump) as mandatory
@@ -37,7 +37,7 @@ porosity       = 0.9;
 jump_parameter = 1;
 
 %  Optionally, we can set a frame rate (saying after how many steps an
-%  output shalle be returned), a boolean parameter indicating if the output
+%  output shall be returned), a boolean parameter indicating if the output
 %  of the results shall be returned or not, a boolean parameter indicating
 %  if the calculated measures shall be returned or not and a boolean
 %  parameter indicating if the number of the random seed shall be printed
@@ -55,7 +55,7 @@ num_random_seed    = 0;
 %  every step with output. The entries of domain_data are either 0,
 %  corresponding to void cells, i.e. non-solid cells, or positive integers
 %  corresponding to solid cells. The matrix measures contains 6 rows and a
-%  column for evry step with output. Every row corresponds to a certain
+%  column for every step with output. Every row corresponds to a certain
 %  geometric measure of the domain_data at the given step: 
 %  - row 1: Number of single solid pixels without solid neighbours.
 %  - row 2: Number of solid particles, including single solid pixels and
@@ -95,14 +95,14 @@ end
 %
 %> @brief Visualize output of cellular_automaton, in .png files.
 %> 
-%> @param geo       A matrix with entries of 0 (to void pixels) and 
+%> @param geo       A matrix with entries of 0 (void pixels) and
 %>                  non-zero integers, corresponding to solid pixels.
 %> @param fig_path  The name of the file where the image is written to.
 %>
-%> The function resizes the matrix geo, s.t. the created image is at least
-%> of size 500x500 pixels. In the creates image, black pixels visualize the
-%> non-zero entries of geo, while white pixels correspond to the zero
-%> entries of geo.
+%>  The function resizes the matrix geo, s.t. the created image is at least
+%>  of size 500 pixels per direction. In the created image, black pixels 
+%>  correspond to the non-zero entries of geo, while white pixels
+%>  correspond to the zero entries of geo.
 function visualize_binary_matrix(geo, fig_path) 
     resize_factor = max(1, min(floor(1000/size(geo,1)), ...
         floor(1000/size(geo,2))));
