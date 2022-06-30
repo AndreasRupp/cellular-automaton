@@ -7,6 +7,11 @@
 // TODO: Do everything that you did in the cellular_automaton.hxx in this file, too.
 
 template <std::size_t size>
+/*!***********************************************************************************************
+ * \brief   Prints matrix of particles.
+ *
+ * \param   particles      Particle number and size
+ ************************************************************************************************/
 void print_array(const std::array<unsigned int, size> particles)
 {
   const unsigned int len_numbers = std::log10(size - 1) + 1;
@@ -23,7 +28,11 @@ void print_array(const std::array<unsigned int, size> particles)
     std::cout << std::endl;
   }
 }
-
+/*!***********************************************************************************************
+ * \brief   Main function.
+ *
+ * TODO: Detailed description goes here.
+ ************************************************************************************************/
 int main()
 {
   constexpr unsigned int nx = 10;

@@ -60,6 +60,9 @@ class cellular_automaton
   //       https://github.com/HyperHDG/HyperHDG/blob/main/include/HyperHDG/dense_la.hxx
   //       for even more examples. Do not changes anything in the functions.
 
+  /*!***********************************************************************************************
+   * \brief   Particle class.
+   ************************************************************************************************/
   class particle
   {
    private:
@@ -101,11 +104,23 @@ class cellular_automaton
       std::swap(fields_, other.fields_);
       return *this;
     }
-
+    /*!***********************************************************************************************
+     * \brief   Checks if particle is deprecated.
+     *
+     * \retval  deprecated     True of false.
+     ************************************************************************************************/
     bool is_deprecated() const { return deprecated_; }
-
+    /*!***********************************************************************************************
+     * \brief   Return size of the particle.
+     *
+     * \retval  size     Size of the particle.
+     ************************************************************************************************/
     unsigned int size() const { return fields_.size(); }
-
+    /*!***********************************************************************************************
+     * \brief   Counts surfaces of all particles.
+     *
+     * \retval  n_surfaces     Surfaces of all particles.
+     ************************************************************************************************/
     unsigned int n_surfaces() const
     {
       unsigned int n_surfaces = 0;
@@ -120,7 +135,9 @@ class cellular_automaton
                     });
       return n_surfaces;
     }
-
+    /*!***********************************************************************************************
+     * \brief   Moves merged particles.
+     ************************************************************************************************/
     void move_all()
     {
       if (fields_.size() == 1)
@@ -142,7 +159,9 @@ class cellular_automaton
                     });
       do_move_all(best_moves[std::rand() % best_moves.size()]);
     }
-
+    /*!***********************************************************************************************
+     * \brief   Moves single particles.
+     ************************************************************************************************/
     void move_singles()
     {
       std::vector<int> possible_moves = stencil_moves_single();
@@ -170,7 +189,11 @@ class cellular_automaton
                       do_move_single(field, best_moves[std::rand() % best_moves.size()]);
                     });
     }
-
+    /*!***********************************************************************************************
+     * \brief   Moves particles.
+     *
+     * \retval stencil
+     ************************************************************************************************/
     std::vector<int> stencil_moves_all() const
     {
       unsigned int layers = std::max(1., domain_.jump_parameter_ / std::sqrt(fields_.size()));
@@ -189,7 +212,11 @@ class cellular_automaton
       }
       return stencil;
     }
-
+    /*!***********************************************************************************************
+     * \brief   Moves single particles.
+     *
+     * \retval stencil
+     ************************************************************************************************/
     std::vector<int> stencil_moves_single() const
     {
       unsigned int layers = std::max(1., domain_.jump_parameter_);
@@ -208,7 +235,14 @@ class cellular_automaton
       }
       return stencil;
     }
-
+    /*!***********************************************************************************************
+     * \brief   Check attraction of the possible moves for merged particles.
+     *
+     * TODO: Detailed description goes here.
+     *
+     * \param   move      Index shift inuced by possible move.
+     * \retval  attraction     Amount of neighbours.
+     ************************************************************************************************/
     double check_move_all(const int move) const
     {
       double attraction = 0.;
@@ -224,7 +258,15 @@ class cellular_automaton
       }
       return attraction;
     }
-
+    /*!***********************************************************************************************
+     * \brief   Check attraction of the possible moves for a single particle.
+     *
+     * TODO: Detailed description goes here.
+     *
+     * \param   field     Particle
+     * \param   move      Index shift inuced by possible move.
+     * \retval  attraction     Amount of neighbours.
+     ************************************************************************************************/
     inline double check_move_single(const unsigned int field, const int move)
     {
       double attraction = 0.;
@@ -238,7 +280,11 @@ class cellular_automaton
       domain_fields[field] = number_;
       return attraction;
     }
-
+    /*!***********************************************************************************************
+     * \brief   Moves merged particles.
+     *
+     * \param   move      Index shift inuced by possible move.
+     ************************************************************************************************/
     void do_move_all(const int move)
     {
       std::array<unsigned int, nx* ny>& domain_fields = domain_.fields_;
@@ -251,7 +297,14 @@ class cellular_automaton
                       domain_fields[field] += number_;
                     });
     }
-
+    /*!***********************************************************************************************
+     * \brief   Moves single particles.
+     *
+     * TODO: Detailed description goes here.
+     *
+     * \param   field     Particle
+     * \param   move      Index shift inuced by possible move.
+     ************************************************************************************************/
     inline void do_move_single(unsigned int& field, const int move)
     {
       std::array<unsigned int, nx* ny>& domain_fields = domain_.fields_;
@@ -260,7 +313,9 @@ class cellular_automaton
       field = aim(field, move);
       domain_fields[field] += number_;
     }
-
+    /*!***********************************************************************************************
+     * \brief   Merges or deprecates particles.
+     ************************************************************************************************/
     void update_particle()
     {
       std::array<unsigned int, nx* ny>& domain_fields = domain_.fields_;
@@ -323,11 +378,26 @@ class cellular_automaton
         }
       }
     }
-
+    /*!***********************************************************************************************
+     * \brief   Find out whether two numbers are the same.
+     *
+     * \param   number     Number to compare.
+     * \retval  isEqual    True of false.
+     ************************************************************************************************/
     bool operator==(const unsigned int number) const { return number_ == number; }
-
+    /*!***********************************************************************************************
+     * \brief   Find out whether number_ is the same the same than other-number_.
+     *
+     * \param   other      Number to compare.
+     * \retval  isEqual    True of false.
+     ************************************************************************************************/
     bool operator==(const particle& other) const { return number_ == other.number_; }
-
+    /*!***********************************************************************************************
+     * \brief   Find out whether fields_.size() is smaller than other.fields_.size().
+     *
+     * \param   other      Size to compare.
+     * \retval  smaller    True of false.
+     ************************************************************************************************/
     bool operator<(const particle& other) const { return fields_.size() < other.fields_.size(); }
   };
 
@@ -340,8 +410,19 @@ class cellular_automaton
   unsigned int rand_seed;
 
  public:
+  /*!***********************************************************************************************
+   * \brief   Returns fields
+   *
+   * \retval  fields_
+   ************************************************************************************************/
   const std::array<unsigned int, nx * ny>& fields() const { return fields_; }
-
+  /*!***********************************************************************************************
+   * \brief   Cellular automaton.
+   *
+   * \param   porosity
+   * \param   jump_parameter
+   * \param   random_seed
+   ************************************************************************************************/
   cellular_automaton(const double porosity,
                      const double jump_parameter,
                      const unsigned int random_seed = 0)
@@ -366,7 +447,11 @@ class cellular_automaton
       particles_.push_back(particle(position, *this, i + 1));
     }
   }
-
+  /*!***********************************************************************************************
+   * \brief   Moves all particles
+   *
+   * \retval  fields_     
+   ************************************************************************************************/
   const std::array<unsigned int, nx * ny>& move_particles()
   {
     std::shuffle(particles_.begin(), particles_.end(), std::default_random_engine(std::rand()));
@@ -383,14 +468,35 @@ class cellular_automaton
       particles_.end());
     return fields_;
   }
-
+  /*!***********************************************************************************************
+   * \brief   Creates particles.
+   *
+   * \param   fields
+   ************************************************************************************************/
   void add_particle(const std::vector<unsigned int>& fields)
   {
     particles_.push_back(particle(fields, *this, ++n_particles));
   }
-
+  /*!***********************************************************************************************
+   * \brief   Sets a random seed.
+   *
+   * \retval  rand_seed     Random seed.
+   ************************************************************************************************/
   unsigned int random_seed() const { return rand_seed; }
-
+  /*!***********************************************************************************************
+   * \brief   Evaluates measure parameters.
+   *
+   * TODO: Detailed description goes here.
+   *          Measure parameters:
+   *            n_single_cells        (amount of single cells)
+   *            n_particles           (amount of particles)
+   *            n_solids              (amount of solid cells)
+   *            n_surfaces            (amount of surfaces)
+   *            mean_particle_size    (mean particle)
+   *            n_connected_fluids    (amount of connected fluids)
+   *
+   * \retval  array     Array of amounts of measure parameters.
+   ************************************************************************************************/
   std::array<double, 6> eval_measures()
   {
     unsigned int n_single_cells =
@@ -416,13 +522,18 @@ class cellular_automaton
     return {(double)n_single_cells, (double)n_particles, (double)n_solids,
             (double)n_surfaces,     mean_particle_size,  (double)n_connected_fluids};
   }
-
+  /*!***********************************************************************************************
+   * \brief   Computes connected fluid areas.
+   *
+   * TODO: Detailed description goes here.
+   *
+   * \retval  n_connected_fluids     Amount of connected fluids.
+   ************************************************************************************************/
   unsigned int n_fluid_comp()
   {
     unsigned int n_connected_fluids = 0;
     unsigned int fluids_size, field, neigh_field;
     std::vector<unsigned int> found_fluids;
-    // auto first_fluid = std::find(particles_.begin(), particles_.end(), 0);
 
     for (auto first_fluid = std::find(fields_.begin(), fields_.end(), 0);
          first_fluid != fields_.end(); first_fluid = std::find(first_fluid, fields_.end(), 0))
