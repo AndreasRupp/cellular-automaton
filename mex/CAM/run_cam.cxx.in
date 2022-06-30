@@ -5,6 +5,8 @@
 
 #include <CAM/cellular_automaton.hxx>
 
+// TODO: Do everything that you did for the cellular_automaton.hxx file in this file, too.
+
 static constexpr unsigned int nx = NX_MATLAB_VAL;
 static constexpr unsigned int ny = NY_MATLAB_VAL;
 
