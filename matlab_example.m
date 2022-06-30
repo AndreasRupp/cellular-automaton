@@ -1,21 +1,18 @@
-% Brief example illustration how to run the cellular automaton, which is
-% implemented in C++, in MATLAB.
 %  ========================================================================
 %> @file  matlab_example.m
 %>
 %> @brief Brief example illustration how to run the cellular automaton,
-%         which is implemented in C++, in MATLAB.
+%>        which is implemented in C++, in MATLAB.
 %  ========================================================================
 %>
 %> @brief Brief example illustration how to run the cellular automaton,
-%         which is implemented in C++, in MATLAB.
+%>        which is implemented in C++, in MATLAB.
 %>
 %> It allows to set the size of the domain, the porosity, the
 %> jump_parameter, indicating how far cells are allowed to jump, and the
 %> number of steps the cellular automaton should run. It creates the
 %> resulting data and images visualizing the results.
 %> 
-%>
 %> This file is part of the GitHub repository
 %>   https://github.com/AndreasRupp/cellular-automaton
 %> Copyright and license conditions can be found there.
@@ -46,11 +43,11 @@ jump_parameter = 1;
 %  parameter indicating if the number of the random seed shall be printed
 %  or not. The parameter num_random_seed allows to choose between a random
 %  seed, depending on the clock time (if set to 0), or a given seed.
-frame_rate     = 1;
-output_results = true;
-output_measures = true;
+frame_rate         = 1;
+output_results     = true;
+output_measures    = true;
 output_random_seed = true;
-num_random_seed = 0;
+num_random_seed    = 0;
 
 %% Call the run_cam function and save the output data.
 %  This calls the run_cam function with the chosen parameters. The output
@@ -95,13 +92,17 @@ for i = 1 : num_steps + 1
 end
 
 %% This routine visualizes the given matrix by a black and white image.
-% @param geo       A matrix with entries of 0, corresponding to void pixels
-%                  and non-zero integers, corresponding to solid pixels.
-% @param fig_path  The name of the file where the image is written to.
-% The function resizes the matrix geo, s.t. the created image is at least
-% of size 500x500 pixels. In the creates image, black pixels visualize the
-% non-zero entries of geo, while white pixels correspond to the zero
-% entries of geo.
+%
+%> @brief Visualize output of cellular_automaton, in .png files.
+%> 
+%> @param geo       A matrix with entries of 0 (to void pixels) and 
+%>                  non-zero integers, corresponding to solid pixels.
+%> @param fig_path  The name of the file where the image is written to.
+%>
+%> The function resizes the matrix geo, s.t. the created image is at least
+%> of size 500x500 pixels. In the creates image, black pixels visualize the
+%> non-zero entries of geo, while white pixels correspond to the zero
+%> entries of geo.
 function visualize_binary_matrix(geo, fig_path) 
     resize_factor = max(1, min(floor(1000/size(geo,1)), ...
         floor(1000/size(geo,2))));
