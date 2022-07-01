@@ -328,9 +328,9 @@ class cellular_automaton
                                             [&](const unsigned int field) -> bool
                                             { return domain_fields[field] == number_; });
       // Checks if there is a particle inside the domain.
-      if (first_with_number == fields_.end()) // If the particle is not inside the domain.
+      if (first_with_number == fields_.end())  // If the particle is not inside the domain.
       {
-        deprecated_ = true;                   // It is deprecated.
+        deprecated_ = true;  // It is deprecated.
         return;
       }
 
@@ -347,7 +347,7 @@ class cellular_automaton
           // If neigh_field is part of the same particle and it's already in new_fields.
           if (domain_fields[neigh_field] == number_ &&
               std::find(new_fields.begin(), new_fields.end(), neigh_field) == new_fields.end())
-            new_fields.push_back(neigh_field); // Puts neigh_field in the end of new_fields.
+            new_fields.push_back(neigh_field);  // Puts neigh_field in the end of new_fields.
         }
       }
 
@@ -365,7 +365,7 @@ class cellular_automaton
                                          { return domain_fields[lost_field] != number_; }),
                           lost_fields.end());
 
-        domain_.add_particle(lost_fields); // Particle splits into a new particle.
+        domain_.add_particle(lost_fields);  // Particle splits into a new particle.
         std::swap(fields_, new_fields);
       }
 
@@ -382,8 +382,8 @@ class cellular_automaton
           if (neigh_num == number_ || neigh_num == 0)
             continue;
 
-          fields_.push_back(neigh_field); // Puts neigh_field in the end of fields_.
-          domain_fields[neigh_field] = number_; // Particles merge.
+          fields_.push_back(neigh_field);        // Puts neigh_field in the end of fields_.
+          domain_fields[neigh_field] = number_;  // Particles merge.
         }
       }
     }
@@ -549,7 +549,7 @@ class cellular_automaton
   /*!***********************************************************************************************
    * \brief   Computes connected fluid areas.
    *
-   * \retval  n_connected_fluids     Number of connected fluid.
+   * \retval  n_connected_fluids     Number of connected fluid areas.
    ************************************************************************************************/
   unsigned int n_fluid_comp()
   {

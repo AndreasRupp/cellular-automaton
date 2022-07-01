@@ -5,7 +5,6 @@
 
 #include <CAM/cellular_automaton.hxx>
 
-// TODO: Do everything that you did for the cellular_automaton.hxx file in this file, too.
 /*!***********************************************************************************************
  * \brief   Domain size values.
  *
