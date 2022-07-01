@@ -11,7 +11,7 @@
 /*!*************************************************************************************************
  * \brief   This class implements a cellular automaton.
  *
- * TODO: Detailed description goes here.
+ * CAM illustrates the behaviour of particles in domain.
  *
  * \tparam  nx       Number of rows of the matrix.
  * \tparam  ny       Number of columns of the matrix. Defaults to create square matrix.
@@ -56,19 +56,26 @@ class cellular_automaton
   /*!***********************************************************************************************
    * \brief   Describes one connected set of bulk cells/fields.
    *
-   * More info
+   * Particles can move, merge, split and deprecate.
    ************************************************************************************************/
   class particle
   {
    private:
     /*!*********************************************************************************************
-     * \brief   Describes one connected set of bulk cells/fields.
-     *
-     * More info
+     * \brief   Index of the particle.
      **********************************************************************************************/
     unsigned int number_;
+    /*!*********************************************************************************************
+     * \brief   If particle is deprecated.
+     **********************************************************************************************/
     bool deprecated_;
+    /*!*********************************************************************************************
+     * \brief   Location of the particle.
+     **********************************************************************************************/
     std::vector<unsigned int> fields_;
+    /*!*********************************************************************************************
+     * \brief   Domain of the particle.
+     **********************************************************************************************/
     cellular_automaton<nx, ny>& domain_;
 
    public:
@@ -190,7 +197,7 @@ class cellular_automaton
                     });
     }
     /*!*********************************************************************************************
-     * \brief   Checks possible moves.
+     * \brief   Checks possible moves for merged particles.
      *
      * Order of possible moves: down, right, up, left.
      *
@@ -215,7 +222,7 @@ class cellular_automaton
       return stencil;
     }
     /*!*********************************************************************************************
-     * \brief   Checks possible moves for a single particle.
+     * \brief   Checks possible moves for single particles.
      *
      * Order of possible moves: down, right, up, left.
      *
@@ -261,9 +268,9 @@ class cellular_automaton
       return attraction;
     }
     /*!*********************************************************************************************
-     * \brief   Check attraction of the possible moves for a single particle.
+     * \brief   Check attraction of the possible moves for single particles.
      *
-     * \param   field           Particle
+     * \param   field           Location of the single particle
      * \param   move            Index shift induced by possible move.
      * \retval  attraction      Amount of neighbours.
      **********************************************************************************************/
@@ -300,7 +307,7 @@ class cellular_automaton
     /*!*********************************************************************************************
      * \brief   Moves single particles.
      *
-     * \param   field     Particle
+     * \param   field     Location of the particle.
      * \param   move      Index shift induced by possible move.
      **********************************************************************************************/
     inline void do_move_single(unsigned int& field, const int move)
@@ -312,9 +319,7 @@ class cellular_automaton
       domain_fields[field] += number_;
     }
     /*!*********************************************************************************************
-     * \brief   Merges or deprecates particles.
-     *
-     * More info
+     * \brief   Merges or splits particles.
      **********************************************************************************************/
     void update_particle()
     {
@@ -322,10 +327,10 @@ class cellular_automaton
       auto first_with_number = std::find_if(fields_.begin(), fields_.end(),
                                             [&](const unsigned int field) -> bool
                                             { return domain_fields[field] == number_; });
-
-      if (first_with_number == fields_.end())
+      // Checks if there is a particle inside the domain.
+      if (first_with_number == fields_.end()) // If the particle is not inside the domain.
       {
-        deprecated_ = true;
+        deprecated_ = true;                   // It is deprecated.
         return;
       }
 
@@ -339,9 +344,10 @@ class cellular_automaton
         for (unsigned int i = 0; i < 4; ++i)
         {
           neigh_field = aim(field, direct_neigh_[i]);
+          // If neigh_field is part of the same particle and it's already in new_fields.
           if (domain_fields[neigh_field] == number_ &&
               std::find(new_fields.begin(), new_fields.end(), neigh_field) == new_fields.end())
-            new_fields.push_back(neigh_field);
+            new_fields.push_back(neigh_field); // Puts neigh_field in the end of new_fields.
         }
       }
 
@@ -350,14 +356,16 @@ class cellular_automaton
         std::vector<unsigned int> lost_fields(fields_.size() - new_fields.size());
         std::sort(fields_.begin(), fields_.end());
         std::sort(new_fields.begin(), new_fields.end());
+        // Checks difference between fields_ and new_fields and puts it in lost_fields.
         std::set_difference(fields_.begin(), fields_.end(), new_fields.begin(), new_fields.end(),
                             lost_fields.begin());
+        // Erases particles from lost_fields if they have already merged to other existing particle.
         lost_fields.erase(std::remove_if(lost_fields.begin(), lost_fields.end(),
                                          [&](const unsigned int lost_field) -> bool
                                          { return domain_fields[lost_field] != number_; }),
                           lost_fields.end());
 
-        domain_.add_particle(lost_fields);
+        domain_.add_particle(lost_fields); // Particle splits into a new particle.
         std::swap(fields_, new_fields);
       }
 
@@ -370,11 +378,12 @@ class cellular_automaton
         {
           neigh_field = aim(field, direct_neigh_[i]);
           neigh_num = domain_fields[neigh_field];
+          // If particle has a neighbour which is a part of a different particle.
           if (neigh_num == number_ || neigh_num == 0)
             continue;
 
-          fields_.push_back(neigh_field);
-          domain_fields[neigh_field] = number_;
+          fields_.push_back(neigh_field); // Puts neigh_field in the end of fields_.
+          domain_fields[neigh_field] = number_; // Particles merge.
         }
       }
     }
@@ -405,32 +414,22 @@ class cellular_automaton
 
   /*!***********************************************************************************************
    * \brief   Jump parameter.
-   *
-   * More info
    ************************************************************************************************/
   const double jump_parameter_;
   /*!***********************************************************************************************
-   * \brief   Particle class.
-   *
-   * More info
+   * \brief   Number of particles.
    ************************************************************************************************/
   unsigned int n_particles;
   /*!***********************************************************************************************
-   * \brief   Particle class.
-   *
-   * More info
+   * \brief   Array of particle locations.
    ************************************************************************************************/
   std::array<unsigned int, nx * ny> fields_;
   /*!***********************************************************************************************
-   * \brief   Particle class.
-   *
-   * More info
+   * \brief   Vector of particles.
    ************************************************************************************************/
   std::vector<particle> particles_;
   /*!***********************************************************************************************
-   * \brief   Particle class.
-   *
-   * More info
+   * \brief   Random seed.
    ************************************************************************************************/
   unsigned int rand_seed;
 
@@ -438,7 +437,7 @@ class cellular_automaton
   /*!***********************************************************************************************
    * \brief   Returns fields
    *
-   * \retval  fields_
+   * \retval  fields_         Location of the particle.
    ************************************************************************************************/
   const std::array<unsigned int, nx * ny>& fields() const { return fields_; }
   /*!***********************************************************************************************
