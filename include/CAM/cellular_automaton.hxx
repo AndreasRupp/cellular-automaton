@@ -43,7 +43,7 @@ class cellular_automaton
    * TODO: Detailed description goes here.
    *
    * \param   position  Current position of field that may move.
-   * \param   move      Index shift inuced by possible move.
+   * \param   move      Index shift induced by possible move.
    * \retval  index     Index of move target.
    ************************************************************************************************/
   static inline unsigned int aim(const unsigned int position, const int move)
@@ -62,6 +62,8 @@ class cellular_automaton
 
   /*!***********************************************************************************************
    * \brief   Particle class.
+   *
+   * More info
    ************************************************************************************************/
   class particle
   {
@@ -107,19 +109,19 @@ class cellular_automaton
     /*!***********************************************************************************************
      * \brief   Checks if particle is deprecated.
      *
-     * \retval  deprecated     True of false.
+     * \retval  deprecated      True of false.
      ************************************************************************************************/
     bool is_deprecated() const { return deprecated_; }
     /*!***********************************************************************************************
      * \brief   Return size of the particle.
      *
-     * \retval  size     Size of the particle.
+     * \retval  size            Size of the particle.
      ************************************************************************************************/
     unsigned int size() const { return fields_.size(); }
     /*!***********************************************************************************************
      * \brief   Counts surfaces of all particles.
      *
-     * \retval  n_surfaces     Surfaces of all particles.
+     * \retval  n_surfaces      Surfaces of all particles.
      ************************************************************************************************/
     unsigned int n_surfaces() const
     {
@@ -190,8 +192,10 @@ class cellular_automaton
                     });
     }
     /*!***********************************************************************************************
-     * \brief   Moves particles.
+     * \brief   Checks possible moves.
      *
+     * Order of possible moves: down, right, up, left.
+     * 
      * \retval stencil
      ************************************************************************************************/
     std::vector<int> stencil_moves_all() const
@@ -213,8 +217,10 @@ class cellular_automaton
       return stencil;
     }
     /*!***********************************************************************************************
-     * \brief   Moves single particles.
+     * \brief   Checks possible moves for a single particle.
      *
+     * Order of possible moves: down, right, up, left.
+     * 
      * \retval stencil
      ************************************************************************************************/
     std::vector<int> stencil_moves_single() const
@@ -238,10 +244,8 @@ class cellular_automaton
     /*!***********************************************************************************************
      * \brief   Check attraction of the possible moves for merged particles.
      *
-     * TODO: Detailed description goes here.
-     *
-     * \param   move      Index shift inuced by possible move.
-     * \retval  attraction     Amount of neighbours.
+     * \param   move            Index shift induced by possible move.
+     * \retval  attraction      Amount of neighbours.
      ************************************************************************************************/
     double check_move_all(const int move) const
     {
@@ -261,11 +265,9 @@ class cellular_automaton
     /*!***********************************************************************************************
      * \brief   Check attraction of the possible moves for a single particle.
      *
-     * TODO: Detailed description goes here.
-     *
-     * \param   field     Particle
-     * \param   move      Index shift inuced by possible move.
-     * \retval  attraction     Amount of neighbours.
+     * \param   field           Particle
+     * \param   move            Index shift induced by possible move.
+     * \retval  attraction      Amount of neighbours.
      ************************************************************************************************/
     inline double check_move_single(const unsigned int field, const int move)
     {
@@ -283,7 +285,7 @@ class cellular_automaton
     /*!***********************************************************************************************
      * \brief   Moves merged particles.
      *
-     * \param   move      Index shift inuced by possible move.
+     * \param   move      Index shift induced by possible move.
      ************************************************************************************************/
     void do_move_all(const int move)
     {
@@ -300,10 +302,8 @@ class cellular_automaton
     /*!***********************************************************************************************
      * \brief   Moves single particles.
      *
-     * TODO: Detailed description goes here.
-     *
      * \param   field     Particle
-     * \param   move      Index shift inuced by possible move.
+     * \param   move      Index shift induced by possible move.
      ************************************************************************************************/
     inline void do_move_single(unsigned int& field, const int move)
     {
@@ -315,6 +315,8 @@ class cellular_automaton
     }
     /*!***********************************************************************************************
      * \brief   Merges or deprecates particles.
+     *
+     * More info
      ************************************************************************************************/
     void update_particle()
     {
@@ -419,9 +421,9 @@ class cellular_automaton
   /*!***********************************************************************************************
    * \brief   Cellular automaton.
    *
-   * \param   porosity
-   * \param   jump_parameter
-   * \param   random_seed
+   * \param   porosity          The percentage of void space, not occupied by solid.
+   * \param   jump_parameter    How far individual particles are allowed to jump.
+   * \param   random_seed       If given, sets random seed to given seed.
    ************************************************************************************************/
   cellular_automaton(const double porosity,
                      const double jump_parameter,
@@ -450,7 +452,7 @@ class cellular_automaton
   /*!***********************************************************************************************
    * \brief   Moves all particles
    *
-   * \retval  fields_     
+   * \retval  fields_     Domain
    ************************************************************************************************/
   const std::array<unsigned int, nx * ny>& move_particles()
   {
@@ -486,16 +488,16 @@ class cellular_automaton
   /*!***********************************************************************************************
    * \brief   Evaluates measure parameters.
    *
-   * TODO: Detailed description goes here.
-   *          Measure parameters:
-   *            n_single_cells        (amount of single cells)
-   *            n_particles           (amount of particles)
-   *            n_solids              (amount of solid cells)
-   *            n_surfaces            (amount of surfaces)
-   *            mean_particle_size    (mean particle)
-   *            n_connected_fluids    (amount of connected fluids)
+   * Measure parameters:
+   * n_single_cells        (number of single solid pixels without solid neighbours)
+   * n_particles           (number of solid particles, including single solid pixels
+   *                        and agglomorates of solid pixels)
+   * n_solids              (total number of solid pixels)
+   * n_surfaces            (total solid surface)
+   * mean_particle_size    (mean particle size)
+   * n_connected_fluids    (number of connected fluid)
    *
-   * \retval  array     Array of amounts of measure parameters.
+   * \retval  array     Array of measure parameters.
    ************************************************************************************************/
   std::array<double, 6> eval_measures()
   {
@@ -525,9 +527,7 @@ class cellular_automaton
   /*!***********************************************************************************************
    * \brief   Computes connected fluid areas.
    *
-   * TODO: Detailed description goes here.
-   *
-   * \retval  n_connected_fluids     Amount of connected fluids.
+   * \retval  n_connected_fluids     Number of connected fluid.
    ************************************************************************************************/
   unsigned int n_fluid_comp()
   {

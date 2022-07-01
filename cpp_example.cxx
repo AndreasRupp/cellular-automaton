@@ -31,7 +31,14 @@ void print_array(const std::array<unsigned int, size> particles)
 /*!***********************************************************************************************
  * \brief   Main function.
  *
- * TODO: Detailed description goes here.
+ * Runs CAM, updates and prints the matrix.
+ * 
+ * Parameters:
+ *    nx              (the number of rows of the domain)
+ *    ny              (the number of columns of the domain)
+ *    n_moves         (the number of iterations of the CAM)
+ *    porosity        (the percentage of void space, not occupied by solid)
+ *    jump_param      (how far individual particles are allowed to jump)
  ************************************************************************************************/
 int main()
 {
