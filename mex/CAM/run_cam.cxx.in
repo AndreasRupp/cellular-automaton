@@ -35,7 +35,7 @@ constexpr double cellular_automaton<nx, ny>::double_min;
 class MexFunction : public matlab::mex::Function
 {
  public:
-   /*!***********************************************************************************************
+  /*!***********************************************************************************************
    * \brief   Takes input arguments and prints possible outputs.
    *
    * \param   outputs     Output arguments.
@@ -124,34 +124,33 @@ class MexFunction : public matlab::mex::Function
                          {factory.createScalar("The number of steps must be a scalar")}));
     }
 
-    if (inputs[0].getType() != matlab::data::ArrayType::INT32 ||
-        (int)inputs[0][0] < 0)
-    {
-      matlabPtr->feval(u"error", 0,
-                       std::vector<matlab::data::Array>({factory.createScalar(
-                         "The number of steps must be a positive integer")}));
-    }
-    
-    if (inputs[1].getNumberOfElements() != 1)
+    if (inputs[0].getType() != matlab::data::ArrayType::INT32 || (int)inputs[0][0] < 0)
     {
       matlabPtr->feval(u"error", 0,
                        std::vector<matlab::data::Array>(
-                         {factory.createScalar("The porosity must be a scalar")}));
+                         {factory.createScalar("The number of steps must be a positive integer")}));
+    }
+
+    if (inputs[1].getNumberOfElements() != 1)
+    {
+      matlabPtr->feval(
+        u"error", 0,
+        std::vector<matlab::data::Array>({factory.createScalar("The porosity must be a scalar")}));
     }
 
     if (inputs[1].getType() != matlab::data::ArrayType::DOUBLE || (double)inputs[1][0] < 0 ||
         (double)inputs[1][0] > 1)
     {
       matlabPtr->feval(u"error", 0,
-                       std::vector<matlab::data::Array>(
-                         {factory.createScalar("The porosity must be a double in range from 0 to 1")}));
+                       std::vector<matlab::data::Array>({factory.createScalar(
+                         "The porosity must be a double in range from 0 to 1")}));
     }
 
     if (inputs[2].getType() != matlab::data::ArrayType::DOUBLE || (double)inputs[2][0] < 0)
     {
       matlabPtr->feval(u"error", 0,
-                       std::vector<matlab::data::Array>(
-                         {factory.createScalar("The jump parameter must be a non-negative double")}));
+                       std::vector<matlab::data::Array>({factory.createScalar(
+                         "The jump parameter must be a non-negative double")}));
     }
 
     if (inputs[2].getNumberOfElements() != 1)
@@ -161,12 +160,11 @@ class MexFunction : public matlab::mex::Function
                          {factory.createScalar("The jump parameter must be a scalar")}));
     }
 
-    if (inputs[3].getType() != matlab::data::ArrayType::INT32 ||
-        (int)inputs[3][0] < 0 )
+    if (inputs[3].getType() != matlab::data::ArrayType::INT32 || (int)inputs[3][0] < 0)
     {
       matlabPtr->feval(u"error", 0,
-                       std::vector<matlab::data::Array>({factory.createScalar(
-                         "The output rate must be a positive integer")}));
+                       std::vector<matlab::data::Array>(
+                         {factory.createScalar("The output rate must be a positive integer")}));
     }
 
     if (inputs[3].getNumberOfElements() != 1)
@@ -181,10 +179,11 @@ class MexFunction : public matlab::mex::Function
       if (inputs[4].getDimensions()[0] != nx * ny &&
           inputs[4].getDimensions()[1] != (int)inputs[0][0] + 1)
       {
-        matlabPtr->feval(u"error", 0,
-                        std::vector<matlab::data::Array>(
-                          {factory.createScalar("The results matrix must be a m-by-n matrix, "
-                                                "where m is the number of solid pixels and n is the number of outputs.")}));
+        matlabPtr->feval(
+          u"error", 0,
+          std::vector<matlab::data::Array>({factory.createScalar(
+            "The results matrix must be a m-by-n matrix, "
+            "where m is the number of solid pixels and n is the number of outputs.")}));
       }
     }
 
@@ -194,42 +193,42 @@ class MexFunction : public matlab::mex::Function
           inputs[5].getDimensions()[1] != (int)inputs[0][0] + 1)
       {
         matlabPtr->feval(u"error", 0,
-                        std::vector<matlab::data::Array>(
-                          {factory.createScalar("The measures matrix must be a 6-by-n matrix, "
-                                                "where n is the number of outputs.")}));
+                         std::vector<matlab::data::Array>(
+                           {factory.createScalar("The measures matrix must be a 6-by-n matrix, "
+                                                 "where n is the number of outputs.")}));
       }
     }
 
     if (inputs[6].getNumberOfElements() != 1)
     {
       matlabPtr->feval(u"error", 0,
-                       std::vector<matlab::data::Array>(
-                         {factory.createScalar("The indicator for the output of the random seed must be a scalar")}));
+                       std::vector<matlab::data::Array>({factory.createScalar(
+                         "The indicator for the output of the random seed must be a scalar")}));
     }
 
-    if (inputs[6].getType() != matlab::data::ArrayType::INT8 || 
-           ((int)inputs[6][0] != 0  && (int)inputs[6][0] != 1 ) )
+    if (inputs[6].getType() != matlab::data::ArrayType::INT8 ||
+        ((int)inputs[6][0] != 0 && (int)inputs[6][0] != 1))
     {
-      matlabPtr->feval(u"error", 0,
-                     std::vector<matlab::data::Array>(
-                       {factory.createScalar("The indicator for the output of the random seed must be true (1) or false (0).")}));
+      matlabPtr->feval(
+        u"error", 0,
+        std::vector<matlab::data::Array>({factory.createScalar(
+          "The indicator for the output of the random seed must be true (1) or false (0).")}));
     }
 
     if (inputs.size() > 7)
-    { 
-
+    {
       if (inputs[7].getNumberOfElements() != 1)
       {
-      matlabPtr->feval(u"error", 0,
-                       std::vector<matlab::data::Array>(
-                         {factory.createScalar("The number of the random seed must be a scalar")}));
+        matlabPtr->feval(u"error", 0,
+                         std::vector<matlab::data::Array>({factory.createScalar(
+                           "The number of the random seed must be a scalar")}));
       }
 
       if (inputs[7].getType() != matlab::data::ArrayType::INT64 || (int)inputs[7][0] < 0)
       {
         matlabPtr->feval(u"error", 0,
-                        std::vector<matlab::data::Array>({factory.createScalar(
-                          "The number of the random seed must be a non-negative integer")}));
+                         std::vector<matlab::data::Array>({factory.createScalar(
+                           "The number of the random seed must be a non-negative integer")}));
       }
     }
   }
