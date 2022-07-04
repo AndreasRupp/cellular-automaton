@@ -40,12 +40,11 @@ void print_array(const std::array<unsigned int, size> particles)
  **************************************************************************************************/
 int main()
 {
-  constexpr unsigned int nx = 10;
-  constexpr unsigned int ny = 10;
+  constexpr std::array<unsigned int, 2> nx = {10, 10};
   const unsigned int n_moves = 3;
   const double porosity = 0.3;
   const double jump_param = 1.;
-  cellular_automaton<nx, ny> domain(porosity, jump_param);
+  cellular_automaton<nx> domain(porosity, jump_param);
 
   print_array(domain.fields());
 

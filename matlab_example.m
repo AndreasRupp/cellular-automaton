@@ -30,8 +30,7 @@ addpath('mex/CAM')
 %  percentage of void space---not occupied by solid) and the jump parameter
 %  (telling how far individual cells are allowd to jump) as mandatory
 %  parameters.
-nx             = 100;
-ny             = 100;
+nx             = [10 10];
 num_steps      = 50;
 porosity       = 0.9;
 jump_parameter = 1;
@@ -67,7 +66,7 @@ num_random_seed    = 0;
 %  - row 5: Mean particle size, i.e. the total number of solid pixels
 %  divided by the number of solid particles.
 %  - row 6: Number of connected fluid, i.e. void, components.
-[domain_data, measures] = run_cam(nx, ny, num_steps,porosity,...
+[domain_data, measures] = run_cam(nx, num_steps,porosity,...
     jump_parameter,output_rate=frame_rate, print_results=output_results,...
     print_measures=output_measures,print_random_seed=output_random_seed,...
     random_seed=num_random_seed);
@@ -81,15 +80,15 @@ end
 %  For every step with output data, we create an image file visualizing the
 %  domain with solid pixels in black and void pixels in white. The
 %  images are saved as output/fig.i.png. 
-for i = 1 : num_steps + 1
-    if (frame_rate ~= 0 && mod(i , frame_rate) == 0) 
-        %  The domain vector at the given step is reshaped to a matrix of
-        %  size [nx ny].
-        domain_geo = reshape(domain_data(:,floor(i / frame_rate)),[nx ny]);
-        visualize_binary_matrix(domain_geo, strcat(strcat('output/fig.',...
-            num2str(floor(i / frame_rate) -1)),'.png')) 
-    end
-end
+% for i = 1 : num_steps + 1
+%     if (frame_rate ~= 0 && mod(i , frame_rate) == 0) 
+%         %  The domain vector at the given step is reshaped to a matrix of
+%         %  size [nx ny].
+%         domain_geo = reshape(domain_data(:,floor(i / frame_rate)),[nx ny]);
+%         visualize_binary_matrix(domain_geo, strcat(strcat('output/fig.',...
+%             num2str(floor(i / frame_rate) -1)),'.png')) 
+%     end
+% end
 
 %% This routine visualizes the given matrix by a black and white image.
 %

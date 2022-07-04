@@ -80,11 +80,10 @@
 %> Copyright and license conditions can be found there.
 
 function [ domain_data, measures ] = run_cam( ...
-    nx, ny, num_steps, porosity, jump_parameter, options )
+    nx, num_steps, porosity, jump_parameter, options )
 
 arguments
-    nx int32
-    ny int32
+    nx (1,:) int32
     num_steps int32
     porosity double
     jump_parameter double
@@ -109,14 +108,21 @@ cd build
 
 %  Check if the C++ Code for the given parameters nx and ny has already 
 %  been compiled. If not, the C++ Code is compiled.
-file_name = strcat('m_run_cam_', string(nx), '_', string(ny));
+file_name = 'm_run_cam';
+for i = 1 : length(nx)
+    file_name = strcat(file_name, '_',  string(nx(i)));
+end
 if ~isfile(strcat(file_name, '.mexa64'))
     fid  = fopen('../mex/CAM/run_cam.cxx.in','r');
     text = fread(fid,'*char')';
     fclose(fid);
-
-    text = strrep(text, 'NX_MATLAB_VAL', string(nx));
-    text = strrep(text, 'NY_MATLAB_VAL', string(ny));
+    
+    nx_val = string(nx(1));
+    for i = 2 : length(nx)
+        nx_val = strcat(nx_val, ', ',  string(nx(i)));
+    end
+    text = strrep(text, 'NX_MATLAB_VAL', nx_val);
+    text = strrep(text, 'NX_MATLAB_SIZE', string(length(nx)));
     
     fid  = fopen(strcat(file_name, '.cxx'),'w');
     fprintf(fid,'%s',text);
@@ -135,7 +141,7 @@ end  % if output rate not 0
 
 %  Create the output matrices.
 if options.print_results
-    results_matrix = zeros(nx * ny, n_outputs);
+    results_matrix = zeros(prod(nx), n_outputs);
 else
     results_matrix = [];
 end  % if print_results
