@@ -44,7 +44,7 @@ int main()
   const unsigned int n_moves = 3;
   const double porosity = 0.3;
   const double jump_param = 1.;
-  cellular_automaton<decltype(nx), nx> domain(porosity, jump_param);
+  cellular_automaton<nx> domain(porosity, jump_param);
 
   print_array(domain.fields());
 

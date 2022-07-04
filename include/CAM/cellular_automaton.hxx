@@ -21,7 +21,7 @@
  * \authors   Simon Zech, University of Erlangen–Nuremberg, 2022.
  **************************************************************************************************/
 // template <unsigned int nx, unsigned int ny = nx>
-template <typename array_t, array_t nx>
+template <auto nx>
 class cellular_automaton
 {
  private:
@@ -36,6 +36,10 @@ class cellular_automaton
     return n_field;
   }
 
+ public:
+  static constexpr unsigned int n_fields_ = n_fields();
+
+ private:
   static constexpr std::array<int, 2 * dim> find_neigh()
   {
     static_assert(dim != 0, "Dimension of zero does not make sense.");
@@ -49,7 +53,6 @@ class cellular_automaton
     }
     return direct_neigh;
   }
-  static constexpr unsigned int n_fields_ = n_fields();
   /*!***********************************************************************************************
    * \brief   Array containing tentative index shifts of direct neighbors.
    ************************************************************************************************/
@@ -111,19 +114,17 @@ class cellular_automaton
     /*!*********************************************************************************************
      * \brief   Domain of the particle.
      **********************************************************************************************/
-    cellular_automaton<array_t, nx>& domain_;
+    cellular_automaton<nx>& domain_;
 
    public:
-    particle(const unsigned int location,
-             cellular_automaton<array_t, nx>& domain,
-             const unsigned int number)
+    particle(const unsigned int location, cellular_automaton<nx>& domain, const unsigned int number)
     : number_(number), deprecated_(false), fields_(1, location), domain_(domain)
     {
       domain_.fields_[fields_[0]] = number_;
     }
 
     particle(const std::vector<unsigned int>& fields,
-             cellular_automaton<array_t, nx>& domain,
+             cellular_automaton<nx>& domain,
              const unsigned int number)
     : number_(number), deprecated_(false), fields_(fields), domain_(domain)
     {
