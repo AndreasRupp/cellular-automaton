@@ -15,30 +15,30 @@ static constexpr std::array<unsigned int, NX_MATLAB_SIZE> nx = {NX_MATLAB_VAL};
 /*!*************************************************************************************************
  * \brief   Array containing tentative index shifts of direct neighbors.
  **************************************************************************************************/
-template <auto nx>
+template <typename array_t, array_t nx>
 constexpr std::array<int, 2 * NX_MATLAB_SIZE> cellular_automaton<decltype(nx), nx>::direct_neigh_;
 
-template <auto nx>
+template <typename array_t, array_t nx>
 constexpr unsigned int cellular_automaton<decltype(nx), nx>::dim;
 
-template <auto nx>
+template <typename array_t, array_t nx>
 constexpr unsigned int cellular_automaton<decltype(nx), nx>::n_fields();
 
-template <auto nx>
+template <typename array_t, array_t nx>
 constexpr std::array<int, 2 * NX_MATLAB_SIZE> cellular_automaton<decltype(nx), nx>::find_neigh();
 
-template <auto nx>
+template <typename array_t, array_t nx>
 constexpr unsigned int cellular_automaton<decltype(nx), nx>::n_fields_;
 
 /*!*************************************************************************************************
  * \brief   Maximum unsigned integer.
  **************************************************************************************************/
-template <auto nx>
+template <typename array_t, array_t nx>
 constexpr unsigned int cellular_automaton<decltype(nx), nx>::uint_max;
 /*!*************************************************************************************************
  * \brief   Smallest (negative) double.
  **************************************************************************************************/
-template <auto nx>
+template <typename array_t, array_t nx>
 constexpr double cellular_automaton<decltype(nx), nx>::double_min;
 /*!*************************************************************************************************
  * \brief   Mex function for MATLAB.
