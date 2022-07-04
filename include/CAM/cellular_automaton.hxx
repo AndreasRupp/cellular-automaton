@@ -20,36 +20,36 @@
  * \authors   Joona Lappalainen, Lappeenranta-Lahti University of Technology LUT, 2022.
  * \authors   Simon Zech, University of Erlangen–Nuremberg, 2022.
  **************************************************************************************************/
-//template <unsigned int nx, unsigned int ny = nx>
-template < auto nx>
+// template <unsigned int nx, unsigned int ny = nx>
+template <typename array_t, array_t nx>
 class cellular_automaton
 {
  private:
- static constexpr unsigned int dim = nx.size();
- static constexpr unsigned int n_fields()
- {
-  unsigned int n_field = 1;
-  for(unsigned int i = 0; i < dim; ++i)
+  static constexpr unsigned int dim = nx.size();
+  static constexpr unsigned int n_fields()
   {
-    n_field *= nx[i];
+    unsigned int n_field = 1;
+    for (unsigned int i = 0; i < dim; ++i)
+    {
+      n_field *= nx[i];
+    }
+    return n_field;
   }
-  return n_field;
- }
 
- static constexpr std::array<int, 2 * dim> find_neigh()
- {
-  static_assert(dim != 0, "Dimension of zero does not make sense.");
-  std::array<int, 2 * dim> direct_neigh;
-  direct_neigh[0] = -1;
-  direct_neigh[1] = 1;
-  for (unsigned int i = 0; i < dim - 1; ++i)
+  static constexpr std::array<int, 2 * dim> find_neigh()
   {
-    direct_neigh[2*i+2] = direct_neigh[2*i] * nx[i];
-    direct_neigh[2*i+3] = direct_neigh[2*i + 1] * nx[i];
+    static_assert(dim != 0, "Dimension of zero does not make sense.");
+    std::array<int, 2 * dim> direct_neigh;
+    direct_neigh[0] = -1;
+    direct_neigh[1] = 1;
+    for (unsigned int i = 0; i < dim - 1; ++i)
+    {
+      direct_neigh[2 * i + 2] = direct_neigh[2 * i] * nx[i];
+      direct_neigh[2 * i + 3] = direct_neigh[2 * i + 1] * nx[i];
+    }
+    return direct_neigh;
   }
-  return direct_neigh;
- }
- static constexpr unsigned int n_fields_ = n_fields();
+  static constexpr unsigned int n_fields_ = n_fields();
   /*!***********************************************************************************************
    * \brief   Array containing tentative index shifts of direct neighbors.
    ************************************************************************************************/
@@ -77,7 +77,8 @@ class cellular_automaton
     unsigned int new_pos = 0;
     for (unsigned int i = 0; i < dim; ++i)
     {
-      coord = (position / direct_neigh_[2 * i + 1] + move / (int)direct_neigh_[2 * i + 1] + nx[i]) % nx[i];
+      coord = (position / direct_neigh_[2 * i + 1] + move / (int)direct_neigh_[2 * i + 1] + nx[i]) %
+              nx[i];
       new_pos += coord * direct_neigh_[2 * i + 1];
     }
     // const unsigned int x_coord = (position % nx + (nx * ny + move) % nx) % nx;
@@ -110,11 +111,11 @@ class cellular_automaton
     /*!*********************************************************************************************
      * \brief   Domain of the particle.
      **********************************************************************************************/
-    cellular_automaton<nx>& domain_;
+    cellular_automaton<array_t, nx>& domain_;
 
    public:
     particle(const unsigned int location,
-             cellular_automaton<nx>& domain,
+             cellular_automaton<array_t, nx>& domain,
              const unsigned int number)
     : number_(number), deprecated_(false), fields_(1, location), domain_(domain)
     {
@@ -122,7 +123,7 @@ class cellular_automaton
     }
 
     particle(const std::vector<unsigned int>& fields,
-             cellular_automaton<nx>& domain,
+             cellular_automaton<array_t, nx>& domain,
              const unsigned int number)
     : number_(number), deprecated_(false), fields_(fields), domain_(domain)
     {
