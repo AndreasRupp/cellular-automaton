@@ -97,14 +97,7 @@ end
 current_folder = pwd;
 
 [path,~,~] = fileparts(mfilename('fullpath'));
-path = strcat(path, '/../..');
 cd(path)
-
-%  Create the build directory, if it does not exist yet.
-if not(isfolder('build'))
-    mkdir('build')
-end  % not is folder
-cd build
 
 %  Check if the C++ Code for the given parameters nx and ny has already 
 %  been compiled. If not, the C++ Code is compiled.
@@ -113,7 +106,7 @@ for i = 1 : length(nx)
     file_name = strcat(file_name, '_',  string(nx(i)));
 end
 if ~isfile(strcat(file_name, '.mexa64'))
-    fid  = fopen('../mex/CAM/run_cam.cxx.in','r');
+    fid  = fopen('run_cam.cxx.in','r');
     text = fread(fid,'*char')';
     fclose(fid);
     
@@ -129,6 +122,7 @@ if ~isfile(strcat(file_name, '.mexa64'))
     fclose(fid);
     
     mex(strcat(file_name, '.cxx'), '-v', '-I../include', ...
+        'CXX=${CMAKE_CXX_COMPILER}', ...
         'CXXFLAGS=-fexceptions -fPIC -fno-omit-frame-pointer -pthread', ...
         'CXXFLAGS=$CXXFLAGS -std=gnu++20', ...
         'CXXOPTIMFLAGS=-O3 -fwrapv -DNDEBUG')
