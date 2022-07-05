@@ -21,7 +21,19 @@
 %  This allows to run all MATLAB functions of CAM. These MATLAB functions
 %  take care of compiling and running respective C++ functions, in which
 %  the actual work is done.
-addpath('build')
+path_to_library = '.';
+
+if not(isfolder(strcat(path_to_library, '/build')))
+    current_folder = pwd;
+    cd(path_to_library);
+    prompt = "What compiler should be used? ";
+    compiler = input(prompt);
+    system(strcat('mkdir -p build && cd build && ', 'CXX=', compiler, ...
+        ' cmake ..'));
+    cd(pwd);
+end  
+
+addpath(strcat(path_to_library, '/build'))
 
 %% Define the arguments of the run_cam function.
 %  This example illustrates how to run the run_cam function, see the file
