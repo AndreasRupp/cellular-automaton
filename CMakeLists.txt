@@ -66,8 +66,8 @@ install(
 
 ## Write a configuration file for Cython
 configure_file(
-  ${CMAKE_CURRENT_LIST_DIR}/mex/CAM/run_cam.m.in
-  ${CMAKE_CURRENT_BINARY_DIR}/run_cam.m
+  ${CMAKE_CURRENT_LIST_DIR}/mex/CAM/compile_and_run.m.in
+  ${CMAKE_CURRENT_BINARY_DIR}/compile_and_run.m
 )
 
 ## Write a configuration file for Cython

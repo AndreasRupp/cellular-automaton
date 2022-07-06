@@ -1,5 +1,5 @@
 %  ========================================================================
-%> @file  run_cam.m
+%> @file  compile_and_run.m
 %>
 %> @brief This function compiles the C++ implementation of the cellular
 %>        automaton, if necessary. It then executes the cellular automaton
@@ -79,7 +79,7 @@
 %>   https://github.com/AndreasRupp/cellular-automaton
 %> Copyright and license conditions can be found there.
 
-function [ domain_data, measures ] = run_cam( ...
+function [ domain_data, measures ] = compile_and_run( ...
     nx, num_steps, porosity, jump_parameter, options )
 
 arguments
@@ -93,11 +93,6 @@ arguments
     options.print_random_seed int8 = 0
     options.random_seed int64 = 0
 end
-
-current_folder = pwd;
-
-[path,~,~] = fileparts(mfilename('fullpath'));
-cd(path)
 
 %  Check if the C++ Code for the given parameters nx and ny has already 
 %  been compiled. If not, the C++ Code is compiled.
@@ -153,7 +148,5 @@ command = strcat(file_name, '(num_steps, porosity, jump_parameter, ', ...
     'options.output_rate, results_matrix, measures_matrix, ', ...
     'options.print_random_seed, options.random_seed)');
 [domain_data, measures] = eval(command);
-
-cd(current_folder)
 
 end  % function run_cam

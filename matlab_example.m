@@ -21,19 +21,7 @@
 %  This allows to run all MATLAB functions of CAM. These MATLAB functions
 %  take care of compiling and running respective C++ functions, in which
 %  the actual work is done.
-path_to_library = '.';
-
-if not(isfolder(strcat(path_to_library, '/build')))
-    current_folder = pwd;
-    cd(path_to_library);
-    prompt = "What compiler should be used? ";
-    compiler = input(prompt);
-    system(strcat('mkdir -p build && cd build && ', 'CXX=', compiler, ...
-        ' cmake ..'));
-    cd(pwd);
-end  
-
-addpath(strcat(path_to_library, '/build'))
+addpath('mex/CAM');
 
 %% Define the arguments of the run_cam function.
 %  This example illustrates how to run the run_cam function, see the file
@@ -83,12 +71,6 @@ num_random_seed    = 0;
     print_measures=output_measures,print_random_seed=output_random_seed,...
     random_seed=num_random_seed);
 
-%  This creates an output directory, if it does not exist yet. In the
-%  output directory, the images of the domain are stored.
-if not(isfolder('output'))
-    mkdir('output')
-end  
-
 %  For every step with output data, we create an image file visualizing the
 %  domain with solid pixels in black and void pixels in white. The
 %  images are saved as output/fig.i.png. 
@@ -114,7 +96,10 @@ end
 %>  of size 500 pixels per direction. In the created image, black pixels 
 %>  correspond to the non-zero entries of geo, while white pixels
 %>  correspond to the zero entries of geo.
-function visualize_binary_matrix(geo, fig_path) 
+function visualize_binary_matrix(geo, fig_path)
+    if not(isfolder('output'))
+        mkdir('output')
+    end  
     resize_factor = max(1, min(floor(1000/size(geo,1)), ...
         floor(1000/size(geo,2))));
     geo = repelem(geo, resize_factor, resize_factor);
