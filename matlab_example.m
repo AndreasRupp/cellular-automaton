@@ -78,7 +78,8 @@ for i = 1 : num_steps + 1
     if (frame_rate ~= 0 && mod(i , frame_rate) == 0)
         %  The domain vector at the given step is reshaped to a matrix of
         %  size [nx ny].
-        domain_geo = reshape(domain_data(:,floor(i / frame_rate)),[nx(1) nx(2)]);
+        domain_geo = reshape(domain_data(:,floor(i / frame_rate)), ...
+            [nx(1) nx(2)]);
         visualize_binary_matrix(domain_geo, strcat(strcat('output/fig.',...
             num2str(floor(i / frame_rate) -1)),'.png'))
     end
