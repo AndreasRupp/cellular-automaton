@@ -100,7 +100,9 @@ file_name = 'm_run_cam';
 for i = 1 : length(nx)
     file_name = strcat(file_name, '_',  string(nx(i)));
 end
-if ~isfile(strcat(file_name, '.mexa64'))
+if ~isfile(strcat(file_name, '.mexa64')) ...
+        && ~isfile(strcat(file_name, '.mexw64')) ...
+        && ~isfile(strcat(file_name, '.mexmaci64'))
     fid  = fopen('run_cam.cxx.in','r');
     text = fread(fid,'*char')';
     fclose(fid);

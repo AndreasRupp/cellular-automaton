@@ -74,15 +74,15 @@ num_random_seed    = 0;
 %  For every step with output data, we create an image file visualizing the
 %  domain with solid pixels in black and void pixels in white. The
 %  images are saved as output/fig.i.png. 
-% for i = 1 : num_steps + 1
-%     if (frame_rate ~= 0 && mod(i , frame_rate) == 0) 
-%         %  The domain vector at the given step is reshaped to a matrix of
-%         %  size [nx ny].
-%         domain_geo = reshape(domain_data(:,floor(i / frame_rate)),[nx ny]);
-%         visualize_binary_matrix(domain_geo, strcat(strcat('output/fig.',...
-%             num2str(floor(i / frame_rate) -1)),'.png')) 
-%     end
-% end
+for i = 1 : num_steps + 1
+    if (frame_rate ~= 0 && mod(i , frame_rate) == 0)
+        %  The domain vector at the given step is reshaped to a matrix of
+        %  size [nx ny].
+        domain_geo = reshape(domain_data(:,floor(i / frame_rate)),[nx(1) nx(2)]);
+        visualize_binary_matrix(domain_geo, strcat(strcat('output/fig.',...
+            num2str(floor(i / frame_rate) -1)),'.png'))
+    end
+end
 
 %% This routine visualizes the given matrix by a black and white image.
 %
