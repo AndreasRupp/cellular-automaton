@@ -80,7 +80,7 @@ class cellular_automaton
     unsigned int new_pos = 0;
     for (unsigned int i = 0; i < dim; ++i)
     {
-      coord = (position / direct_neigh_[2 * i + 1] + move / (int)direct_neigh_[2 * i + 1] + nx[i]) %
+      coord = (position / direct_neigh_[2 * i + 1] + move / (int)direct_neigh_[2 * i + 1] + n_fields_) %
               nx[i];
       new_pos += coord * direct_neigh_[2 * i + 1];
     }
