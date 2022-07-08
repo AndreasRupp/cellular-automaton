@@ -13,14 +13,12 @@
  *
  * CAM illustrates the behaviour of particles in domain.
  *
- * \tparam  nx       Number of rows of the matrix.
- * \tparam  ny       Number of columns of the matrix. Defaults to create square matrix.
+ * \tparam  nx       The size of a row for each dimension of the matrix.
  *
  * \authors   Andreas Rupp, Lappeenranta-Lahti University of Technology LUT, 2022.
  * \authors   Joona Lappalainen, Lappeenranta-Lahti University of Technology LUT, 2022.
  * \authors   Simon Zech, University of Erlangen–Nuremberg, 2022.
  **************************************************************************************************/
-// template <unsigned int nx, unsigned int ny = nx>
 template <auto nx>
 class cellular_automaton
 {
@@ -56,7 +54,6 @@ class cellular_automaton
   /*!***********************************************************************************************
    * \brief   Array containing tentative index shifts of direct neighbors.
    ************************************************************************************************/
-  // static constexpr std::array<int, 4> direct_neigh_ = {-1 * (int)nx, 1, nx, -1};
   static constexpr std::array<int, 2 * dim> direct_neigh_ = find_neigh();
   /*!***********************************************************************************************
    * \brief   Maximum unsigned integer.
@@ -85,8 +82,6 @@ class cellular_automaton
         nx[i];
       new_pos += coord * direct_neigh_[2 * i + 1];
     }
-    // const unsigned int x_coord = (position % nx + (nx * ny + move) % nx) % nx;
-    // const unsigned int y_coord = (position / nx + (move / (int)nx) + ny) % ny;
     return new_pos;
   }
 
@@ -432,7 +427,7 @@ class cellular_automaton
      **********************************************************************************************/
     bool operator==(const unsigned int number) const { return number_ == number; }
     /*!*********************************************************************************************
-     * \brief   Find out whether number_ is the same the same than other-number_.
+     * \brief   Find out whether number_ is the same the same than other.number_.
      *
      * \param   other      Number to compare.
      * \retval  isEqual    True of false.
@@ -548,13 +543,13 @@ class cellular_automaton
    * \brief   Evaluates measure parameters.
    *
    * Measure parameters:
-   * n_single_cells        (number of single solid pixels without solid neighbours)
-   * n_particles           (number of solid particles, including single solid pixels
-   *                        and agglomorates of solid pixels)
-   * n_solids              (total number of solid pixels)
-   * n_surfaces            (total solid surface)
-   * mean_particle_size    (mean particle size)
-   * n_connected_fluids    (number of connected fluid)
+   * n_single_cells        number of single solid pixels without solid neighbours
+   * n_particles           number of solid particles, including single solid pixels
+   *                       and agglomorates of solid pixels
+   * n_solids              total number of solid pixels
+   * n_surfaces            total solid surface
+   * mean_particle_size    mean particle size
+   * n_connected_fluids    number of connected fluid
    *
    * \retval  array     Array of measure parameters.
    ************************************************************************************************/

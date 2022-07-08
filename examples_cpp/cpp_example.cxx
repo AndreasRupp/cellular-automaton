@@ -5,9 +5,10 @@
 #include <CAM/cellular_automaton.hxx>
 
 /*!*************************************************************************************************
- * \brief   Prints matrix of particles.
+ * \brief   Prints matrix of particles in 2D and 3D.
  *
- * \param   particles      Particle number and size
+ * \param   particles      Particle index and size
+ * \param   nx             Nx dimension and size
  **************************************************************************************************/
 template <std::size_t size_p, std::size_t dim>
 void print_array(const std::array<unsigned int, size_p> particles, std::array<unsigned int, dim> nx)
@@ -73,15 +74,14 @@ void print_array(const std::array<unsigned int, size_p> particles, std::array<un
  * Runs CAM, updates and prints the matrix.
  *
  * Parameters:
- *    nx              (the number of rows of the domain)
- *    ny              (the number of columns of the domain)
- *    n_moves         (the number of iterations of the CAM)
- *    porosity        (the percentage of void space, not occupied by solid)
- *    jump_param      (how far individual particles are allowed to jump)
+ *    nx              the size of a row for each dimension of the domain
+ *    n_moves         the number of iterations of the CAM
+ *    porosity        the percentage of void space, not occupied by solid
+ *    jump_param      how far individual particles are allowed to jump
  **************************************************************************************************/
 int main()
 {
-  constexpr std::array<unsigned int, 3> nx = {10, 10, 10};
+  constexpr std::array<unsigned int, 3> nx = {10, 10, 3};
   const unsigned int n_moves = 5;
   const double porosity = 0.9;
   const double jump_param = 1.;
