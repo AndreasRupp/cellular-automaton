@@ -19,8 +19,8 @@
 %> cellular automaton is called. The resulting data of the domain and
 %> calculated geometric measures are returned, if opted for. 
 %>
-%> @param nx              The number of rows of the domain.
-%> @param ny              The number of columns of the domain.
+%> @param nx              The size of a row for each dimension of the 
+%>                        domain.
 %> @param num_steps       The number of iterations of the CAM.
 %> @param porosity        The porosity, i.e. the percentage of void
 %>                        space, not occupied by solid.
@@ -49,11 +49,11 @@
 %>                                   the clock time (if set to 0), or a 
 %>                                   given seed. Default value of 0.
 %>
-%> @retval domain_data  A matrix with nx*ny rows and a column for
-%>                      every step with output. The entries of domain_data 
-%>                      are either 0, corresponding to void cells, i.e. 
-%>                      non-solid cells, or positive integers corresponding 
-%>                      to solid cells.
+%> @retval domain_data  A matrix with nx(1)*nx(2)*...*nx(n) rows and a
+%>                      column for every step with output. The entries of
+%>                      domain_data are either 0, corresponding to void
+%>                      cells, i.e. non-solid cells, or positive integers
+%>                      corresponding to solid cells.
 %>
 %> @retval measures     A matrix with 6 rows and a column for every step 
 %>                      with output. Every row corresponds to a certain 

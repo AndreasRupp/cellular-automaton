@@ -26,10 +26,10 @@ addpath('mex/CAM');
 %% Define the arguments of the run_cam function.
 %  This example illustrates how to run the run_cam function, see the file
 %  mex/CAM/run_cam.m. It runs a cellular automaton method on a grid of size
-%  'nx * ny' for 'num_steps' steps. Moreover, we set the porosity (i.e.the
-%  percentage of void space---not occupied by solid) and the jump parameter
-%  (telling how far individual cells are allowd to jump) as mandatory
-%  parameters.
+%  'nx(1) * nx(2) * ... * nx(n)' for 'num_steps' steps. Moreover, we set
+%  the porosity (i.e.the percentage of void space---not occupied by solid)
+%  and the jump parameter (telling how far individual cells are allowd to
+%  jump) as mandatory parameters.
 nx             = [10 10];
 num_steps      = 50;
 porosity       = 0.9;
@@ -50,12 +50,13 @@ num_random_seed    = 0;
 
 %% Call the run_cam function and save the output data.
 %  This calls the run_cam function with the chosen parameters. The output
-%  consists of the matrix domain_data with nx*ny rows and a column for
-%  every step with output. The entries of domain_data are either 0,
-%  corresponding to void cells, i.e. non-solid cells, or positive integers
-%  corresponding to solid cells. The matrix measures contains 6 rows and a
-%  column for every step with output. Every row corresponds to a certain
-%  geometric measure of the domain_data at the given step: 
+%  consists of the matrix domain_data with nx(1)*nx(2)*...*nx(n) rows and
+%  a column for every step with output. The entries of domain_data are
+%  either 0, corresponding to void cells, i.e. non-solid cells, or
+%  positive integers corresponding to solid cells. The matrix measures
+%  contains 6 rows and a column for every step with output. Every row
+%  corresponds to a certain geometric measure of the domain_data at the
+%  given step: 
 %  - row 1: Number of single solid pixels without solid neighbours.
 %  - row 2: Number of solid particles, including single solid pixels and
 %  agglomorates of solid pixels.
@@ -77,7 +78,7 @@ num_random_seed    = 0;
 for i = 1 : num_steps + 1
     if (frame_rate ~= 0 && mod(i , frame_rate) == 0)
         %  The domain vector at the given step is reshaped to a matrix of
-        %  size [nx ny].
+        %  size [nx(1) nx(2) ... nx(n)].
         domain_geo = reshape(domain_data(:,floor(i / frame_rate)), ...
             [nx(1) nx(2)]);
         visualize_binary_matrix(domain_geo, strcat(strcat('output/fig.',...
