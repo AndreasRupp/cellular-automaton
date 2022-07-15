@@ -9,7 +9,7 @@ arguments
     options.output_rate int32 = 1
     options.print_results int8  = 1
     options.print_measures int8 = 1
-    options.print_random_seed int8 = 0
+    options.print_random_seed int8 = 1
     options.random_seed int64 = 0
 end
 
