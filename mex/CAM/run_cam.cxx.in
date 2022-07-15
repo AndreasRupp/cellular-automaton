@@ -8,38 +8,18 @@
 /*!*************************************************************************************************
  * \brief   Domain size values.
  *
- * \tparam  nx       Number of rows of the matrix.
- * \tparam  ny       Number of columns of the matrix. Defaults to create square matrix.
+ * \tparam  nx       the size of a row for each dimension of the domain
  **************************************************************************************************/
 static constexpr std::array<unsigned int, NX_MATLAB_SIZE> nx = {NX_MATLAB_VAL};
 /*!*************************************************************************************************
  * \brief   Array containing tentative index shifts of direct neighbors.
  **************************************************************************************************/
-/*template <typename array_t, array_t nx>
-constexpr std::array<int, 2 * NX_MATLAB_SIZE> cellular_automaton<array_t, nx>::direct_neigh_;
-
-template <typename array_t, array_t nx>
-constexpr unsigned int cellular_automaton<array_t, nx>::dim;
-
-template <typename array_t, array_t nx>
-constexpr unsigned int cellular_automaton<array_t, nx>::n_fields();
-
-template <typename array_t, array_t nx>
-constexpr std::array<int, 2 * NX_MATLAB_SIZE> cellular_automaton<array_t, nx>::find_neigh();
-
-template <typename array_t, array_t nx>
-constexpr unsigned int cellular_automaton<array_t, nx>::n_fields_;*/
-
 /*!*************************************************************************************************
  * \brief   Maximum unsigned integer.
  **************************************************************************************************/
-// template <typename array_t, array_t nx>
-// constexpr unsigned int cellular_automaton<decltype(nx), nx>::uint_max;
 /*!*************************************************************************************************
  * \brief   Smallest (negative) double.
  **************************************************************************************************/
-// template <typename array_t, array_t nx>
-// constexpr double cellular_automaton<decltype(nx), nx>::double_min;
 /*!*************************************************************************************************
  * \brief   Mex function for MATLAB.
  **************************************************************************************************/
@@ -54,7 +34,7 @@ class MexFunction : public matlab::mex::Function
    ************************************************************************************************/
   void operator()(matlab::mex::ArgumentList outputs, matlab::mex::ArgumentList inputs)
   {
-    // check_arguments(outputs, inputs);
+    check_arguments(outputs, inputs);
 
     const unsigned int n_moves = inputs[0][0];
     const double porosity = inputs[1][0];
@@ -118,7 +98,7 @@ class MexFunction : public matlab::mex::Function
    * \param   outputs     Output arguments.
    * \param   inputs      Input arguments.
    ************************************************************************************************/
-  /*void check_arguments(matlab::mex::ArgumentList outputs, matlab::mex::ArgumentList inputs)
+  void check_arguments(matlab::mex::ArgumentList outputs, matlab::mex::ArgumentList inputs)
   {
     std::shared_ptr<matlab::engine::MATLABEngine> matlabPtr = getEngine();
     matlab::data::ArrayFactory factory;
@@ -189,7 +169,7 @@ class MexFunction : public matlab::mex::Function
 
     if (inputs[4].getDimensions().size() != 2)
     {
-      if (inputs[4].getDimensions()[0] != nx * ny &&
+      if (inputs[4].getDimensions()[0] != cellular_automaton<nx>::n_fields_ &&
           inputs[4].getDimensions()[1] != (int)inputs[0][0] + 1)
       {
         matlabPtr->feval(
@@ -202,7 +182,7 @@ class MexFunction : public matlab::mex::Function
 
     if (inputs[5].getDimensions().size() != 2)
     {
-      if (inputs[5].getDimensions()[0] != nx * ny &&
+      if (inputs[5].getDimensions()[0] != 6 &&
           inputs[5].getDimensions()[1] != (int)inputs[0][0] + 1)
       {
         matlabPtr->feval(u"error", 0,
@@ -244,5 +224,5 @@ class MexFunction : public matlab::mex::Function
                            "The number of the random seed must be a non-negative integer")}));
       }
     }
-  }*/
+  }
 };

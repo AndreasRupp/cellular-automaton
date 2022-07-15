@@ -86,6 +86,12 @@ num_random_seed    = 1038079164;
 %     end
 % end
 
+%  For every step with output data, we create a figure of the
+%  domain with solid pixels as black cubes and void pixels as empty space.
+%  Press one (1) to move forward and two (2) to move backward in figures.
+%  Press any other button and the program ends.
+%  Remember to press enter after every option to complete the action.
+
 i = 0;
 
 if (frame_rate ~= 0)
