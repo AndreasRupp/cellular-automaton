@@ -81,8 +81,8 @@ void print_array(const std::array<unsigned int, size_p> particles, std::array<un
  **************************************************************************************************/
 int main()
 {
-  constexpr std::array<unsigned int, 2> nx = {10, 10};
-  const unsigned int n_moves = 3;
+  constexpr std::array<unsigned int, 3> nx = {10, 10, 3};
+  const unsigned int n_moves = 1;
   const double porosity = 0.9;
   const double jump_param = 1.;
   cellular_automaton<nx> domain(porosity, jump_param);
