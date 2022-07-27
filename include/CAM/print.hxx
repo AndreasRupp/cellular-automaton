@@ -4,6 +4,13 @@
 #include <iomanip>
 #include <iostream>
 
+/*!*************************************************************************************************
+ * \brief   Prints array of particles. Only used in print_n_dim().
+ *
+ * \param   particles      Particle index and size
+ * \param   nx             Nx dimension and size
+ * \param   init_index     Temporary index in current slice
+ **************************************************************************************************/
 template <std::size_t size_p, std::size_t dim>
 void print_1d(const std::array<unsigned int, size_p>& particles,
               const std::array<unsigned int, dim>& nx,
@@ -28,7 +35,14 @@ void print_1d(const std::array<unsigned int, size_p>& particles,
   }
   std::cout << std::endl;
 }
-
+/*!*************************************************************************************************
+ * \brief   Prints array of particles in n dimensions. Only used in print_array().
+ *
+ * \tparam  n_dim          Temporary dimension of current slice
+ * \param   particles      Particle index and size
+ * \param   nx             Nx dimension and size
+ * \param   init_index     Temporary index in current slice
+ **************************************************************************************************/
 template <unsigned int n_dim, std::size_t size_p, std::size_t dim>
 void print_n_dim(const std::array<unsigned int, size_p>& particles,
                  const std::array<unsigned int, dim>& nx,
@@ -44,10 +58,27 @@ void print_n_dim(const std::array<unsigned int, size_p>& particles,
     {
       unsigned int coord_i_helper = init_index;
       std::cout << std::endl;
-      for (unsigned int i = dim; i > 2; --i)
+      for (unsigned int i = 3; i < dim + 1; ++i)
       {
         coord_i_helper = coord_i_helper / nx[i - 2];
-        std::cout << i << "th coord: " << coord_i_helper % nx[i - 1] << "  ";
+        std::cout << i;
+        if (i % 10 == 1 && i != 11)
+        {
+          std::cout << "st";
+        }
+        else if (i % 10 == 2 && i != 12)
+        {
+          std::cout << "nd";
+        }
+        else if (i % 10 == 3 && i != 13)
+        {
+          std::cout << "rd";
+        }
+        else
+        {
+          std::cout << "th";
+        }
+        std::cout << " coord: " << coord_i_helper % nx[i - 1] << "  ";
       }
       std::cout << std::endl;
     }
@@ -58,7 +89,12 @@ void print_n_dim(const std::array<unsigned int, size_p>& particles,
     }
   }
 }
-
+/*!*************************************************************************************************
+ * \brief   Runs print_n_dim() function
+ *
+ * \param   particles      Particle index and size
+ * \param   nx             Nx dimension and size
+ **************************************************************************************************/
 template <std::size_t size_p, std::size_t dim>
 void print_array(const std::array<unsigned int, size_p>& particles,
                  const std::array<unsigned int, dim>& nx)
