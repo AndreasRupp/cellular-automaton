@@ -554,7 +554,7 @@ class cellular_automaton
    *
    * \retval  array     Array of measure parameters.
    ************************************************************************************************/
-  std::array<double, 6> eval_measures()
+  std::array<double, 10> eval_measures()
   {
     unsigned int n_single_cells =
       std::count_if(particles_.begin(), particles_.end(),
@@ -576,8 +576,31 @@ class cellular_automaton
 
     unsigned int n_connected_fluids = n_fluid_comp();
 
-    return {(double)n_single_cells, (double)n_particles, (double)n_solids,
-            (double)n_surfaces,     mean_particle_size,  (double)n_connected_fluids};
+    double compactness = std::pow(((double)n_surfaces / fields_.size()), (dim / (dim - 1)));
+
+    double variance_particle_sizes = 0;
+    for (unsigned int i = 0; i < particles_.size() - 1; ++i)
+    {
+      variance_particle_sizes += std::pow(particles_[i] - mean_particle_size, 2);
+    }
+    variance_particle_sizes /= particles_.size();
+
+    sphericity = (std::pow(M_PI, 1.0 / 3.0) *
+                  std::pow(6.0 * fields_.size(), (double)(dim - 1) / (double)dim)) /
+                 (double)n_surfaces;
+
+    unsigned int n_fluids_with_bdr = 0;  // TODO
+
+    return {(double)n_single_cells,
+            (double)n_particles,
+            (double)n_solids,
+            (double)n_surfaces,
+            mean_particle_size,
+            (double)n_connected_fluids,
+            compactness,
+            variance_particle_sizes,
+            sphericity,
+            (double)n_fluids_with_bdr};
   }
   /*!***********************************************************************************************
    * \brief   Computes connected fluid areas.
