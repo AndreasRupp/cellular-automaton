@@ -13,21 +13,48 @@
  *
  * CAM illustrates the behaviour of particles in domain.
  *
- * \tparam  nx       Number of rows of the matrix.
- * \tparam  ny       Number of columns of the matrix. Defaults to create square matrix.
+ * \tparam  nx       The size of a row for each dimension of the matrix.
  *
  * \authors   Andreas Rupp, Lappeenranta-Lahti University of Technology LUT, 2022.
  * \authors   Joona Lappalainen, Lappeenranta-Lahti University of Technology LUT, 2022.
  * \authors   Simon Zech, University of Erlangen–Nuremberg, 2022.
  **************************************************************************************************/
-template <unsigned int nx, unsigned int ny = nx>
+template <auto nx>
 class cellular_automaton
 {
  private:
+  static constexpr unsigned int dim = nx.size();
+  static constexpr unsigned int n_fields()
+  {
+    unsigned int n_field = 1;
+    for (unsigned int i = 0; i < dim; ++i)
+    {
+      n_field *= nx[i];
+    }
+    return n_field;
+  }
+
+ public:
+  static constexpr unsigned int n_fields_ = n_fields();
+
+ private:
+  static constexpr std::array<int, 2 * dim> find_neigh()
+  {
+    static_assert(dim != 0, "Dimension of zero does not make sense.");
+    std::array<int, 2 * dim> direct_neigh;
+    direct_neigh[0] = -1;
+    direct_neigh[1] = 1;
+    for (unsigned int i = 0; i < dim - 1; ++i)
+    {
+      direct_neigh[2 * i + 2] = direct_neigh[2 * i] * nx[i];
+      direct_neigh[2 * i + 3] = direct_neigh[2 * i + 1] * nx[i];
+    }
+    return direct_neigh;
+  }
   /*!***********************************************************************************************
    * \brief   Array containing tentative index shifts of direct neighbors.
    ************************************************************************************************/
-  static constexpr std::array<int, 4> direct_neigh_ = {-1 * (int)nx, 1, nx, -1};
+  static constexpr std::array<int, 2 * dim> direct_neigh_ = find_neigh();
   /*!***********************************************************************************************
    * \brief   Maximum unsigned integer.
    ************************************************************************************************/
@@ -46,9 +73,16 @@ class cellular_automaton
    ************************************************************************************************/
   static inline unsigned int aim(const unsigned int position, const int move)
   {
-    const unsigned int x_coord = (position % nx + (nx * ny + move) % nx) % nx;
-    const unsigned int y_coord = (position / nx + (move / (int)nx) + ny) % ny;
-    return y_coord * nx + x_coord;
+    unsigned int coord;
+    unsigned int new_pos = 0;
+    for (unsigned int i = 0; i < dim; ++i)
+    {
+      coord =
+        (position / direct_neigh_[2 * i + 1] + move / (int)direct_neigh_[2 * i + 1] + n_fields_) %
+        nx[i];
+      new_pos += coord * direct_neigh_[2 * i + 1];
+    }
+    return new_pos;
   }
 
   // -----------------------------------------------------------------------------------------------
@@ -76,19 +110,17 @@ class cellular_automaton
     /*!*********************************************************************************************
      * \brief   Domain of the particle.
      **********************************************************************************************/
-    cellular_automaton<nx, ny>& domain_;
+    cellular_automaton<nx>& domain_;
 
    public:
-    particle(const unsigned int location,
-             cellular_automaton<nx, ny>& domain,
-             const unsigned int number)
+    particle(const unsigned int location, cellular_automaton<nx>& domain, const unsigned int number)
     : number_(number), deprecated_(false), fields_(1, location), domain_(domain)
     {
       domain_.fields_[fields_[0]] = number_;
     }
 
     particle(const std::vector<unsigned int>& fields,
-             cellular_automaton<nx, ny>& domain,
+             cellular_automaton<nx>& domain,
              const unsigned int number)
     : number_(number), deprecated_(false), fields_(fields), domain_(domain)
     {
@@ -131,12 +163,12 @@ class cellular_automaton
     unsigned int n_surfaces() const
     {
       unsigned int n_surfaces = 0;
-      const std::array<unsigned int, nx* ny>& domain_fields = domain_.fields_;
+      const std::array<unsigned int, n_fields_>& domain_fields = domain_.fields_;
 
       std::for_each(fields_.begin(), fields_.end(),
                     [&](const unsigned int field)
                     {
-                      for (unsigned int i = 0; i < 4; ++i)
+                      for (unsigned int i = 0; i < 2 * dim; ++i)
                         if (domain_fields[aim(field, direct_neigh_[i])] == 0)
                           ++n_surfaces;
                     });
@@ -205,7 +237,8 @@ class cellular_automaton
      **********************************************************************************************/
     std::vector<int> stencil_moves_all() const
     {
-      unsigned int layers = std::max(1., domain_.jump_parameter_ / std::sqrt(fields_.size()));
+      unsigned int layers =
+        std::max(1., domain_.jump_parameter_ / std::pow(fields_.size(), 1.0 / (double)dim));
       std::vector<int> stencil(1, 0);
       unsigned int index = 0;
       unsigned int old_size = stencil.size();
@@ -213,7 +246,7 @@ class cellular_automaton
       for (unsigned int lay = 0; lay < layers; ++lay)
       {
         for (; index < old_size; ++index)
-          for (unsigned int i = 0; i < 4; ++i)
+          for (unsigned int i = 0; i < 2 * dim; ++i)
             if (std::find(stencil.begin(), stencil.end(), stencil[index] + direct_neigh_[i]) ==
                 stencil.end())
               stencil.push_back(stencil[index] + direct_neigh_[i]);
@@ -238,7 +271,7 @@ class cellular_automaton
       for (unsigned int lay = 0; lay < layers; ++lay)
       {
         for (; index < old_size; ++index)
-          for (unsigned int i = 0; i < 4; ++i)
+          for (unsigned int i = 0; i < 2 * dim; ++i)
             if (std::find(stencil.begin(), stencil.end(), stencil[index] + direct_neigh_[i]) ==
                 stencil.end())
               stencil.push_back(stencil[index] + direct_neigh_[i]);
@@ -255,13 +288,13 @@ class cellular_automaton
     double check_move_all(const int move) const
     {
       double attraction = 0.;
-      const std::array<unsigned int, nx* ny>& domain_fields = domain_.fields_;
+      const std::array<unsigned int, n_fields_>& domain_fields = domain_.fields_;
       for (unsigned int i = 0; i < fields_.size(); ++i)
       {
         unsigned int aiming = aim(fields_[i], move);
         if (domain_fields[aiming] != number_ && domain_fields[aiming] != 0)
           return double_min;
-        for (unsigned int i = 0; i < 4; ++i)
+        for (unsigned int i = 0; i < 2 * dim; ++i)
           attraction += domain_fields[aim(aiming, direct_neigh_[i])] != number_ &&
                         domain_fields[aim(aiming, direct_neigh_[i])] != 0;
       }
@@ -277,12 +310,12 @@ class cellular_automaton
     inline double check_move_single(const unsigned int field, const int move)
     {
       double attraction = 0.;
-      std::array<unsigned int, nx* ny>& domain_fields = domain_.fields_;
+      std::array<unsigned int, n_fields_>& domain_fields = domain_.fields_;
       unsigned int aiming = aim(field, move);
       if (domain_fields[aiming] != 0 && move != 0)
         return double_min;
       domain_fields[field] = 0;
-      for (unsigned int i = 0; i < 4; ++i)
+      for (unsigned int i = 0; i < 2 * dim; ++i)
         attraction += domain_fields[aim(aiming, direct_neigh_[i])] != 0;
       domain_fields[field] = number_;
       return attraction;
@@ -294,7 +327,7 @@ class cellular_automaton
      **********************************************************************************************/
     void do_move_all(const int move)
     {
-      std::array<unsigned int, nx* ny>& domain_fields = domain_.fields_;
+      std::array<unsigned int, n_fields_>& domain_fields = domain_.fields_;
 
       std::for_each(fields_.begin(), fields_.end(),
                     [&](unsigned int& field)
@@ -312,7 +345,7 @@ class cellular_automaton
      **********************************************************************************************/
     inline void do_move_single(unsigned int& field, const int move)
     {
-      std::array<unsigned int, nx* ny>& domain_fields = domain_.fields_;
+      std::array<unsigned int, n_fields_>& domain_fields = domain_.fields_;
 
       domain_fields[field] -= number_;
       field = aim(field, move);
@@ -323,7 +356,7 @@ class cellular_automaton
      **********************************************************************************************/
     void update_particle()
     {
-      std::array<unsigned int, nx* ny>& domain_fields = domain_.fields_;
+      std::array<unsigned int, n_fields_>& domain_fields = domain_.fields_;
       auto first_with_number = std::find_if(fields_.begin(), fields_.end(),
                                             [&](const unsigned int field) -> bool
                                             { return domain_fields[field] == number_; });
@@ -341,7 +374,7 @@ class cellular_automaton
       for (unsigned int k = 0; k < fields_size; ++k, fields_size = new_fields.size())
       {
         field = new_fields[k];
-        for (unsigned int i = 0; i < 4; ++i)
+        for (unsigned int i = 0; i < 2 * dim; ++i)
         {
           neigh_field = aim(field, direct_neigh_[i]);
           // If neigh_field is part of the same particle and it's already in new_fields.
@@ -374,7 +407,7 @@ class cellular_automaton
       for (unsigned int k = 0; k < fields_size; ++k, fields_size = fields_.size())
       {
         field = fields_[k];
-        for (unsigned int i = 0; i < 4; ++i)
+        for (unsigned int i = 0; i < 2 * dim; ++i)
         {
           neigh_field = aim(field, direct_neigh_[i]);
           neigh_num = domain_fields[neigh_field];
@@ -395,7 +428,7 @@ class cellular_automaton
      **********************************************************************************************/
     bool operator==(const unsigned int number) const { return number_ == number; }
     /*!*********************************************************************************************
-     * \brief   Find out whether number_ is the same the same than other-number_.
+     * \brief   Find out whether number_ is the same the same than other.number_.
      *
      * \param   other      Number to compare.
      * \retval  isEqual    True of false.
@@ -423,7 +456,7 @@ class cellular_automaton
   /*!***********************************************************************************************
    * \brief   Array of particle locations.
    ************************************************************************************************/
-  std::array<unsigned int, nx * ny> fields_;
+  std::array<unsigned int, n_fields_> fields_;
   /*!***********************************************************************************************
    * \brief   Vector of particles.
    ************************************************************************************************/
@@ -439,7 +472,7 @@ class cellular_automaton
    *
    * \retval  fields_         Location of the particle.
    ************************************************************************************************/
-  const std::array<unsigned int, nx * ny>& fields() const { return fields_; }
+  const std::array<unsigned int, n_fields_>& fields() const { return fields_; }
   /*!***********************************************************************************************
    * \brief   Cellular automaton.
    *
@@ -460,13 +493,13 @@ class cellular_automaton
       rand_seed = random_seed;
     std::srand(rand_seed);
 
-    n_particles = (1. - porosity) * nx * ny;
+    n_particles = (1. - porosity) * n_fields_;
     fields_.fill(0);
-    unsigned int position = std::rand() % (nx * ny);
+    unsigned int position = std::rand() % (n_fields_);
     for (unsigned int i = 0; i < n_particles; ++i)
     {
       while (fields_[position] != 0)
-        position = std::rand() % (nx * ny);
+        position = std::rand() % (n_fields_);
 
       particles_.push_back(particle(position, *this, i + 1));
     }
@@ -476,7 +509,7 @@ class cellular_automaton
    *
    * \retval  fields_     Domain
    ************************************************************************************************/
-  const std::array<unsigned int, nx * ny>& move_particles()
+  const std::array<unsigned int, n_fields_>& move_particles()
   {
     std::shuffle(particles_.begin(), particles_.end(), std::default_random_engine(std::rand()));
     std::for_each(particles_.begin(), particles_.end(), [&](particle& part) { part.move_all(); });
@@ -511,13 +544,13 @@ class cellular_automaton
    * \brief   Evaluates measure parameters.
    *
    * Measure parameters:
-   * n_single_cells        (number of single solid pixels without solid neighbours)
-   * n_particles           (number of solid particles, including single solid pixels
-   *                        and agglomorates of solid pixels)
-   * n_solids              (total number of solid pixels)
-   * n_surfaces            (total solid surface)
-   * mean_particle_size    (mean particle size)
-   * n_connected_fluids    (number of connected fluid)
+   * n_single_cells        number of single solid pixels without solid neighbours
+   * n_particles           number of solid particles, including single solid pixels
+   *                       and agglomorates of solid pixels
+   * n_solids              total number of solid pixels
+   * n_surfaces            total solid surface
+   * mean_particle_size    mean particle size
+   * n_connected_fluids    number of connected fluid
    *
    * \retval  array     Array of measure parameters.
    ************************************************************************************************/
@@ -566,7 +599,7 @@ class cellular_automaton
       for (unsigned int k = 0; k < fluids_size; ++k, fluids_size = found_fluids.size())
       {
         field = found_fluids[k];
-        for (unsigned int i = 0; i < 4; ++i)
+        for (unsigned int i = 0; i < 2 * dim; ++i)
         {
           neigh_field = aim(field, direct_neigh_[i]);
           if (fields_[neigh_field] == 0)

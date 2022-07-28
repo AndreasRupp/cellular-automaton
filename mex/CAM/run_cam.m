@@ -1,157 +1,43 @@
-%  ========================================================================
-%> @file  run_cam.m
-%>
-%> @brief This function compiles the C++ implementation of the cellular
-%>        automaton, if necessary. It then executes the cellular automaton
-%>        for the given input parameters. If opted for, it returns the
-%>        resulting data of the domain and calculated geometric measures.
-%  ========================================================================
-%>
-%> @brief This function compiles the C++ implementation of the cellular
-%>        automaton, if necessary. It then executes the cellular automaton
-%>        for the given input parameters. If opted for, it returns the
-%>        resulting data of the domain and calculated geometric measures.
-%> 
-%> This function first checks if the C++ implementation of the cellular
-%> automaton has already been compiled for the given domain size. If not,
-%> the C++ Code is compiled. The number of ouputs is then calculated and
-%> the result matrices are created. Then the C++ function for executing the
-%> cellular automaton is called. The resulting data of the domain and
-%> calculated geometric measures are returned, if opted for. 
-%>
-%> @param nx              The number of rows of the domain.
-%> @param ny              The number of columns of the domain.
-%> @param num_steps       The number of iterations of the CAM.
-%> @param porosity        The porosity, i.e. the percentage of void
-%>                        space, not occupied by solid.
-%> @param jump_parameter  The jump parameter, telling how far individual
-%>                        particles are allowed to jump. It is also
-%>                        included as a factor in the calculation, how far 
-%>                        larger particles are allowed to jump.
-%>
-%> @param options                    Optional parameters, that are set to 
-%>                                   default values if not specified.
-%> @param options.output_rate        An integer indicating after how many 
-%>                                   steps an output shall be returned.
-%>                                   Default value of 1.
-%> @param options.print_results      An integer indicating if the domain
-%>                                   results shall be returned or not. 
-%>                                   Default value of 1 (true).
-%> @param options.print_measures     An integer indicating if the
-%>                                   calculated measures shall be returned 
-%>                                   or not. Default value of 1 (true).
-%> @param options.print_random_seed  An integer indicating if the
-%>                                   number of the random seed shall be 
-%>                                   printed or not. Default value of 0 
-%>                                   (false).
-%> @param options.random_seed        An integer that allows to choose 
-%>                                   between a random seed, depending on 
-%>                                   the clock time (if set to 0), or a 
-%>                                   given seed. Default value of 0.
-%>
-%> @retval domain_data  A matrix with nx*ny rows and a column for
-%>                      every step with output. The entries of domain_data 
-%>                      are either 0, corresponding to void cells, i.e. 
-%>                      non-solid cells, or positive integers corresponding 
-%>                      to solid cells.
-%>
-%> @retval measures     A matrix with 6 rows and a column for every step 
-%>                      with output. Every row corresponds to a certain 
-%>                      geometric measure of the domain_data at the given 
-%>                      step: 
-%>                      - row 1: Number of single solid pixels without 
-%>                               solid neighbours.
-%>                      - row 2: Number of solid particles, including 
-%>                               single solid pixels and agglomorates of 
-%>                               solid pixels.
-%>                      - row 3: Total number of solid pixels. This is 
-%>                               constant over the run of one simulation.
-%>                      - row 4: Total solid surface, i.e. the sum over all
-%>                               solid pixels of neighboring void pixels.
-%>                      - row 5: Mean particle size, i.e. the total number 
-%>                               of solid pixels divided by the number of
-%>                               solid particles.
-%>                      - row 6: Number of connected fluid, i.e. void, 
-%>                               components.
-%>
-%>
-%> This file is part of the GitHub repository
-%>   https://github.com/AndreasRupp/cellular-automaton
-%> Copyright and license conditions can be found there.
-
-function [ domain_data, measures ] = run_cam( ...
-    nx, ny, num_steps, porosity, jump_parameter, options )
+function [ domain_data, measures ] = run_cam(...
+    nx, num_steps, porosity, jump_parameter, options )
 
 arguments
-    nx int32
-    ny int32
+    nx (1,:) int32
     num_steps int32
     porosity double
     jump_parameter double
     options.output_rate int32 = 1
     options.print_results int8  = 1
     options.print_measures int8 = 1
-    options.print_random_seed int8 = 0
+    options.print_random_seed int8 = 1
     options.random_seed int64 = 0
 end
 
 current_folder = pwd;
-
 [path,~,~] = fileparts(mfilename('fullpath'));
-path = strcat(path, '/../..');
-cd(path)
+cd(strcat(path, '/../..'))
 
-%  Create the build directory, if it does not exist yet.
 if not(isfolder('build'))
-    mkdir('build')
-end  % not is folder
-cd build
+    status = system('cmake -version');
+    if status ~= 0
+        cd (current_folder)
+        error(strcat('Your MATLAB version does not support CMAKE. ', ...
+            ' Please run ./setup.sh manually.'));
+    end
+    system(strcat('cmake -E make_directory build && cd build && ', ...
+        'CXX=g++-10 cmake .. && cd ..'), '-echo');
+end
 
-%  Check if the C++ Code for the given parameters nx and ny has already 
-%  been compiled. If not, the C++ Code is compiled.
-file_name = strcat('m_run_cam_', string(nx), '_', string(ny));
-if ~isfile(strcat(file_name, '.mexa64'))
-    fid  = fopen('../mex/CAM/run_cam.cxx.in','r');
-    text = fread(fid,'*char')';
-    fclose(fid);
+cd('build')
 
-    text = strrep(text, 'NX_MATLAB_VAL', string(nx));
-    text = strrep(text, 'NY_MATLAB_VAL', string(ny));
-    
-    fid  = fopen(strcat(file_name, '.cxx'),'w');
-    fprintf(fid,'%s',text);
-    fclose(fid);
-    
-    mex(strcat(file_name, '.cxx'), '-I../include', ...
-        'COMPFLAGS=$COMPFLAGS -O3')
-end  % not exists file
+[ domain_data, measures ] = compile_and_run( ...
+    nx, num_steps, porosity, jump_parameter, ...
+    output_rate       = options.output_rate, ...
+    print_results     = options.print_results, ...
+    print_measures    = options.print_measures, ...
+    print_random_seed = options.print_random_seed, ...
+    random_seed       = options.random_seed);
 
-%  Calculate the number of outputs for the given number of steps of the
-%  cellular automaton and output_rate.  
-n_outputs = 0;
-if options.output_rate ~= 0
-    n_outputs = 1 + floor(double(num_steps) / double(options.output_rate));
-end  % if output rate not 0
+cd(current_folder);
 
-%  Create the output matrices.
-if options.print_results
-    results_matrix = zeros(nx * ny, n_outputs);
-else
-    results_matrix = [];
-end  % if print_results
-
-if options.print_measures
-    measures_matrix = zeros(6, n_outputs);
-else
-    measures_matrix = [];
-end  % if print measures
-
-%  Call the C++ function for the cellular automaton.
-command = strcat(file_name, '(num_steps, porosity, jump_parameter, ', ...
-    'options.output_rate, results_matrix, measures_matrix, ', ...
-    'options.print_random_seed, options.random_seed)');
-[domain_data, measures] = eval(command);
-
-cd(current_folder)
-
-end  % function run_cam
+end

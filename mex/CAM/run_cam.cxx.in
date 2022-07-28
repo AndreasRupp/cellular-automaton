@@ -8,26 +8,18 @@
 /*!*************************************************************************************************
  * \brief   Domain size values.
  *
- * \tparam  nx       Number of rows of the matrix.
- * \tparam  ny       Number of columns of the matrix. Defaults to create square matrix.
+ * \tparam  nx       the size of a row for each dimension of the domain
  **************************************************************************************************/
-static constexpr unsigned int nx = NX_MATLAB_VAL;
-static constexpr unsigned int ny = NY_MATLAB_VAL;
+static constexpr std::array<unsigned int, NX_MATLAB_SIZE> nx = {NX_MATLAB_VAL};
 /*!*************************************************************************************************
  * \brief   Array containing tentative index shifts of direct neighbors.
  **************************************************************************************************/
-template <unsigned int nx, unsigned int ny>
-constexpr std::array<int, 4> cellular_automaton<nx, ny>::direct_neigh_;
 /*!*************************************************************************************************
  * \brief   Maximum unsigned integer.
  **************************************************************************************************/
-template <unsigned int nx, unsigned int ny>
-constexpr unsigned int cellular_automaton<nx, ny>::uint_max;
 /*!*************************************************************************************************
  * \brief   Smallest (negative) double.
  **************************************************************************************************/
-template <unsigned int nx, unsigned int ny>
-constexpr double cellular_automaton<nx, ny>::double_min;
 /*!*************************************************************************************************
  * \brief   Mex function for MATLAB.
  **************************************************************************************************/
@@ -52,8 +44,8 @@ class MexFunction : public matlab::mex::Function
     matlab::data::TypedArray<double> measures = std::move(inputs[5]);
     const bool print_random_seed = inputs[6][0];
 
-    cellular_automaton<nx, ny> domain(porosity, jump_param,
-                                      inputs.size() == 8 ? (unsigned int)inputs[7][0] : 0U);
+    cellular_automaton<nx> domain(porosity, jump_param,
+                                  inputs.size() == 8 ? (unsigned int)inputs[7][0] : 0U);
 
     if (print_random_seed)
       std::cout << "The random seed is " << domain.random_seed() << "." << std::endl;
@@ -62,8 +54,9 @@ class MexFunction : public matlab::mex::Function
     {
       if (results.getNumberOfElements() != 0)
       {
-        const std::array<unsigned int, nx* ny>& domain_fields = domain.fields();
-        for (unsigned int k = 0; k < nx * ny; ++k)
+        const std::array<unsigned int, cellular_automaton<nx>::n_fields_>& domain_fields =
+          domain.fields();
+        for (unsigned int k = 0; k < cellular_automaton<nx>::n_fields_; ++k)
           results[k][0] = domain_fields[k];
       }
       if (measures.getNumberOfElements() != 0)
@@ -82,8 +75,9 @@ class MexFunction : public matlab::mex::Function
       {
         if (results.getNumberOfElements() != 0)
         {
-          const std::array<unsigned int, nx* ny>& domain_fields = domain.fields();
-          for (unsigned int k = 0; k < nx * ny; ++k)
+          const std::array<unsigned int, cellular_automaton<nx>::n_fields_>& domain_fields =
+            domain.fields();
+          for (unsigned int k = 0; k < cellular_automaton<nx>::n_fields_; ++k)
             results[k][(1 + i) / output_rate] = domain_fields[k];
         }
         if (measures.getNumberOfElements() != 0)
@@ -175,7 +169,7 @@ class MexFunction : public matlab::mex::Function
 
     if (inputs[4].getDimensions().size() != 2)
     {
-      if (inputs[4].getDimensions()[0] != nx * ny &&
+      if (inputs[4].getDimensions()[0] != cellular_automaton<nx>::n_fields_ &&
           inputs[4].getDimensions()[1] != (int)inputs[0][0] + 1)
       {
         matlabPtr->feval(
@@ -188,7 +182,7 @@ class MexFunction : public matlab::mex::Function
 
     if (inputs[5].getDimensions().size() != 2)
     {
-      if (inputs[5].getDimensions()[0] != nx * ny &&
+      if (inputs[5].getDimensions()[0] != 6 &&
           inputs[5].getDimensions()[1] != (int)inputs[0][0] + 1)
       {
         matlabPtr->feval(u"error", 0,

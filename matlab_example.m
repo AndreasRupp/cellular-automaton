@@ -21,18 +21,18 @@
 %  This allows to run all MATLAB functions of CAM. These MATLAB functions
 %  take care of compiling and running respective C++ functions, in which
 %  the actual work is done.
-addpath('mex/CAM')
+addpath('mex/CAM');
+addpath('matlab_functions');
 
 %% Define the arguments of the run_cam function.
 %  This example illustrates how to run the run_cam function, see the file
 %  mex/CAM/run_cam.m. It runs a cellular automaton method on a grid of size
-%  'nx * ny' for 'num_steps' steps. Moreover, we set the porosity (i.e.the
-%  percentage of void space---not occupied by solid) and the jump parameter
-%  (telling how far individual cells are allowd to jump) as mandatory
-%  parameters.
-nx             = 100;
-ny             = 100;
-num_steps      = 50;
+%  'nx(1) * nx(2) * ... * nx(n)' for 'num_steps' steps. Moreover, we set
+%  the porosity (i.e.the percentage of void space---not occupied by solid)
+%  and the jump parameter (telling how far individual cells are allowd to
+%  jump) as mandatory parameters.
+nx             = [10 10 10];
+num_steps      = 10;
 porosity       = 0.9;
 jump_parameter = 1;
 
@@ -51,12 +51,13 @@ num_random_seed    = 0;
 
 %% Call the run_cam function and save the output data.
 %  This calls the run_cam function with the chosen parameters. The output
-%  consists of the matrix domain_data with nx*ny rows and a column for
-%  every step with output. The entries of domain_data are either 0,
-%  corresponding to void cells, i.e. non-solid cells, or positive integers
-%  corresponding to solid cells. The matrix measures contains 6 rows and a
-%  column for every step with output. Every row corresponds to a certain
-%  geometric measure of the domain_data at the given step: 
+%  consists of the matrix domain_data with nx(1)*nx(2)*...*nx(n) rows and
+%  a column for every step with output. The entries of domain_data are
+%  either 0, corresponding to void cells, i.e. non-solid cells, or
+%  positive integers corresponding to solid cells. The matrix measures
+%  contains 6 rows and a column for every step with output. Every row
+%  corresponds to a certain geometric measure of the domain_data at the
+%  given step: 
 %  - row 1: Number of single solid pixels without solid neighbours.
 %  - row 2: Number of solid particles, including single solid pixels and
 %  agglomorates of solid pixels.
@@ -67,45 +68,10 @@ num_random_seed    = 0;
 %  - row 5: Mean particle size, i.e. the total number of solid pixels
 %  divided by the number of solid particles.
 %  - row 6: Number of connected fluid, i.e. void, components.
-[domain_data, measures] = run_cam(nx, ny, num_steps,porosity,...
+[domain_data, measures] = run_cam(nx, num_steps,porosity,...
     jump_parameter,output_rate=frame_rate, print_results=output_results,...
     print_measures=output_measures,print_random_seed=output_random_seed,...
     random_seed=num_random_seed);
 
-%  This creates an output directory, if it does not exist yet. In the
-%  output directory, the images of the domain are stored.
-if not(isfolder('output'))
-    mkdir('output')
-end  
-
-%  For every step with output data, we create an image file visualizing the
-%  domain with solid pixels in black and void pixels in white. The
-%  images are saved as output/fig.i.png. 
-for i = 1 : num_steps + 1
-    if (frame_rate ~= 0 && mod(i , frame_rate) == 0) 
-        %  The domain vector at the given step is reshaped to a matrix of
-        %  size [nx ny].
-        domain_geo = reshape(domain_data(:,floor(i / frame_rate)),[nx ny]);
-        visualize_binary_matrix(domain_geo, strcat(strcat('output/fig.',...
-            num2str(floor(i / frame_rate) -1)),'.png')) 
-    end
-end
-
-%% This routine visualizes the given matrix by a black and white image.
-%
-%> @brief Visualize output of cellular_automaton, in .png files.
-%> 
-%> @param geo       A matrix with entries of 0 (void pixels) and
-%>                  non-zero integers, corresponding to solid pixels.
-%> @param fig_path  The name of the file where the image is written to.
-%>
-%>  The function resizes the matrix geo, s.t. the created image is at least
-%>  of size 500 pixels per direction. In the created image, black pixels 
-%>  correspond to the non-zero entries of geo, while white pixels
-%>  correspond to the zero entries of geo.
-function visualize_binary_matrix(geo, fig_path) 
-    resize_factor = max(1, min(floor(1000/size(geo,1)), ...
-        floor(1000/size(geo,2))));
-    geo = repelem(geo, resize_factor, resize_factor);
-    imwrite(~geo, fig_path);
-end
+%% Call the print function to illustrate CAM.
+print(nx, domain_data, frame_rate, num_steps)

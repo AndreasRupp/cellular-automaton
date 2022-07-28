@@ -19,6 +19,9 @@ There is two ways of using CAM:
 
 - In `MATLAB`, one has to add the path of the `mex/CAM/` directory using MATLAB's `addpath`
   function. Then, one can run the CAM using `run_cam.m` as illustrated in `matlab_example.m`.
+  Notably, for the MATLAB code to work smoothly in Ubuntu, you need to have `g++-10` installed,
+  since it is currently the only compiler supporting both C++20 and MATLAB's supported libstdc++.
+  In any case, you will also need `cmake`.
 - In `C++`, one has to include the file `include/CAM/cellular_automaton.hxx`. Then, you can run the
   CAM as shown in `cpp_example.cxx` provided that you compile it using `-std=gnu++20`. A possible
   compilation command for the `cpp_example.cxx` is `clang++-12 -std=gnu++20 -Wall -Wextra -pedantic 
