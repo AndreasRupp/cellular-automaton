@@ -238,7 +238,7 @@ class cellular_automaton
     std::vector<int> stencil_moves_all() const
     {
       unsigned int layers =
-        std::max(1., domain_.jump_parameter_ / std::pow(fields_.size(), 1.0 / dim));
+        std::max(1., domain_.jump_parameter_ / std::pow(fields_.size(), 1.0 / (double)dim));
       std::vector<int> stencil(1, 0);
       unsigned int index = 0;
       unsigned int old_size = stencil.size();

@@ -15,7 +15,7 @@
 int main()
 {
   constexpr std::array<unsigned int, 3> nx = {2, 3, 4};
-  const unsigned int n_moves = 1;
+  const unsigned int n_moves = 5;
   const double porosity = 0.9;
   const double jump_param = 1.;
   cellular_automaton<nx> domain(porosity, jump_param);
