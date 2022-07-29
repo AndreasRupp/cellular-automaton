@@ -576,16 +576,17 @@ class cellular_automaton
 
     unsigned int n_connected_fluids = n_fluid_comp();
 
-    double compactness = std::pow(((double)n_surfaces / fields_.size()), (dim / (dim - 1)));
+    double compactness =
+      std::pow(((double)n_surfaces / (double)fields_.size()), ((double)dim / (double)(dim - 1)));
 
     double variance_particle_sizes = 0;
     for (unsigned int i = 0; i < particles_.size() - 1; ++i)
     {
       variance_particle_sizes += std::pow(particles_[i] - mean_particle_size, 2);
     }
-    variance_particle_sizes /= particles_.size();
+    variance_particle_sizes /= (double)particles_.size();
 
-    sphericity = (std::pow(M_PI, 1.0 / 3.0) *
+    double sphericity = (std::pow(M_PI, 1.0 / 3.0) *
                   std::pow(6.0 * fields_.size(), (double)(dim - 1) / (double)dim)) /
                  (double)n_surfaces;
 
