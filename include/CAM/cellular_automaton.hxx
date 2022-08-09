@@ -113,6 +113,74 @@ class cellular_automaton
      **********************************************************************************************/
     cellular_automaton<nx>& domain_;
 
+    unsigned int max_min_distance(unsigned int field)
+    {
+      unsigned int max_distance = 0;
+      std::array<unsigned int, n_fields_>& domain_fields = domain_.fields_;
+      std::vector<unsigned int> visits(1, field);
+      domain_fields[field] = uint_max;
+
+      unsigned int neigh_field, visits_size = visits.size();
+      for (unsigned int i = 0; i < visits_size; ++i, visits_size = visits.size())
+      {
+        field = visits[i];
+        for (unsigned int j = 0; j < 2 * dim; ++j)
+        {
+          neigh_field = aim(field, direct_neigh_[j]);
+          if (domain_fields[neigh_field] == number_)
+          {
+            visits.push_back(neigh_field);
+            domain_fields[neigh_field] = domain_fields[field] - 1;
+          }
+        }
+      }
+      max_distance = uint_max - domain_fields[field];
+      std::for_each(fields_.begin(), fields_.end(),
+                    [&](const unsigned int field_loc) { domain_fields[field_loc] = number_; });
+      return max_distance;
+    }
+
+    unsigned int directed_max_min_distance(unsigned int dir_dim)
+    {
+      unsigned int max_distance = 0, field = fields_[0];
+      std::array<unsigned int, n_fields_>& domain_fields = domain_.fields_;
+      std::vector<unsigned int> visits(1, field);
+      domain_fields[field] = uint_max - n_fields_;
+      unsigned int min_val = domain_fields[field], max_val = domain_fields[field];
+
+      unsigned int neigh_field, visits_size = visits.size();
+      for (unsigned int i = 0; i < visits_size; ++i, visits_size = visits.size())
+      {
+        field = visits[i];
+        for (unsigned int j = 0; j < 2 * dim; ++j)
+        {
+          neigh_field = aim(field, direct_neigh_[j]);
+          if (domain_fields[neigh_field] == number_)
+          {
+            visits.push_back(neigh_field);
+            if (j / 2 == dir_dim && j % 2 == 0)
+            {
+              domain_fields[neigh_field] = domain_fields[field] - 1;
+              if (domain_fields[neigh_field] < min_val)
+                min_val = domain_fields[neigh_field];
+            }
+            else if (j / 2 == dir_dim)  // && j % 2 == 1
+            {
+              domain_fields[neigh_field] = domain_fields[field] + 1;
+              if (domain_fields[neigh_field] > max_val)
+                max_val = domain_fields[neigh_field];
+            }
+            else  // j / 2 != dir_dim
+              domain_fields[neigh_field] = domain_fields[field];
+          }
+        }
+      }
+      max_distance = max_val - min_val;
+      std::for_each(fields_.begin(), fields_.end(),
+                    [&](const unsigned int field_loc) { domain_fields[field_loc] = number_; });
+      return max_distance;
+    }
+
    public:
     particle(const unsigned int location, cellular_automaton<nx>& domain, const unsigned int number)
     : number_(number), deprecated_(false), fields_(1, location), domain_(domain)
@@ -176,73 +244,58 @@ class cellular_automaton
       return n_surfaces;
     }
 
-    unsigned int max_min_distance(unsigned int field)
-    {
-      unsigned int max_distance = 0;
-      std::array<unsigned int, n_fields_>& domain_fields = domain_.fields_;
-      std::vector<unsigned int> visits(field);
-      domain_fields[field] = uint_max;
-
-      unsigned int neigh_field, visits_size = visits.size();
-      for (unsigned int i = 0; i < visits_size; ++i, visits_size = visits.size())
-      {
-        field = visits[i];
-        for (unsigned int i = 0; i < 2 * dim; ++i)
-        {
-          neigh_field = aim(field, direct_neigh_[i]);
-          if (domain_fields[neigh_field] == number_)
-          {
-            visits.push_back(neigh_field);
-            domain_fields[neigh_field] = domain_fields[field] - 1;
-          }
-        }
-      }
-
-      max_distance = uint_max - domain_fields[field];
-      std::for_each(fields_.begin(), fields_.end(),
-                    [&](const unsigned int field) { domain_fields[field] = number_; });
-      return max_distance;
-    }
-
     unsigned int max_min_distance()
     {
       std::array<unsigned int, n_fields_>& domain_fields = domain_.fields_;
-      std::vector<unsigned int> starts_old;
-      std::vector<unsigned int> starts(fields_[0]);
+      std::vector<unsigned int> starts(1, fields_[0]);
+      std::vector<bool> bigger(1, true);
+      unsigned int start_index = 0, end_index = 1, neigh_field;
       unsigned int max_distance = max_min_distance(starts[0]);
       bool found_larger = true;
 
       while (found_larger)
       {
         found_larger = false;
-        starts_old = starts;
-        starts.clear();
-        for_each(starts_old.begin(), starts_old.end(),
-                 [&](const unsigned int field)
-                 {
-                   for (unsigned int i = 0; i < 2 * dim; ++i)
-                     if (domain_fields[aim(field, direct_neigh_[i])] == number_)
-                       starts.push_back(aim(field, direct_neigh_[i]));
-                 });
-        starts.erase(std::unique(starts.begin(), starts.end()), starts.end());
 
-        for_each(starts.begin(), starts.end(),
-                 [&](unsigned int& start)
-                 {
-                   if (max_min_distance(start) > max_distance)
-                     found_larger = true;
-                   else
-                     start = uint_max;
-                 });
+        for (unsigned int i = start_index; i < end_index; ++i)
+        {
+          if (!bigger[i - start_index])
+            continue;
+          for (unsigned int j = 0; j < 2 * dim; ++j)
+          {
+            neigh_field = aim(starts[i], direct_neigh_[j]);
+            if (domain_fields[neigh_field] == number_ &&
+                std::find(starts.begin(), starts.end(), neigh_field) == starts.end())
+              starts.push_back(neigh_field);
+          }
+        }
+        start_index = end_index;
+        end_index = starts.size();
+        bigger = std::vector<bool>(end_index - start_index, true);
+
+        for (unsigned int i = start_index; i < end_index; ++i)
+          if (max_min_distance(starts[i]) > max_distance)
+            found_larger = true;
+          else
+            bigger[i - start_index] = false;
+
         if (found_larger)
-          ++ max_distance;
-        starts.erase(std::remove_if(
-          starts.begin(), starts.end(),
-          [&](const unsigned int field) -> bool { return field == uint_max; }), starts.end());
+          ++max_distance;
       }
 
       return max_distance;
     }
+
+    double max_dimension_ratio()
+    {
+      std::array<unsigned int, dim> width_dim;
+      for (unsigned int i = 0; i < dim; ++i)
+        width_dim[i] = directed_max_min_distance(i);
+      unsigned int max_diameter = *std::max_element(width_dim.begin(), width_dim.end());
+      unsigned int min_diameter = *std::min_element(width_dim.begin(), width_dim.end());
+      return (double)max_diameter / (double)min_diameter;
+    }
+
     /*!*********************************************************************************************
      * \brief   Moves merged particles.
      **********************************************************************************************/
@@ -640,6 +693,8 @@ class cellular_automaton
 
     double mean_sphericity = 0;
     double local_sphericity = 0;
+    double max_diameters_ratio = 0;
+    double local_diameters_ratio = 0;
 
     std::for_each(particles_.begin(), particles_.end(),
                   [&](particle& part)
@@ -656,7 +711,10 @@ class cellular_automaton
                     mean_sphericity += local_sphericity;
 
                     local_max_min_distance = part.max_min_distance();
-                    max_max_min_distance = local_max_min_distance;
+                    max_max_min_distance = std::max(max_max_min_distance, local_max_min_distance);
+
+                    local_diameters_ratio = part.max_dimension_ratio();
+                    max_diameters_ratio = std::max(max_diameters_ratio, local_diameters_ratio);
                   });
     mean_sphericity /= particles_.size();
 
@@ -672,33 +730,22 @@ class cellular_automaton
     }
     variance_particle_sizes /= (double)particles_.size();
 
-    double diameters_ratio = 0;  // TODO
-    /*
-    for (unsigned int = 0; i < particles_.size(); ++i)
-    {
-      for (unsigned int j = 0; j < dim; ++j)
-        {
-          diameters_ratio = nx/ny
-        }
-    }
-    diameters_ratio /= particles_.size();
-    */
-    unsigned int n_connected_fluids = n_fluid_comp()[0];
-
-    unsigned int n_fluids_with_bdr = n_fluid_comp()[1];
+    std::array<unsigned int, 2> n_fluid_components = n_fluid_comp();
+    unsigned int n_connected_fluids = n_fluid_components[0];
+    unsigned int n_periodic_fluid_components = n_fluid_components[1];
 
     return {(double)n_single_cells,
             (double)n_particles,
             (double)n_solids,
             (double)n_surfaces,
             (double)n_connected_fluids,
-            (double)n_fluids_with_bdr,
+            (double)n_periodic_fluid_components,
             mean_particle_size,
             variance_particle_sizes,
             compactness,
             (double)max_max_min_distance,
             mean_sphericity,
-            diameters_ratio};
+            max_diameters_ratio};
   }
   /*!***********************************************************************************************
    * \brief   Computes connected fluid areas.
@@ -708,13 +755,19 @@ class cellular_automaton
   std::array<unsigned int, 2> n_fluid_comp()
   {
     unsigned int n_connected_fluids = 0;
-    unsigned int n_fluids_with_bdr = 0;
+    unsigned int n_periodic_fluids = 0;
     unsigned int fluids_size, field, neigh_field;
     std::vector<unsigned int> found_fluids;
+
+    bool periodic;
+    std::vector<std::array<int, dim> > ref_dist(n_fields_);
+    std::for_each(ref_dist.begin(), ref_dist.end(),
+                  [](std::array<int, dim> dist) { dist.fill(0); });
 
     for (auto first_fluid = std::find(fields_.begin(), fields_.end(), 0);
          first_fluid != fields_.end(); first_fluid = std::find(first_fluid, fields_.end(), 0))
     {
+      periodic = false;
       found_fluids = std::vector<unsigned int>(1, std::distance(fields_.begin(), first_fluid));
       fields_[found_fluids[0]] = uint_max;
       fluids_size = 1;
@@ -728,10 +781,17 @@ class cellular_automaton
           {
             fields_[neigh_field] = uint_max;
             found_fluids.push_back(neigh_field);
+            ref_dist[neigh_field] = ref_dist[field];
+            ref_dist[neigh_field][i / 2] += 2 * (i % 2) - 1;
           }
+          else if (fields_[neigh_field] == uint_max)
+            for (unsigned int j = 0; j < dim; ++j)
+              if (std::abs(ref_dist[field][j] - ref_dist[neigh_field][j]) > nx[j] - 2)
+                periodic = true;
         }
       }
       ++n_connected_fluids;
+      n_periodic_fluids += periodic;
     }
 
     std::for_each(fields_.begin(), fields_.end(),
@@ -741,6 +801,6 @@ class cellular_automaton
                       field = 0;
                   });
 
-    return {n_connected_fluids, n_fluids_with_bdr};
+    return {n_connected_fluids, n_periodic_fluids};
   }
 };

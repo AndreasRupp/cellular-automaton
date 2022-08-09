@@ -33,4 +33,9 @@ int main()
   {
     std::cout << "Meas[" << k << "] = " << meas[k] << std::endl;
   }
+  auto helper = domain.fields();
+  for (unsigned int i = 0; i < helper.size(); ++i)
+    helper[i] = i;
+  print_array(helper, nx);
+  std::cout << (domain.fields())[9];
 }
