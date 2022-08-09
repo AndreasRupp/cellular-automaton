@@ -4,6 +4,7 @@
 #include <array>
 #include <chrono>
 #include <cmath>
+#include <iostream>
 #include <limits>
 #include <random>
 #include <vector>
@@ -173,6 +174,27 @@ class cellular_automaton
                           ++n_surfaces;
                     });
       return n_surfaces;
+    }
+    /* max_distance */
+    unsigned int max_distance() const
+    {
+      unsigned int max_distance = 0;
+      const std::array<unsigned int, n_fields_>& domain_fields = domain_.fields_;
+
+      std::for_each(fields_.begin(), fields_.end(),
+                    [&](const unsigned int field)
+                    {
+                      visited.push_back(field);
+                      for (unsigned int i = 0; i < 2 * dim; ++i)
+                      {
+                        if (domain_fields[aim(field, direct_neigh_[i])] != 0 &&)
+                        {
+                          
+                        }
+                      }
+                      max_distance += 1;
+                    });
+      return max_distance;
     }
     /*!*********************************************************************************************
      * \brief   Moves merged particles.
@@ -554,7 +576,7 @@ class cellular_automaton
    *
    * \retval  array     Array of measure parameters.
    ************************************************************************************************/
-  std::array<double, 10> eval_measures()
+  std::array<double, 12> eval_measures()
   {
     unsigned int n_single_cells =
       std::count_if(particles_.begin(), particles_.end(),
@@ -564,53 +586,82 @@ class cellular_automaton
 
     unsigned int n_solids = 0;
     unsigned int n_surfaces = 0;
+    unsigned int n_solids_part = 0;
+    unsigned int n_surfaces_part = 0;
+    unsigned int max_min_distance = 0;
+    unsigned int local_max_min_distance = 0;
+
+    double mean_sphericity = 0;
+    double local_sphericity = 0;
 
     std::for_each(particles_.begin(), particles_.end(),
                   [&](const particle& part)
                   {
-                    n_solids += part.size();
-                    n_surfaces += part.n_surfaces();
+                    n_solids_part = part.size();
+                    n_surfaces_part = part.n_surfaces();
+
+                    n_solids += n_solids_part;
+                    n_surfaces += n_surfaces_part;
+
+                    local_sphericity =
+                      std::pow((double)n_solids_part, (double)(dim - 1) / (double)dim) /
+                      (double)n_surfaces_part;
+                    mean_sphericity += local_sphericity;
+
+                    local_max_min_distance = part.max_distance();
+                    max_min_distance = local_max_min_distance;
                   });
+    mean_sphericity /= particles_.size();
 
     double mean_particle_size = (double)n_solids / (double)n_particles;
-
-    unsigned int n_connected_fluids = n_fluid_comp();
 
     double compactness =
       std::pow(((double)n_surfaces / (double)fields_.size()), ((double)dim / (double)(dim - 1)));
 
     double variance_particle_sizes = 0;
-    for (unsigned int i = 0; i < particles_.size() - 1; ++i)
+    for (unsigned int i = 0; i < particles_.size(); ++i)
     {
-      variance_particle_sizes += std::pow(particles_[i] - mean_particle_size, 2);
+      variance_particle_sizes += std::pow(particles_[i].size() - mean_particle_size, 2);
     }
     variance_particle_sizes /= (double)particles_.size();
 
-    double sphericity = (std::pow(M_PI, 1.0 / 3.0) *
-                  std::pow(6.0 * fields_.size(), (double)(dim - 1) / (double)dim)) /
-                 (double)n_surfaces;
+    double diameters_ratio = 0;  // TODO
+    /*
+    for (unsigned int = 0; i < particles_.size(); ++i)
+    {
+      for (unsigned int j = 0; j < dim; ++j)
+        {
+          diameters_ratio = nx/ny
+        }
+    }
+    diameters_ratio /= particles_.size();
+    */
+    unsigned int n_connected_fluids = n_fluid_comp()[0];
 
-    unsigned int n_fluids_with_bdr = 0;  // TODO
+    unsigned int n_fluids_with_bdr = n_fluid_comp()[1];
 
     return {(double)n_single_cells,
             (double)n_particles,
             (double)n_solids,
             (double)n_surfaces,
-            mean_particle_size,
             (double)n_connected_fluids,
-            compactness,
+            (double)n_fluids_with_bdr,
+            mean_particle_size,
             variance_particle_sizes,
-            sphericity,
-            (double)n_fluids_with_bdr};
+            compactness,
+            (double)max_min_distance,
+            mean_sphericity,
+            diameters_ratio};
   }
   /*!***********************************************************************************************
    * \brief   Computes connected fluid areas.
    *
    * \retval  n_connected_fluids     Number of connected fluid areas.
    ************************************************************************************************/
-  unsigned int n_fluid_comp()
+  std::array<unsigned int, 2> n_fluid_comp()
   {
     unsigned int n_connected_fluids = 0;
+    unsigned int n_fluids_with_bdr = 0;
     unsigned int fluids_size, field, neigh_field;
     std::vector<unsigned int> found_fluids;
 
@@ -643,6 +694,6 @@ class cellular_automaton
                       field = 0;
                   });
 
-    return n_connected_fluids;
+    return {n_connected_fluids, n_fluids_with_bdr};
   }
 };

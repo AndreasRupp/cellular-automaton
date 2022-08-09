@@ -14,11 +14,11 @@
  **************************************************************************************************/
 int main()
 {
-  constexpr std::array<unsigned int, 3> nx = {2, 3, 4};
-  const unsigned int n_moves = 5;
-  const double porosity = 0.9;
+  constexpr std::array<unsigned int, 2> nx = {5, 5};
+  const unsigned int n_moves = 1;
+  const double porosity = 0.5;
   const double jump_param = 1.;
-  cellular_automaton<nx> domain(porosity, jump_param);
+  cellular_automaton<nx> domain(porosity, jump_param, 123456789);
   std::cout << "Seed: " << domain.random_seed() << std::endl;
 
   print_array(domain.fields(), nx);
@@ -27,5 +27,10 @@ int main()
   {
     std::cout << std::endl;
     print_array(domain.move_particles(), nx);
+  }
+  const std::array<double, 12> meas = domain.eval_measures();
+  for (unsigned int k = 0; k < 12; ++k)
+  {
+    std::cout << "Meas[" << k << "] = " << meas[k] << std::endl;
   }
 }
