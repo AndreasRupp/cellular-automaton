@@ -175,25 +175,72 @@ class cellular_automaton
                     });
       return n_surfaces;
     }
-    /* max_distance */
-    unsigned int max_distance() const
+
+    unsigned int max_min_distance(unsigned int field)
     {
       unsigned int max_distance = 0;
-      const std::array<unsigned int, n_fields_>& domain_fields = domain_.fields_;
+      std::array<unsigned int, n_fields_>& domain_fields = domain_.fields_;
+      std::vector<unsigned int> visits(field);
+      domain_fields[field] = uint_max;
 
+      unsigned int neigh_field, visits_size = visits.size();
+      for (unsigned int i = 0; i < visits_size; ++i, visits_size = visits.size())
+      {
+        field = visits[i];
+        for (unsigned int i = 0; i < 2 * dim; ++i)
+        {
+          neigh_field = aim(field, direct_neigh_[i]);
+          if (domain_fields[neigh_field] == number_)
+          {
+            visits.push_back(neigh_field);
+            domain_fields[neigh_field] = domain_fields[field] - 1;
+          }
+        }
+      }
+
+      max_distance = uint_max - domain_fields[field];
       std::for_each(fields_.begin(), fields_.end(),
-                    [&](const unsigned int field)
-                    {
-                      visited.push_back(field);
-                      for (unsigned int i = 0; i < 2 * dim; ++i)
-                      {
-                        if (domain_fields[aim(field, direct_neigh_[i])] != 0 &&)
-                        {
-                          
-                        }
-                      }
-                      max_distance += 1;
-                    });
+                    [&](const unsigned int field) { domain_fields[field] = number_; });
+      return max_distance;
+    }
+
+    unsigned int max_min_distance()
+    {
+      std::array<unsigned int, n_fields_>& domain_fields = domain_.fields_;
+      std::vector<unsigned int> starts_old;
+      std::vector<unsigned int> starts(fields_[0]);
+      unsigned int max_distance = max_min_distance(starts[0]);
+      bool found_larger = true;
+
+      while (found_larger)
+      {
+        found_larger = false;
+        starts_old = starts;
+        starts.clear();
+        for_each(starts_old.begin(), starts_old.end(),
+                 [&](const unsigned int field)
+                 {
+                   for (unsigned int i = 0; i < 2 * dim; ++i)
+                     if (domain_fields[aim(field, direct_neigh_[i])] == number_)
+                       starts.push_back(aim(field, direct_neigh_[i]));
+                 });
+        starts.erase(std::unique(starts.begin(), starts.end()), starts.end());
+
+        for_each(starts.begin(), starts.end(),
+                 [&](unsigned int& start)
+                 {
+                   if (max_min_distance(start) > max_distance)
+                     found_larger = true;
+                   else
+                     start = uint_max;
+                 });
+        if (found_larger)
+          ++ max_distance;
+        starts.erase(std::remove_if(
+          starts.begin(), starts.end(),
+          [&](const unsigned int field) -> bool { return field == uint_max; }), starts.end());
+      }
+
       return max_distance;
     }
     /*!*********************************************************************************************
@@ -588,14 +635,14 @@ class cellular_automaton
     unsigned int n_surfaces = 0;
     unsigned int n_solids_part = 0;
     unsigned int n_surfaces_part = 0;
-    unsigned int max_min_distance = 0;
+    unsigned int max_max_min_distance = 0;
     unsigned int local_max_min_distance = 0;
 
     double mean_sphericity = 0;
     double local_sphericity = 0;
 
     std::for_each(particles_.begin(), particles_.end(),
-                  [&](const particle& part)
+                  [&](particle& part)
                   {
                     n_solids_part = part.size();
                     n_surfaces_part = part.n_surfaces();
@@ -608,8 +655,8 @@ class cellular_automaton
                       (double)n_surfaces_part;
                     mean_sphericity += local_sphericity;
 
-                    local_max_min_distance = part.max_distance();
-                    max_min_distance = local_max_min_distance;
+                    local_max_min_distance = part.max_min_distance();
+                    max_max_min_distance = local_max_min_distance;
                   });
     mean_sphericity /= particles_.size();
 
@@ -649,7 +696,7 @@ class cellular_automaton
             mean_particle_size,
             variance_particle_sizes,
             compactness,
-            (double)max_min_distance,
+            (double)max_max_min_distance,
             mean_sphericity,
             diameters_ratio};
   }
