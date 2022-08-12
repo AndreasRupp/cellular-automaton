@@ -785,7 +785,7 @@ class cellular_automaton
           }
           else if (fields_[neigh_field] == uint_max)
             for (unsigned int j = 0; j < dim; ++j)
-              if (std::abs(ref_dist[field][j] - ref_dist[neigh_field][j]) > nx[j] - 2)
+              if ((unsigned int)std::abs(ref_dist[field][j] - ref_dist[neigh_field][j]) > nx[j] - 2)
                 periodic = true;
         }
       }
