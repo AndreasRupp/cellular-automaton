@@ -1,0 +1,32 @@
+# Author: Andreas Rupp, Heidelberg University, 2021.
+
+name: Doxygen
+
+on: push
+
+env:
+  CXX: g++-10
+
+jobs:
+  make_and_deploy_doxygen:
+    name: Make and deploy doxygen
+    runs-on: ubuntu-latest
+    steps:
+    - name: Install cmake
+      run: sudo apt-get update; sudo apt-get install -y cmake
+    - name: Checkout current branch
+      uses: actions/checkout@v2
+      with:
+        submodules: recursive
+    - name: Run build and deploy action
+      uses: HyperHDG/actions@doxygen
+      with:
+        deploy_doxygen: ${{ github.ref == 'refs/heads/measures' }}
+        doxygen_command: |
+          eval "mkdir build && cd build && CXX=${{env.CXX}} cmake .. && make doxygen && cd .."
+        ci_repo_token: ${{ secrets.CELLULARAUTOMATONTOKEN }}
+        ci_user_name: HyperHDG-CI
+        ci_user_mail: HyperHDG@rupp.ink
+        pages_repo_organization: AndreasRupp
+        pages_repo_name: cellular-automaton_auto-pages
+        doxygen_path: build/doxygen/html
