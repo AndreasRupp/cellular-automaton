@@ -1,4 +1,5 @@
-# Author: Andreas Rupp, Heidelberg University, 2021.
+# Author: Andreas Rupp, LUT University, 2022.
+# Copied from https://github.com/HyperHDG/HyperHDG/blob/main/.github/workflows/make_doxygen.yml
 
 name: Doxygen
 
@@ -29,4 +30,4 @@ jobs:
         ci_user_mail: HyperHDG@rupp.ink
         pages_repo_organization: AndreasRupp
         pages_repo_name: cellular-automaton_auto-pages
-        doxygen_path: build/doxygen/html
+        doxygen_path: build/html
