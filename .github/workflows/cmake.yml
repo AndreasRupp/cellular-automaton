@@ -12,7 +12,7 @@ jobs:
     strategy:
       matrix:
         osys: [ ubuntu-22.04 ]
-        comp: [ {cxx: clang++-11}, {cxx: clang++-12}, {cxx: clang++-13}, {cxx: clang++-14},
+        comp: [ {cxx: clang++-12}, {cxx: clang++-13}, {cxx: clang++-14},
                 {cxx: g++-10}, {cxx: g++-11}, {cxx: g++-12} ]
 
     name: Test code with ${{ matrix.comp.cxx }} on ${{ matrix.osys }}
