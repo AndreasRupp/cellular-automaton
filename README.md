@@ -53,7 +53,7 @@ Developer Certificate of Origin version 1.1 is quoted in [DeveloperCertificateOf
 DeveloperCertificateOfOrigin.txt).
 
 
-# Third party software
+## Third party software
 
 - The documentation for the MATLAB code is created using the submodule [doxymatlab](
   https://github.com/simgunz/doxymatlab). Please refer to  Simone Gaiarin's [GitHub page](
