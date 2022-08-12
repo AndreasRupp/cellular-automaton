@@ -95,6 +95,8 @@ if(DOXYGEN_FOUND)
   set(DOXYGEN_CALL_GRAPH YES)
   set(DOXYGEN_DOT_MULTI_TARGETS NO)
   set(DOXYGEN_EXAMPLE_PATH ${CMAKE_SOURCE_DIR}/examples)
+  set(DOXYGEN_FILTER_PATTERNS *.m=../submodules/doxymatlab.git/m2cpp.pl)
+  set(DOXYGEN_EXCLUDE_PATTERNS */submodules/*)
   doxygen_add_docs(
     doxygen
     ${CMAKE_SOURCE_DIR}
