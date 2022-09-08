@@ -8,6 +8,17 @@
 #include <random>
 #include <vector>
 
+namespace CAM
+{
+
+static constexpr unsigned int n_fields(const auto nx)
+{
+  unsigned int n_field = 1;
+  for (unsigned int i = 0; i < nx.size(); ++i)
+    n_field *= nx[i];
+  return n_field;
+}
+
 /*!*************************************************************************************************
  * \brief   This class implements a cellular automaton.
  *
@@ -19,25 +30,14 @@
  * \authors   Joona Lappalainen, Lappeenranta-Lahti University of Technology LUT, 2022.
  * \authors   Simon Zech, University of Erlangen–Nuremberg, 2022.
  **************************************************************************************************/
-template <auto nx>
+template <auto nx, typename fields_array_t = std::array<unsigned int, n_fields(nx)> >
 class cellular_automaton
 {
+ public:
+  static constexpr unsigned int n_fields_ = n_fields(nx);
+
  private:
   static constexpr unsigned int dim = nx.size();
-  static constexpr unsigned int n_fields()
-  {
-    unsigned int n_field = 1;
-    for (unsigned int i = 0; i < dim; ++i)
-    {
-      n_field *= nx[i];
-    }
-    return n_field;
-  }
-
- public:
-  static constexpr unsigned int n_fields_ = n_fields();
-
- private:
   static constexpr std::array<int, 2 * dim> find_neigh()
   {
     static_assert(dim != 0, "Dimension of zero does not make sense.");
@@ -110,7 +110,7 @@ class cellular_automaton
     /*!*********************************************************************************************
      * \brief   Domain of the particle.
      **********************************************************************************************/
-    cellular_automaton<nx>& domain_;
+    cellular_automaton<nx, fields_array_t>& domain_;
 
     unsigned int max_min_distance(unsigned int field)
     {
@@ -181,14 +181,16 @@ class cellular_automaton
     }
 
    public:
-    particle(const unsigned int location, cellular_automaton<nx>& domain, const unsigned int number)
+    particle(const unsigned int location,
+             cellular_automaton<nx, fields_array_t>& domain,
+             const unsigned int number)
     : number_(number), deprecated_(false), fields_(1, location), domain_(domain)
     {
       domain_.fields_[fields_[0]] = number_;
     }
 
     particle(const std::vector<unsigned int>& fields,
-             cellular_automaton<nx>& domain,
+             cellular_automaton<nx, fields_array_t>& domain,
              const unsigned int number)
     : number_(number), deprecated_(false), fields_(fields), domain_(domain)
     {
@@ -231,7 +233,7 @@ class cellular_automaton
     unsigned int n_surfaces() const
     {
       unsigned int n_surfaces = 0;
-      const std::array<unsigned int, n_fields_>& domain_fields = domain_.fields_;
+      const fields_array_t& domain_fields = domain_.fields_;
 
       std::for_each(fields_.begin(), fields_.end(),
                     [&](const unsigned int field)
@@ -358,8 +360,8 @@ class cellular_automaton
      **********************************************************************************************/
     std::vector<int> stencil_moves_all() const
     {
-      unsigned int layers =
-        std::max(1., domain_.jump_parameter_ / std::pow(fields_.size(), 1.0 / (double)dim));
+      unsigned int layers = std::max(
+        1., domain_.jump_parameter_composites_ / std::pow(fields_.size(), 1.0 / (double)dim));
       std::vector<int> stencil(1, 0);
       unsigned int index = 0;
       unsigned int old_size = stencil.size();
@@ -384,7 +386,7 @@ class cellular_automaton
      **********************************************************************************************/
     std::vector<int> stencil_moves_single() const
     {
-      unsigned int layers = std::max(1., domain_.jump_parameter_);
+      unsigned int layers = std::max(1., domain_.jump_parameter_singles_);
       std::vector<int> stencil(1, 0);
       unsigned int index = 0;
       unsigned int old_size = stencil.size();
@@ -409,7 +411,7 @@ class cellular_automaton
     double check_move_all(const int move) const
     {
       double attraction = 0.;
-      const std::array<unsigned int, n_fields_>& domain_fields = domain_.fields_;
+      const fields_array_t& domain_fields = domain_.fields_;
       for (unsigned int i = 0; i < fields_.size(); ++i)
       {
         unsigned int aiming = aim(fields_[i], move);
@@ -431,7 +433,7 @@ class cellular_automaton
     inline double check_move_single(const unsigned int field, const int move)
     {
       double attraction = 0.;
-      std::array<unsigned int, n_fields_>& domain_fields = domain_.fields_;
+      fields_array_t& domain_fields = domain_.fields_;
       unsigned int aiming = aim(field, move);
       if (domain_fields[aiming] != 0 && move != 0)
         return double_min;
@@ -448,7 +450,7 @@ class cellular_automaton
      **********************************************************************************************/
     void do_move_all(const int move)
     {
-      std::array<unsigned int, n_fields_>& domain_fields = domain_.fields_;
+      fields_array_t& domain_fields = domain_.fields_;
 
       std::for_each(fields_.begin(), fields_.end(),
                     [&](unsigned int& field)
@@ -466,7 +468,7 @@ class cellular_automaton
      **********************************************************************************************/
     inline void do_move_single(unsigned int& field, const int move)
     {
-      std::array<unsigned int, n_fields_>& domain_fields = domain_.fields_;
+      fields_array_t& domain_fields = domain_.fields_;
 
       domain_fields[field] -= number_;
       field = aim(field, move);
@@ -477,7 +479,7 @@ class cellular_automaton
      **********************************************************************************************/
     void update_particle()
     {
-      std::array<unsigned int, n_fields_>& domain_fields = domain_.fields_;
+      fields_array_t& domain_fields = domain_.fields_;
       auto first_with_number = std::find_if(fields_.begin(), fields_.end(),
                                             [&](const unsigned int field) -> bool
                                             { return domain_fields[field] == number_; });
@@ -569,7 +571,9 @@ class cellular_automaton
   /*!***********************************************************************************************
    * \brief   Jump parameter.
    ************************************************************************************************/
-  const double jump_parameter_;
+  const double jump_parameter_singles_;
+
+  const double jump_parameter_composites_;
   /*!***********************************************************************************************
    * \brief   Number of particles.
    ************************************************************************************************/
@@ -577,7 +581,7 @@ class cellular_automaton
   /*!***********************************************************************************************
    * \brief   Array of particle locations.
    ************************************************************************************************/
-  std::array<unsigned int, n_fields_> fields_;
+  fields_array_t fields_;
   /*!***********************************************************************************************
    * \brief   Vector of particles.
    ************************************************************************************************/
@@ -593,7 +597,7 @@ class cellular_automaton
    *
    * \retval  fields_         Location of the particle.
    ************************************************************************************************/
-  const std::array<unsigned int, n_fields_>& fields() const { return fields_; }
+  const fields_array_t& fields() const { return fields_; }
   /*!***********************************************************************************************
    * \brief   Cellular automaton.
    *
@@ -602,10 +606,25 @@ class cellular_automaton
    * \param   random_seed       If given, sets random seed to given seed.
    ************************************************************************************************/
   cellular_automaton(const double porosity,
-                     const double jump_parameter,
+                     const double jump_parameter_singles,
+                     const double jump_parameter_composites = -1.,
                      const unsigned int random_seed = 0)
-  : jump_parameter_(jump_parameter)
+  : jump_parameter_singles_(jump_parameter_singles),
+    jump_parameter_composites_((jump_parameter_composites != -1.) ? jump_parameter_composites
+                                                                  : jump_parameter_singles)
   {
+    if constexpr (std::is_same<fields_array_t,
+                               std::vector<typename fields_array_t::value_type> >::value)
+      fields_.resize(n_fields_, 0);
+    else
+    {
+      static_assert(
+        std::is_same<fields_array_t,
+                     std::array<typename fields_array_t::value_type, n_fields(nx)> >::value,
+        "The fields array has incorrect size");
+      fields_.fill(0);
+    }
+
     if (random_seed == 0)
     {
       rand_seed = std::chrono::system_clock::now().time_since_epoch().count();
@@ -615,7 +634,6 @@ class cellular_automaton
     std::srand(rand_seed);
 
     n_particles = (1. - porosity) * n_fields_;
-    fields_.fill(0);
     unsigned int position = std::rand() % (n_fields_);
     for (unsigned int i = 0; i < n_particles; ++i)
     {
@@ -630,7 +648,7 @@ class cellular_automaton
    *
    * \retval  fields_     Domain
    ************************************************************************************************/
-  const std::array<unsigned int, n_fields_>& move_particles()
+  const fields_array_t& move_particles()
   {
     std::shuffle(particles_.begin(), particles_.end(), std::default_random_engine(std::rand()));
     std::for_each(particles_.begin(), particles_.end(), [&](particle& part) { part.move_all(); });
@@ -803,3 +821,5 @@ class cellular_automaton
     return {n_connected_fluids, n_periodic_fluids};
   }
 };
+
+}  // end of namespace CAM

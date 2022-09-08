@@ -18,15 +18,15 @@ int main()
   const unsigned int n_moves = 1;
   const double porosity = 0.5;
   const double jump_param = 1.;
-  cellular_automaton<nx> domain(porosity, jump_param);
+  CAM::cellular_automaton<nx> domain(porosity, jump_param);
   std::cout << "Seed: " << domain.random_seed() << std::endl;
 
-  print_array(domain.fields(), nx);
+  CAM::print_array(domain.fields(), nx);
 
   for (unsigned int i = 0; i < n_moves; ++i)
   {
     std::cout << std::endl;
-    print_array(domain.move_particles(), nx);
+    CAM::print_array(domain.move_particles(), nx);
   }
 
   std::cout << std::endl << "Characteristics / Measures:" << std::endl;
