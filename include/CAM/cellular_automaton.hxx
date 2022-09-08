@@ -115,7 +115,7 @@ class cellular_automaton
     unsigned int max_min_distance(unsigned int field)
     {
       unsigned int max_distance = 0;
-      std::array<unsigned int, n_fields_>& domain_fields = domain_.fields_;
+      fields_array_t& domain_fields = domain_.fields_;
       std::vector<unsigned int> visits(1, field);
       domain_fields[field] = uint_max;
 
@@ -142,7 +142,7 @@ class cellular_automaton
     unsigned int directed_max_min_distance(unsigned int dir_dim)
     {
       unsigned int max_distance = 0, field = fields_[0];
-      std::array<unsigned int, n_fields_>& domain_fields = domain_.fields_;
+      fields_array_t& domain_fields = domain_.fields_;
       std::vector<unsigned int> visits(1, field);
       domain_fields[field] = uint_max - n_fields_;
       unsigned int min_val = domain_fields[field], max_val = domain_fields[field];
@@ -247,7 +247,7 @@ class cellular_automaton
 
     unsigned int max_min_distance()
     {
-      std::array<unsigned int, n_fields_>& domain_fields = domain_.fields_;
+      fields_array_t& domain_fields = domain_.fields_;
       std::vector<unsigned int> starts(1, fields_[0]);
       std::vector<bool> bigger(1, true);
       unsigned int start_index = 0, end_index = 1, neigh_field;
