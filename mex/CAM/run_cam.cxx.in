@@ -157,8 +157,8 @@ class MexFunction : public matlab::mex::Function
     if (inputs[3].getType() != matlab::data::ArrayType::DOUBLE)
     {
       matlabPtr->feval(u"error", 0,
-                       std::vector<matlab::data::Array>({factory.createScalar(
-                         "The jump parameter must be a double")}));
+                       std::vector<matlab::data::Array>(
+                         {factory.createScalar("The jump parameter must be a double")}));
     }
 
     if (inputs[3].getNumberOfElements() != 1)
