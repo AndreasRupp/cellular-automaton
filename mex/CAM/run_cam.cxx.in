@@ -38,14 +38,15 @@ class MexFunction : public matlab::mex::Function
 
     const unsigned int n_moves = inputs[0][0];
     const double porosity = inputs[1][0];
-    const double jump_param = inputs[2][0];
-    const unsigned int output_rate = inputs[3][0];
-    matlab::data::TypedArray<double> results = std::move(inputs[4]);
-    matlab::data::TypedArray<double> measures = std::move(inputs[5]);
-    const bool print_random_seed = inputs[6][0];
+    const unsigned int jump_param_singles = inputs[2][0];
+    const double jump_parameter_composites = inputs[3][0];
+    const unsigned int output_rate = inputs[4][0];
+    matlab::data::TypedArray<double> results = std::move(inputs[5]);
+    matlab::data::TypedArray<double> measures = std::move(inputs[6]);
+    const bool print_random_seed = inputs[7][0];
 
-    cellular_automaton<nx> domain(porosity, jump_param,
-                                  inputs.size() == 8 ? (unsigned int)inputs[7][0] : 0U);
+    cellular_automaton<nx> domain(porosity, jump_param_singles, jump_param_composites,
+                                  inputs.size() == 9 ? (unsigned int)inputs[8][0] : 0U);
 
     if (print_random_seed)
       std::cout << "The random seed is " << domain.random_seed() << "." << std::endl;
@@ -139,38 +140,52 @@ class MexFunction : public matlab::mex::Function
                          "The porosity must be a double in range from 0 to 1")}));
     }
 
-    if (inputs[2].getType() != matlab::data::ArrayType::DOUBLE || (double)inputs[2][0] < 0)
-    {
-      matlabPtr->feval(u"error", 0,
-                       std::vector<matlab::data::Array>({factory.createScalar(
-                         "The jump parameter must be a non-negative double")}));
-    }
-
     if (inputs[2].getNumberOfElements() != 1)
     {
       matlabPtr->feval(u"error", 0,
                        std::vector<matlab::data::Array>(
-                         {factory.createScalar("The jump parameter must be a scalar")}));
+                         {factory.createScalar("The number of steps must be a scalar")}));
     }
 
-    if (inputs[3].getType() != matlab::data::ArrayType::INT32 || (int)inputs[3][0] < 0)
+    if (inputs[2].getType() != matlab::data::ArrayType::INT32 || (int)inputs[2][0] < 0)
     {
       matlabPtr->feval(u"error", 0,
                        std::vector<matlab::data::Array>(
-                         {factory.createScalar("The output rate must be a positive integer")}));
+                         {factory.createScalar("The number of steps must be a positive integer")}));
+    }
+
+    if (inputs[3].getType() != matlab::data::ArrayType::DOUBLE)
+    {
+      matlabPtr->feval(u"error", 0,
+                       std::vector<matlab::data::Array>({factory.createScalar(
+                         "The jump parameter must be a double")}));
     }
 
     if (inputs[3].getNumberOfElements() != 1)
     {
       matlabPtr->feval(u"error", 0,
                        std::vector<matlab::data::Array>(
+                         {factory.createScalar("The jump parameter must be a scalar")}));
+    }
+
+    if (inputs[4].getType() != matlab::data::ArrayType::INT32 || (int)inputs[4][0] < 0)
+    {
+      matlabPtr->feval(u"error", 0,
+                       std::vector<matlab::data::Array>(
+                         {factory.createScalar("The output rate must be a positive integer")}));
+    }
+
+    if (inputs[4].getNumberOfElements() != 1)
+    {
+      matlabPtr->feval(u"error", 0,
+                       std::vector<matlab::data::Array>(
                          {factory.createScalar("The output rate must be a scalar")}));
     }
 
-    if (inputs[4].getDimensions().size() != 2)
+    if (inputs[5].getDimensions().size() != 2)
     {
-      if (inputs[4].getDimensions()[0] != cellular_automaton<nx>::n_fields_ &&
-          inputs[4].getDimensions()[1] != (int)inputs[0][0] + 1)
+      if (inputs[5].getDimensions()[0] != cellular_automaton<nx>::n_fields_ &&
+          inputs[5].getDimensions()[1] != (int)inputs[0][0] + 1)
       {
         matlabPtr->feval(
           u"error", 0,
@@ -180,10 +195,10 @@ class MexFunction : public matlab::mex::Function
       }
     }
 
-    if (inputs[5].getDimensions().size() != 2)
+    if (inputs[6].getDimensions().size() != 2)
     {
-      if (inputs[5].getDimensions()[0] != 6 &&
-          inputs[5].getDimensions()[1] != (int)inputs[0][0] + 1)
+      if (inputs[6].getDimensions()[0] != 6 &&
+          inputs[6].getDimensions()[1] != (int)inputs[0][0] + 1)
       {
         matlabPtr->feval(u"error", 0,
                          std::vector<matlab::data::Array>(
@@ -192,15 +207,15 @@ class MexFunction : public matlab::mex::Function
       }
     }
 
-    if (inputs[6].getNumberOfElements() != 1)
+    if (inputs[7].getNumberOfElements() != 1)
     {
       matlabPtr->feval(u"error", 0,
                        std::vector<matlab::data::Array>({factory.createScalar(
                          "The indicator for the output of the random seed must be a scalar")}));
     }
 
-    if (inputs[6].getType() != matlab::data::ArrayType::INT8 ||
-        ((int)inputs[6][0] != 0 && (int)inputs[6][0] != 1))
+    if (inputs[7].getType() != matlab::data::ArrayType::INT8 ||
+        ((int)inputs[7][0] != 0 && (int)inputs[7][0] != 1))
     {
       matlabPtr->feval(
         u"error", 0,
@@ -208,16 +223,16 @@ class MexFunction : public matlab::mex::Function
           "The indicator for the output of the random seed must be true (1) or false (0).")}));
     }
 
-    if (inputs.size() > 7)
+    if (inputs.size() > 8)
     {
-      if (inputs[7].getNumberOfElements() != 1)
+      if (inputs[8].getNumberOfElements() != 1)
       {
         matlabPtr->feval(u"error", 0,
                          std::vector<matlab::data::Array>({factory.createScalar(
                            "The number of the random seed must be a scalar")}));
       }
 
-      if (inputs[7].getType() != matlab::data::ArrayType::INT64 || (int)inputs[7][0] < 0)
+      if (inputs[8].getType() != matlab::data::ArrayType::INT64 || (int)inputs[8][0] < 0)
       {
         matlabPtr->feval(u"error", 0,
                          std::vector<matlab::data::Array>({factory.createScalar(
