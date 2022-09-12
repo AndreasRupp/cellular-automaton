@@ -5,6 +5,8 @@
 
 #include <CAM/cellular_automaton.hxx>
 
+using namespace CAM;
+
 /*!*************************************************************************************************
  * \brief   Domain size values.
  *
@@ -38,14 +40,14 @@ class MexFunction : public matlab::mex::Function
 
     const unsigned int n_moves = inputs[0][0];
     const double porosity = inputs[1][0];
-    const unsigned int jump_param_singles = inputs[2][0];
+    const unsigned int jump_parameter_singles = inputs[2][0];
     const double jump_parameter_composites = inputs[3][0];
     const unsigned int output_rate = inputs[4][0];
     matlab::data::TypedArray<double> results = std::move(inputs[5]);
     matlab::data::TypedArray<double> measures = std::move(inputs[6]);
     const bool print_random_seed = inputs[7][0];
 
-    cellular_automaton<nx> domain(porosity, jump_param_singles, jump_param_composites,
+    cellular_automaton<nx> domain(porosity, jump_parameter_singles, jump_parameter_composites,
                                   inputs.size() == 9 ? (unsigned int)inputs[8][0] : 0U);
 
     if (print_random_seed)
@@ -62,7 +64,7 @@ class MexFunction : public matlab::mex::Function
       }
       if (measures.getNumberOfElements() != 0)
       {
-        const std::array<double, 6> meas = domain.eval_measures();
+        const auto meas = domain.eval_measures();
         for (unsigned int k = 0; k < 6; ++k)
           measures[k][0] = meas[k];
       }
@@ -83,7 +85,7 @@ class MexFunction : public matlab::mex::Function
         }
         if (measures.getNumberOfElements() != 0)
         {
-          const std::array<double, 6> meas = domain.eval_measures();
+          const auto meas = domain.eval_measures();
           for (unsigned int k = 0; k < 6; ++k)
             measures[k][(1 + i) / output_rate] = meas[k];
         }
@@ -104,7 +106,7 @@ class MexFunction : public matlab::mex::Function
     std::shared_ptr<matlab::engine::MATLABEngine> matlabPtr = getEngine();
     matlab::data::ArrayFactory factory;
 
-    if (inputs.size() < 7 || inputs.size() > 8)
+    if (inputs.size() < 8 || inputs.size() > 9)
     {
       matlabPtr->feval(
         u"error", 0,

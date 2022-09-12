@@ -80,7 +80,7 @@
 %> Copyright and license conditions can be found there.
 
 function [ domain_data, measures ] = compile_and_run( ...
-    nx, num_steps, porosity, jump_parameter, options )
+    nx, num_steps, porosity, jump_parameter_singles, options )
 
 arguments
     nx (1,:) int32
@@ -141,16 +141,16 @@ else
 end  % if print_results
 
 if options.print_measures
-    measures_matrix = zeros(6, n_outputs);
+    measures_matrix = zeros(12, n_outputs);
 else
     measures_matrix = [];
 end  % if print measures
 
 %  Call the C++ function for the cellular automaton.
-command = strcat(file_name, '(num_steps, porosity, jump_parameter_singles, '...
-    'options.jump_parameter_composites, options.output_rate, '...
-    'results_matrix, measures_matrix, options.print_random_seed, '...
-    'options.random_seed)');
+command = strcat(file_name, '(num_steps, porosity, ', ...
+    'jump_parameter_singles, options.jump_parameter_composites, ', ...
+    'options.output_rate, results_matrix, measures_matrix, ', ...
+    'options.print_random_seed, options.random_seed)');
 [domain_data, measures] = eval(command);
 
 end  % function run_cam

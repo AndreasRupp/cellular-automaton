@@ -1,5 +1,5 @@
 function [ domain_data, measures ] = run_cam(...
-    nx, num_steps, porosity, jump_parameter, options )
+    nx, num_steps, porosity, jump_parameter_singles, options )
 
 arguments
     nx (1,:) int32

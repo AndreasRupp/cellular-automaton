@@ -73,5 +73,7 @@ num_random_seed    = 0;
     print_measures=output_measures,print_random_seed=output_random_seed,...
     random_seed=num_random_seed);
 
+measures
+
 %% Call the print function to illustrate CAM.
 print(nx, domain_data, frame_rate, num_steps)
