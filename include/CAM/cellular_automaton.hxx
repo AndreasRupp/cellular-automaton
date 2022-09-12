@@ -738,7 +738,7 @@ class cellular_automaton
     double mean_particle_size = (double)n_solids / (double)n_particles;
 
     double compactness =
-      std::pow(((double)n_surfaces / (double)fields_.size()), ((double)dim / (double)(dim - 1)));
+      std::pow((double)n_surfaces, ((double)dim / (double)(dim - 1))) / (double) n_solids;
 
     double variance_particle_sizes = 0;
     for (unsigned int i = 0; i < particles_.size(); ++i)
