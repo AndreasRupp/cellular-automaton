@@ -4,6 +4,9 @@
 #include <iomanip>
 #include <iostream>
 
+namespace CAM
+{
+
 /*!*************************************************************************************************
  * \brief   Prints array of particles. Only used in print_n_dim().
  *
@@ -11,12 +14,12 @@
  * \param   nx             Nx dimension and size
  * \param   init_index     Temporary index in current slice
  **************************************************************************************************/
-template <std::size_t size_p, std::size_t dim>
-void print_1d(const std::array<unsigned int, size_p>& particles,
+template <typename fields_array_t, std::size_t dim>
+void print_1d(const fields_array_t& particles,
               const std::array<unsigned int, dim>& nx,
               unsigned int init_index = 0)
 {
-  const unsigned int len_numbers = std::log10(size_p - 1) + 1;
+  const unsigned int len_numbers = std::log10(particles.size() - 1) + 1;
   unsigned int index;
 
   for (unsigned int x = 0; x < nx[0]; ++x)
@@ -43,8 +46,8 @@ void print_1d(const std::array<unsigned int, size_p>& particles,
  * \param   nx             Nx dimension and size
  * \param   init_index     Temporary index in current slice
  **************************************************************************************************/
-template <unsigned int n_dim, std::size_t size_p, std::size_t dim>
-void print_n_dim(const std::array<unsigned int, size_p>& particles,
+template <unsigned int n_dim, typename fields_array_t, std::size_t dim>
+void print_n_dim(const fields_array_t& particles,
                  const std::array<unsigned int, dim>& nx,
                  unsigned int init_index = 0)
 {
@@ -95,9 +98,10 @@ void print_n_dim(const std::array<unsigned int, size_p>& particles,
  * \param   particles      Particle index and size
  * \param   nx             Nx dimension and size
  **************************************************************************************************/
-template <std::size_t size_p, std::size_t dim>
-void print_array(const std::array<unsigned int, size_p>& particles,
-                 const std::array<unsigned int, dim>& nx)
+template <typename fields_array_t, std::size_t dim>
+void print_array(const fields_array_t& particles, const std::array<unsigned int, dim>& nx)
 {
   print_n_dim<dim>(particles, nx);
 }
+
+}  // end of namespace CAM

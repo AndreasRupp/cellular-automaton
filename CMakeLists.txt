@@ -22,6 +22,10 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
 endif()
 
 
+## Check whether doxygen is installed.
+find_package(Doxygen)
+
+
 ## Create a target that transports all the necessary information to downstream projects
 add_library(CAM INTERFACE)
 
@@ -64,17 +68,43 @@ install(
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 )
 
-## Write a configuration file for Cython
+## Write a configuration file for MEX
 configure_file(
   ${CMAKE_CURRENT_LIST_DIR}/mex/CAM/compile_and_run.m.in
   ${CMAKE_CURRENT_BINARY_DIR}/compile_and_run.m
 )
 
-## Write a configuration file for Cython
+## Write a configuration file for MEX
 configure_file(
   ${CMAKE_CURRENT_LIST_DIR}/mex/CAM/run_cam.cxx.in
   ${CMAKE_CURRENT_BINARY_DIR}/run_cam.cxx.in
 )
+
+
+## Build doxygen if found.
+if(DOXYGEN_FOUND)
+  set(DOXYGEN_TAB_SIZE 2)
+  set(DOXYGEN_TOC_INCLUDE_HEADINGS 0)
+  set(DOXYGEN_EXTRACT_ALL YES)
+  set(DOXYGEN_EXTRACT_PRIVATE YES)
+  set(DOXYGEN_EXTRACT_STATIC YES)
+  set(DPXYGEN_STRICT_PROTO_MATCHING YES)
+  set(DOXYGEN_USE_MATHJAX YES)
+  set(DOXYGEN_MACRO_EXPANSION YES)
+  set(DOXYGEN_EXPAND_ONLY_PREDEF YES)
+  set(DOXYGEN_CALL_GRAPH YES)
+  set(DOXYGEN_DOT_MULTI_TARGETS NO)
+  set(DOXYGEN_EXAMPLE_PATH ${CMAKE_SOURCE_DIR}/examples)
+  set(DOXYGEN_FILTER_PATTERNS *.m=../submodules/doxymatlab.git/m2cpp.pl)
+  set(DOXYGEN_EXCLUDE_PATTERNS */submodules/*)
+  doxygen_add_docs(
+    doxygen
+    ${CMAKE_SOURCE_DIR}
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    COMMENT Building Doxygen documentation...
+  )
+endif()
+
 
 ## Print a summary
 include(FeatureSummary)

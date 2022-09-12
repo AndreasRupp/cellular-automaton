@@ -31,7 +31,7 @@ addpath('matlab_functions');
 %  the porosity (i.e.the percentage of void space---not occupied by solid)
 %  and the jump parameter (telling how far individual cells are allowd to
 %  jump) as mandatory parameters.
-nx             = [10 10 10];
+nx             = [10 10];
 num_steps      = 10;
 porosity       = 0.9;
 jump_parameter = 1;
@@ -72,6 +72,8 @@ num_random_seed    = 0;
     jump_parameter,output_rate=frame_rate, print_results=output_results,...
     print_measures=output_measures,print_random_seed=output_random_seed,...
     random_seed=num_random_seed);
+
+measures
 
 %% Call the print function to illustrate CAM.
 print(nx, domain_data, frame_rate, num_steps)

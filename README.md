@@ -25,8 +25,8 @@ There is two ways of using CAM:
 - In `C++`, one has to include the file `include/CAM/cellular_automaton.hxx`. Then, you can run the
   CAM as shown in `cpp_example.cxx` provided that you compile it using `-std=gnu++20`. A possible
   compilation command for the `cpp_example.cxx` is `clang++-12 -std=gnu++20 -Wall -Wextra -pedantic 
-  -Iinclude -O3 cpp_example.cxx -o test`. Here, `clang++-12` can be replaced by any suitable
-  compiler implementing C++20.
+  -Iinclude -O3 examples_cpp/cpp_example.cxx -o test`. Here, `clang++-12` can be replaced by any
+  suitable compiler implementing C++20.
 
 
 # Copyright, License, and Contribution Policy
@@ -51,6 +51,15 @@ project is held by its respective contributors who have each agreed to release t
 code under a compatible open source license (LGPL v2.1 for library code). The full text of the 
 Developer Certificate of Origin version 1.1 is quoted in [DeveloperCertificateOfOrigin.txt](
 DeveloperCertificateOfOrigin.txt).
+
+
+## Third party software
+
+- The documentation for the MATLAB code is created using the submodule [doxymatlab](
+  https://github.com/simgunz/doxymatlab). Please refer to  Simone Gaiarin's [GitHub page](
+  https://github.com/simgunz/doxymatlab) and the [official file exchange page](
+  https://se.mathworks.com/matlabcentral/fileexchange/25925-using-doxygen-with-matlab/)
+  by Fabrice for additional information (e.g. considering licenses).
 
 
 ## Referencing the library
