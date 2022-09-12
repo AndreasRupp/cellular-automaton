@@ -174,7 +174,7 @@ class cellular_automaton
           }
         }
       }
-      max_distance = max_val - min_val;
+      max_distance = max_val - min_val + 1;
       std::for_each(fields_.begin(), fields_.end(),
                     [&](const unsigned int field_loc) { domain_fields[field_loc] = number_; });
       return max_distance;
