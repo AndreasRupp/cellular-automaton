@@ -65,7 +65,7 @@ class MexFunction : public matlab::mex::Function
       if (measures.getNumberOfElements() != 0)
       {
         const auto meas = domain.eval_measures();
-        for (unsigned int k = 0; k < 6; ++k)
+        for (unsigned int k = 0; k < meas.size(); ++k)
           measures[k][0] = meas[k];
       }
     }
@@ -86,7 +86,7 @@ class MexFunction : public matlab::mex::Function
         if (measures.getNumberOfElements() != 0)
         {
           const auto meas = domain.eval_measures();
-          for (unsigned int k = 0; k < 6; ++k)
+          for (unsigned int k = 0; k < meas.size(); ++k)
             measures[k][(1 + i) / output_rate] = meas[k];
         }
       }

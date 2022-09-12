@@ -31,7 +31,7 @@ addpath('matlab_functions');
 %  the porosity (i.e.the percentage of void space---not occupied by solid)
 %  and the jump parameter (telling how far individual cells are allowd to
 %  jump) as mandatory parameters.
-nx             = [10 10 10];
+nx             = [10 10];
 num_steps      = 10;
 porosity       = 0.9;
 jump_parameter = 1;
