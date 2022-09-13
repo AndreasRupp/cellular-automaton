@@ -63,19 +63,37 @@ end  % function print
 %> Copyright and license conditions can be found there.
 function print_update(nx, data)
     [~, dim] = size(nx);
-    x = 0:nx(1);
-    if dim == 2 || dim == 3
-        y = 0:nx(2);
-    end
-    if dim == 3
-        z = 0:nx(3);
-    end
     if dim == 1
-        y = [0 1];
         nx(2) = 1;
         dim = 2;
     end
+
+    x = 0:nx(1);
+    y = 0:nx(2);
+    if dim == 3
+        z = 0:nx(3);
+    end
+
     cla
+
+    if dim == 2
+        % Creates gridlines for the domain
+        [X1, Y1] = meshgrid(x,y);
+        X1 = permute(X1,[2 1]); Y1 = permute(Y1,[2 1]);
+        X1(end+1,:) = NaN; Y1(end+1,:) = NaN;
+        [X2, Y2] = meshgrid(x,y);
+        X2(end+1,:) = NaN; Y2(end+1,:) = NaN;
+        h = line([X1(:);X2(:)], [Y1(:);Y2(:)]);
+        set(h, 'Color',[0.5 0.5 1], 'LineWidth',1, 'LineStyle','-');
+
+        % Creates faces of the square (particle)
+        cube_xy = [0 1 1 0 0; 0 0 1 1 0];
+        x = repmat(mod(0:size(data)-1,nx(1))', 5);
+        x = x((data ~= 0), :);
+        y = repmat(mod(floor((0:size(data)-1)./nx(1)),nx(2))', 5);
+        y = y((data ~= 0), :);
+        patch('XData', (x + cube_xy(1,:))', 'YData', (y + cube_xy(2,:))')
+    end
 
     if dim == 3
         % Creates gridlines for the domain
@@ -117,25 +135,6 @@ function print_update(nx, data)
             'ZData', z + cube_yz(3,:)')
         patch('XData', x + cube_yz(1,:)'+1, 'YData', y + cube_yz(2,:)', ...
             'ZData', z + cube_yz(3,:)')
-    end
-
-    if dim == 2
-        % Creates gridlines for the domain
-        [X1, Y1] = meshgrid(x,y);
-        X1 = permute(X1,[2 1]); Y1 = permute(Y1,[2 1]);
-        X1(end+1,:) = NaN; Y1(end+1,:) = NaN;
-        [X2, Y2] = meshgrid(x,y);
-        X2(end+1,:) = NaN; Y2(end+1,:) = NaN;
-        h = line([X1(:);X2(:)], [Y1(:);Y2(:)]);
-        set(h, 'Color',[0.5 0.5 1], 'LineWidth',1, 'LineStyle','-');
-
-        % Creates faces of the square (particle)
-        cube_xy = [0 1 1 0 0; 0 0 1 1 0];
-        x = repmat(mod(0:size(data)-1,nx(1))', 5);
-        x = x((data ~= 0), :);
-        y = repmat(mod(floor((0:size(data)-1)./nx(1)),nx(2))', 5);
-        y = y((data ~= 0), :);
-        patch('XData', (x + cube_xy(1,:))', 'YData', (y + cube_xy(2,:))')
     end
 
     axis equal
