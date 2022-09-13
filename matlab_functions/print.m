@@ -137,16 +137,13 @@ function print_update(nx, data)
         set(h, 'Color',[0.5 0.5 1], 'LineWidth',1, 'LineStyle','-');
 
         % Creates faces of the square (particle)
-        for i = 1:size(data)
-            if data(i) ~= 0
-                xi = mod((i-1),nx(1));
-                yi = mod(floor((i-1)/nx(1)),nx(2));
-                cube_xy = [0 1 1 0 0;
-                           0 0 1 1 0];
-                patch('XData', xi + cube_xy(1,:), 'YData', yi + ...
-                    cube_xy(2,:))
-            end
-        end
+        cube_xy = [0 1 1 0 0; 0 0 1 1 0];
+        x = repmat(mod(0:size(data)-1,nx(1))', 5) + cube_xy(1,:);
+        x = x((data ~= 0), :);
+        y = repmat(mod(floor((0:size(data)-1)./nx(1)),nx(2))', 5) + ...
+            cube_xy(2,:);
+        y = y((data ~= 0), :);
+        patch('XData', x', 'YData', y')
     end
 
     if dim == 1
