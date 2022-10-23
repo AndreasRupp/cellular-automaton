@@ -10,7 +10,11 @@
 
 namespace CAM
 {
-
+/*!*************************************************************************************************
+ * \brief   Calculates the size of the domain.
+ *
+ * \retval n_field        size of the domain
+ **************************************************************************************************/
 static constexpr unsigned int n_fields(const auto nx)
 {
   unsigned int n_field = 1;
@@ -24,7 +28,8 @@ static constexpr unsigned int n_fields(const auto nx)
  *
  * CAM illustrates the behaviour of particles in domain.
  *
- * \tparam  nx       The size of a row for each dimension of the matrix.
+ * \tparam  nx              The size of a row for each dimension of the matrix
+ * \tparam  n_fields        Size of the domain
  *
  * \authors   Andreas Rupp, Lappeenranta-Lahti University of Technology LUT, 2022.
  * \authors   Joona Lappalainen, Lappeenranta-Lahti University of Technology LUT, 2022.
@@ -111,7 +116,12 @@ class cellular_automaton
      * \brief   Domain of the particle.
      **********************************************************************************************/
     cellular_automaton<nx, fields_array_t>& domain_;
-
+    /*!***********************************************************************************************
+     * \brief   Find the longest shortest path inside particle.
+     *
+     * \param   field            Location of the single particle
+     * \retval  max_distance     Length of the path
+     ************************************************************************************************/
     unsigned int max_min_distance(unsigned int field)
     {
       unsigned int max_distance = 0;
@@ -138,7 +148,12 @@ class cellular_automaton
                     [&](const unsigned int field_loc) { domain_fields[field_loc] = number_; });
       return max_distance;
     }
-
+    /*!***********************************************************************************************
+     * \brief   Find the longest amount of moves in certain direction inside particle.
+     *
+     * \param   dir_dim          Certain dimension
+     * \retval  max_distance     Amount of moves
+     ************************************************************************************************/
     unsigned int directed_max_min_distance(unsigned int dir_dim)
     {
       unsigned int max_distance = 0, field = fields_[0];
@@ -244,7 +259,11 @@ class cellular_automaton
                     });
       return n_surfaces;
     }
-
+    /*!***********************************************************************************************
+     * \brief   Find the longest shortest path inside domain.
+     *
+     * \retval  max_distance     Length of the path.
+     ************************************************************************************************/
     unsigned int max_min_distance()
     {
       fields_array_t& domain_fields = domain_.fields_;
@@ -286,7 +305,11 @@ class cellular_automaton
 
       return max_distance;
     }
-
+    /*!***********************************************************************************************
+     * \brief   Calculate the ratio of diameters for every dimension.
+     *
+     * \retval  max_diameter / min_diameter      Max dimension ratio.
+     ************************************************************************************************/
     double max_dimension_ratio()
     {
       std::array<unsigned int, dim> width_dim;
@@ -683,15 +706,22 @@ class cellular_automaton
    * \brief   Evaluates measure parameters.
    *
    * Measure parameters:
-   * n_single_cells        number of single solid pixels without solid neighbours
-   * n_particles           number of solid particles, including single solid pixels
-   *                       and agglomorates of solid pixels
-   * n_solids              total number of solid pixels
-   * n_surfaces            total solid surface
-   * mean_particle_size    mean particle size
-   * n_connected_fluids    number of connected fluid
+   * n_single_cells                 number of cells that are not part of any larger agglomerate
+   * n_particles                    number of connected solid cells, including single cells and
+   *                                larger agglomerates
+   * n_solids                       total number of solid cells
+   * n_surfaces                     total number of faces between solid and fluid
+   * n_connected_fluids             number of connected fluids
+   * n_periodic_fluid_components    number of connected fluids which are periodic
+   * mean_particle_size             average particle size (n_solids / n_particles)
+   * variance_particle_sizes        variance of particle sizes
+   * compactness                    evaluates the degree of which a particle is compact
+   * max_max_min_distance           maximum over all particles with respect to the maximum of
+   *                                shortest distances between two solid cells within a particle
+   * mean_sphericity                sphericity rates how close a shape is to the perfect sphere
+   * max_diameters_ratio            maximum ratio of diameters with respect to one dimension
    *
-   * \retval  array     Array of measure parameters.
+   * \retval  array                 Array of measure parameters.
    ************************************************************************************************/
   std::array<double, 12> eval_measures()
   {
@@ -767,7 +797,8 @@ class cellular_automaton
   /*!***********************************************************************************************
    * \brief   Computes connected fluid areas.
    *
-   * \retval  n_connected_fluids     Number of connected fluid areas.
+   * \retval  n_fluid_comp      1st entry of array is connected fluid areas.
+   *                            2nd entry of array is periodic connected fluid areas.
    ************************************************************************************************/
   std::array<unsigned int, 2> n_fluid_comp()
   {
