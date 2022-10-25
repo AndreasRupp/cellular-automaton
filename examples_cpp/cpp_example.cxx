@@ -1,5 +1,4 @@
 #include <CAM/cellular_automaton.hxx>
-#include <CAM/print.hxx>
 
 /*!*************************************************************************************************
  * \brief   Main function.
