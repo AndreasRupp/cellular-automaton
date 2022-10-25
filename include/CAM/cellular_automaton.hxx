@@ -116,12 +116,12 @@ class cellular_automaton
      * \brief   Domain of the particle.
      **********************************************************************************************/
     cellular_automaton<nx, fields_array_t>& domain_;
-    /*!***********************************************************************************************
+    /*!*********************************************************************************************
      * \brief   Find the longest shortest path inside particle.
      *
      * \param   field            Location of the single particle
      * \retval  max_distance     Length of the path
-     ************************************************************************************************/
+     **********************************************************************************************/
     unsigned int max_min_distance(unsigned int field)
     {
       unsigned int max_distance = 0;
@@ -148,12 +148,12 @@ class cellular_automaton
                     [&](const unsigned int field_loc) { domain_fields[field_loc] = number_; });
       return max_distance;
     }
-    /*!***********************************************************************************************
+    /*!*********************************************************************************************
      * \brief   Find the longest amount of moves in certain direction inside particle.
      *
      * \param   dir_dim          Certain dimension
      * \retval  max_distance     Amount of moves
-     ************************************************************************************************/
+     **********************************************************************************************/
     unsigned int directed_max_min_distance(unsigned int dir_dim)
     {
       unsigned int max_distance = 0, field = fields_[0];
@@ -259,11 +259,11 @@ class cellular_automaton
                     });
       return n_surfaces;
     }
-    /*!***********************************************************************************************
+    /*!*********************************************************************************************
      * \brief   Find the longest shortest path inside domain.
      *
      * \retval  max_distance     Length of the path.
-     ************************************************************************************************/
+     **********************************************************************************************/
     unsigned int max_min_distance()
     {
       fields_array_t& domain_fields = domain_.fields_;
@@ -305,11 +305,11 @@ class cellular_automaton
 
       return max_distance;
     }
-    /*!***********************************************************************************************
+    /*!*********************************************************************************************
      * \brief   Calculate the ratio of diameters for every dimension.
      *
      * \retval  max_diameter / min_diameter      Max dimension ratio.
-     ************************************************************************************************/
+     **********************************************************************************************/
     double max_dimension_ratio()
     {
       std::array<unsigned int, dim> width_dim;
