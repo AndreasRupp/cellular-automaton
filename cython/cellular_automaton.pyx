@@ -2,11 +2,11 @@
 
 cdef class PythonClassName :
   cdef CythonClassName *thisptr # hold a C++ instance which we're wrapping
-  def __cinit__(self,porosity, jump_param):
+  def __cinit__(self, porosity, jump_param):
     self.thisptr = new CythonClassName (porosity, jump_param)
   def __dealloc__(self):
     del self.thisptr
   def move_particles(self):
     return self.thisptr.move_particles ()
-  def print_state(self, vec):
-    self.thisptr.plot_solution (vec)
+  def print_state(self):
+    self.thisptr.print_state ()

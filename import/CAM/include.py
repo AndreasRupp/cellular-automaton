@@ -11,7 +11,7 @@ from .paths import main_dir
 def include(conf):
   start_time = datetime.datetime.now()
   # Check that conf is appropriatelly filled.
-  assert isinstance(conf, config) and consistent(conf)
+  assert isinstance(conf, config)# and consistent(conf)
 
   # Start program.
   options = get_options()
@@ -34,16 +34,17 @@ def include(conf):
   # Evaluate configfile, define include files, and define dependent files.
   cy_replace = generate_cy_replace(conf)
   cpp_class, python_class, cython_class = files(conf)
-  if conf.cpp_code == "":
-    include_string = extract_includes(conf)
-  else:
-    include_string = extract_includes(conf, main_dir()+"/build/cython_files/"+python_class+".hxx")
+  # if conf.cpp_code == "":
+  #   include_string = extract_includes(conf)
+  # else:
+  #   include_string = extract_includes(conf, main_dir()+"/build/cython_files/"+python_class+".hxx")
+  include_string = ""
 
   compilation_necessary = need_compile(conf, python_class, options)
   if compilation_necessary:
     # Copy pyx and pxd files from cython directory.
     for file_end in ["pxd", "pyx"]:
-      with open(main_dir() + "/cython/" + cython_from_cpp(conf.global_loop) + "." \
+      with open(main_dir() + "/cython/" + "cellular_automaton" + "." \
         + file_end, "r") as file:
         content = file.read()
       content = re.sub("C\+\+ClassName", "\"" + cpp_class + "\"", content)

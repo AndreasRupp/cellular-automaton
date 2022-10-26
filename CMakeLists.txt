@@ -22,8 +22,10 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
 endif()
 
 
-## Check whether doxygen is installed.
+## Find packages that might become necessary.
 find_package(Doxygen)
+find_package (Python3 COMPONENTS Interpreter Development NumPy)
+find_program (CYTHON_EXECUTABLE NAMES cython cython.bat cython3)
 
 
 ## Create a target that transports all the necessary information to downstream projects
@@ -80,6 +82,11 @@ configure_file(
   ${CMAKE_CURRENT_BINARY_DIR}/run_cam.cxx.in
 )
 
+## Write a configuration file for Cython
+configure_file(
+  ${CMAKE_CURRENT_LIST_DIR}/cmake_cython.cfg.in
+  ${CMAKE_CURRENT_BINARY_DIR}/cmake_cython.cfg
+)
 
 ## Build doxygen if found.
 if(DOXYGEN_FOUND)

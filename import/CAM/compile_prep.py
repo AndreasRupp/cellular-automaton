@@ -32,7 +32,7 @@ def need_compile(conf, python_class, opt):
     and time_so < os.stat(main_dir() + "/build/cmake_cython.cfg").st_mtime:
     return True
   for file_end in ["pxd", "pyx", "cfg"]:
-    time_in = os.stat(main_dir() + "/cython/" + cython_from_cpp(conf.global_loop) + "." \
+    time_in = os.stat(main_dir() + "/cython/" +"cellular_automaton" + "." \
       + file_end).st_mtime
     if time_so < time_in:
       return True

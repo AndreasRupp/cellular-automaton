@@ -5,7 +5,10 @@ from .paths import main_dir
 
 ## \brief   Object that comprises all information for HyperHDG to create a problem.
 class config:
-  array_def = ""
+  array_def     = ""
+  cpp_code      = ""
+  debug_mode    = False
+  include_files = ""
 
 ## \brief   Check that config is consistent.
 def consistent(conf):
@@ -63,9 +66,9 @@ def extract_includes(conf, cpp_inc=""):
 
 ## \brief   Evaluate config file that needs to be present for all .pyx/.pxd files.
 def generate_cy_replace(conf):
-  assert isinstance(conf, config) and consistent(conf)
+  assert isinstance(conf, config)# and consistent(conf)
   config_file = configparser.ConfigParser()
-  config_file.read(main_dir() + "/cython/" + cython_from_cpp(conf.global_loop) + ".cfg")
+  config_file.read(main_dir() + "/cython/" + "cellular_automaton" + ".cfg")
   n_replacements = int(config_file['default']['n_replacements'])
   cy_replace = []
   for i in range(n_replacements):
