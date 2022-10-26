@@ -5,24 +5,17 @@ from .paths import main_dir
 
 ## \brief   Object that comprises all information for HyperHDG to create a problem.
 class config:
-  array_def     = ""
-  cpp_code      = ""
-  debug_mode    = False
-  include_files = ""
+  nx                  = ""
+  cython_replacements = []
+  cpp_code            = ""
+  include_files       = []
+  debug_mode          = False
 
 ## \brief   Check that config is consistent.
 def consistent(conf):
   assert isinstance(conf, config)
-  if not (isinstance(conf.global_loop, str) and conf.global_loop != ""):
+  if not (isinstance(conf.nx, str) and conf.nx != ""):
      return False
-  if not (isinstance(conf.local_solver, str) and  conf.local_solver != ""):
-    return False
-  if not (isinstance(conf.topology, str) and conf.topology != ""):
-    return False
-  if not (isinstance(conf.geometry, str) and conf.geometry != ""):
-    return False
-  if not (isinstance(conf.node_descriptor, str) and conf.node_descriptor != ""):
-    return False
   if not isinstance(conf.cpp_code, str):
     return False
   if not isinstance(conf.debug_mode, bool):
@@ -42,19 +35,7 @@ def consistent(conf):
 ## \brief   Add the files that need to be included for defining the problem to include list.
 def extract_includes(conf, cpp_inc=""):
   assert isinstance(conf, config) and consistent(conf)
-  helper = find_definition("geometry", extract_classname(conf.geometry))
-  if helper not in conf.include_files:
-    conf.include_files.append(helper)
-  helper = find_definition("node_descriptor", extract_classname(conf.node_descriptor))
-  if helper not in conf.include_files:
-    conf.include_files.append(helper)
-  helper = find_definition("topology", extract_classname(conf.topology))
-  if helper not in conf.include_files:
-    conf.include_files.append(helper)
-  helper = find_definition("global_loop", extract_classname(conf.global_loop))
-  if helper not in conf.include_files:
-    conf.include_files.append(helper)
-  helper = find_definition("local_solver", extract_classname(conf.local_solver))
+  helper = find_definition(".", "cellular_automaton")
   if helper not in conf.include_files:
     conf.include_files.append(helper)
   include_string = ""

@@ -66,7 +66,7 @@ template <auto nx, typename fields_array_t>
 static constexpr unsigned int skeleton_distance(const fields_array_t& domain_a,
                                                 const fields_array_t& domain_b)
 {
-  unsigned int neigh_field, loc_distance, distance = 0;
+  unsigned int neigh_field, distance = 0;
   for (unsigned int field = 0; field < domain_a.size(); ++field)
     for (unsigned int j = 0; j < 2 * nx.size(); j += 2)
     {

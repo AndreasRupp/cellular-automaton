@@ -7,7 +7,7 @@ def cython_from_cpp(name):
 
 ## \brief   Generate names of auxiliary classes that will be constructed (internal use only).
 def files(conf):
-  cpp_class    = "CAM::cellular_automaton< " + conf.array_def + " >"
+  cpp_class    = "CAM::cellular_automaton< " + conf.nx + ", std::vector<unsigned int> >"
   cython_file  = cpp_class + "_deb" if conf.debug_mode else cpp_class + "_rel"
   cython_file  = re.sub(' ', '', cython_file)
   cython_file  = "mod" + str(hashlib.sha256(cython_file.encode('utf-8')).hexdigest())

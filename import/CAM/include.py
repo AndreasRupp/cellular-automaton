@@ -11,7 +11,7 @@ from .paths import main_dir
 def include(conf):
   start_time = datetime.datetime.now()
   # Check that conf is appropriatelly filled.
-  assert isinstance(conf, config)# and consistent(conf)
+  assert isinstance(conf, config) #and consistent(conf)
 
   # Start program.
   options = get_options()
@@ -34,11 +34,10 @@ def include(conf):
   # Evaluate configfile, define include files, and define dependent files.
   cy_replace = generate_cy_replace(conf)
   cpp_class, python_class, cython_class = files(conf)
-  # if conf.cpp_code == "":
-  #   include_string = extract_includes(conf)
-  # else:
-  #   include_string = extract_includes(conf, main_dir()+"/build/cython_files/"+python_class+".hxx")
-  include_string = ""
+  if conf.cpp_code == "":
+    include_string = extract_includes(conf)
+  else:
+    include_string = extract_includes(conf, main_dir()+"/build/cython_files/"+python_class+".hxx")
 
   compilation_necessary = need_compile(conf, python_class, options)
   if compilation_necessary:
