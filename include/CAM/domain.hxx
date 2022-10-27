@@ -89,8 +89,7 @@ static constexpr unsigned int skeleton_distance(const fields_array_t& domain_a,
  * \param   init_index     Temporary index in current slice
  **************************************************************************************************/
 template <auto nx, typename fields_array_t>
-void print_1d(const fields_array_t& particles,
-              unsigned int init_index = 0)
+void print_1d(const fields_array_t& particles, unsigned int init_index = 0)
 {
   const unsigned int len_numbers = std::log10(particles.size() - 1) + 1;
   unsigned int index;
@@ -115,8 +114,7 @@ void print_1d(const fields_array_t& particles,
  * \param   init_index     Temporary index in current slice
  **************************************************************************************************/
 template <auto nx, unsigned int n_dim, typename fields_array_t>
-void print_n_dim(const fields_array_t& particles,
-                 unsigned int init_index = 0)
+void print_n_dim(const fields_array_t& particles, unsigned int init_index = 0)
 {
   if constexpr (n_dim == 1)
     print_1d<nx>(particles, init_index);
