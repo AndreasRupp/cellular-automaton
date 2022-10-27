@@ -73,9 +73,16 @@ In addition to the terms imposed by the LGPL v2.1 or later, we ask for the follo
     restructuring in porous media***  
 >   Advances in Water Resources, doi: [10.1016/j.advwatres.2017.04.001](
     https://doi.org/10.1016/j.advwatres.2017.04.001)
+> - A. Rupp, M. Gahn, and G. Kanschat  
+> ***Partial differential equations on hypergraphs and networks of surfaces: Derivation and hybrid
+  discretizations***  
+> ESAIM: Mathematical Modelling and Numerical Analysis, doi: [10.1051/m2an/2022011](
+  https://doi.org/10.1051/m2an/2022011)
 
 This is the usual, fair way of giving credit to contributors to a scientific result. In addition, it
-helps us justify our effort in developing CAM as an academic undertaking.
+helps us justify our effort in developing CAM as an academic undertaking. The last publication
+refers to HyperHDG(https://github.com/HyperHDG/), from which we borrowed the just-in-time C++
+compilation.
 
 
 ## Contact
