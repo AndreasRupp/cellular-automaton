@@ -5,7 +5,7 @@ from .paths import main_dir
 
 ## \brief   Object that comprises all information for HyperHDG to create a problem.
 class config:
-  nx                  = ""
+  nx                  = []
   cython_replacements = []
   cpp_code            = ""
   include_files       = []
@@ -14,8 +14,11 @@ class config:
 ## \brief   Check that config is consistent.
 def consistent(conf):
   assert isinstance(conf, config)
-  if not (isinstance(conf.nx, str) and conf.nx != ""):
+  if not (isinstance(conf.nx, list) and conf.nx != ""):
      return False
+  for entry in conf.nx:
+    if not isinstance(entry, int) or entry < 0:
+      return False
   if not isinstance(conf.cpp_code, str):
     return False
   if not isinstance(conf.debug_mode, bool):

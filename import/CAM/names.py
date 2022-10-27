@@ -7,10 +7,14 @@ def cython_from_cpp(name):
 
 ## \brief   Generate names of auxiliary classes that will be constructed (internal use only).
 def files(conf):
-  cpp_class    = "CAM::cellular_automaton< " + conf.nx + ", std::vector<unsigned int> >"
+  nx_string    = "std::array<unsigned int, " + str(len(conf.nx)) + ">({"
+  for nx_dim in conf.nx:
+    nx_string = nx_string + str(nx_dim) + ","
+  nx_string    = nx_string[:-1] + "})"
+  cpp_class    = "CAM::cellular_automaton< " + nx_string + ", std::vector<unsigned int> >"
   cython_file  = cpp_class + "_deb" if conf.debug_mode else cpp_class + "_rel"
   cython_file  = re.sub(' ', '', cython_file)
   cython_file  = "mod" + str(hashlib.sha256(cython_file.encode('utf-8')).hexdigest())
   cython_file  = re.sub('\+|\-|\*|\/|<|>|\,|\:', '_', cython_file)
   cython_class = cython_file + "CP"
-  return cpp_class, cython_file, cython_class
+  return nx_string, cpp_class, cython_file, cython_class

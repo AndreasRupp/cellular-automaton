@@ -20,7 +20,7 @@ def cam_test(debug_mode=False):
     import CAM
   
   const                 = CAM.config()
-  const.nx              = "std::array<unsigned int, 2>({10, 10})"
+  const.nx              = [10, 10]
   const.debug_mode      = debug_mode
 
   PyCAM = CAM.include(const)

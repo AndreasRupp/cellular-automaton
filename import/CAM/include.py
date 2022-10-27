@@ -33,7 +33,7 @@ def include(conf):
 
   # Evaluate configfile, define include files, and define dependent files.
   cy_replace = generate_cy_replace(conf)
-  cpp_class, python_class, cython_class = files(conf)
+  nx_string, cpp_class, python_class, cython_class = files(conf)
   if conf.cpp_code == "":
     include_string = extract_includes(conf)
   else:
@@ -50,6 +50,7 @@ def include(conf):
       content = re.sub("CythonClassName", cython_class, content)
       content = re.sub("PythonClassName", python_class, content)
       content = re.sub("IncludeFiles", include_string, content)
+      content = re.sub("NX_string", nx_string, content)
       for i in range(len(cy_replace)):
         content = re.sub("CyReplace" + '%02d' % (i+1), cy_replace[i], content)
       with open(main_dir() + "/build/cython_files/" + python_class + "." + file_end, "w") as file:
