@@ -81,7 +81,7 @@ In addition to the terms imposed by the LGPL v2.1 or later, we ask for the follo
 
 This is the usual, fair way of giving credit to contributors to a scientific result. In addition, it
 helps us justify our effort in developing CAM as an academic undertaking. The last publication
-refers to HyperHDG(https://github.com/HyperHDG/), from which we borrowed the just-in-time C++
+refers to [HyperHDG](https://github.com/HyperHDG/), from which we borrowed the just-in-time C++
 compilation.
 
 
