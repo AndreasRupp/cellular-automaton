@@ -88,9 +88,8 @@ static constexpr unsigned int skeleton_distance(const fields_array_t& domain_a,
  * \param   nx             Nx dimension and size
  * \param   init_index     Temporary index in current slice
  **************************************************************************************************/
-template <typename fields_array_t, std::size_t dim>
+template <auto nx, typename fields_array_t>
 void print_1d(const fields_array_t& particles,
-              const std::array<unsigned int, dim>& nx,
               unsigned int init_index = 0)
 {
   const unsigned int len_numbers = std::log10(particles.size() - 1) + 1;
@@ -115,22 +114,19 @@ void print_1d(const fields_array_t& particles,
  * \param   nx             Nx dimension and size
  * \param   init_index     Temporary index in current slice
  **************************************************************************************************/
-template <unsigned int n_dim, typename fields_array_t, std::size_t dim>
+template <auto nx, unsigned int n_dim, typename fields_array_t>
 void print_n_dim(const fields_array_t& particles,
-                 const std::array<unsigned int, dim>& nx,
                  unsigned int init_index = 0)
 {
   if constexpr (n_dim == 1)
-  {
-    print_1d(particles, nx, init_index);
-  }
+    print_1d<nx>(particles, init_index);
   else
   {
-    if (n_dim == 2 && dim > 2)
+    if (n_dim == 2 && nx.size() > 2)
     {
       unsigned int coord_i_helper = init_index;
       std::cout << std::endl;
-      for (unsigned int i = 3; i < dim + 1; ++i)
+      for (unsigned int i = 3; i < nx.size() + 1; ++i)
       {
         coord_i_helper = coord_i_helper / nx[i - 2];
         std::cout << i;
@@ -147,7 +143,7 @@ void print_n_dim(const fields_array_t& particles,
       std::cout << std::endl;
     }
     for (unsigned int i = 0; i < nx[n_dim - 1]; ++i)
-      print_n_dim<n_dim - 1>(particles, nx, (init_index + i) * nx[n_dim - 2]);
+      print_n_dim<nx, n_dim - 1>(particles, (init_index + i) * nx[n_dim - 2]);
   }
 }
 /*!*************************************************************************************************
@@ -156,10 +152,10 @@ void print_n_dim(const fields_array_t& particles,
  * \param   particles      Particle index and size
  * \param   nx             Nx dimension and size
  **************************************************************************************************/
-template <typename fields_array_t, std::size_t dim>
-void print_array(const fields_array_t& particles, const std::array<unsigned int, dim>& nx)
+template <auto nx, typename fields_array_t>
+void print_array(const fields_array_t& particles)
 {
-  print_n_dim<dim>(particles, nx);
+  print_n_dim<nx, nx.size()>(particles);
 }
 
 }  // end of namespace CAM

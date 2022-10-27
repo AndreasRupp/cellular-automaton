@@ -27,7 +27,7 @@ def cam_test(debug_mode=False):
   CAM_wrapper = PyCAM( 0.7, 5 )
 
   helper = CAM_wrapper.move_particles()
-  CAM_wrapper.print_state()
+  CAM_wrapper.print_array(helper)
   
   end_time = datetime.now()
   print("Program ended at", end_time, "after", end_time-start_time)

@@ -28,11 +28,7 @@ template <auto nx, typename fields_array_t = std::array<unsigned int, n_fields<n
 class cellular_automaton
 {
  public:
-  void print_state()
-  {
-    print_array(fields_, nx);
-  }
-
+  
   static constexpr unsigned int n_fields_ = n_fields<nx>();
 
  private:

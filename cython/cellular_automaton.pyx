@@ -8,5 +8,5 @@ cdef class PythonClassName :
     del self.thisptr
   def move_particles(self):
     return self.thisptr.move_particles ()
-  def print_state(self):
-    self.thisptr.print_state ()
+  def print_array(self, vec):
+    print_array (vec)
