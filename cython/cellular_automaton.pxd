@@ -10,3 +10,4 @@ cdef extern from "<CAM/cellular_automaton.hxx>" :
 
 cdef extern from "<CAM/domain.hxx>" :
   void print_array "CAM::print_array<NX_string>" (const vector[ unsigned int ]&)
+  unsigned int bulk_distance "CAM::bulk_distance" (const vector[ unsigned int]&, const vector[ unsigned int ]&)
