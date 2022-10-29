@@ -8,6 +8,8 @@ cdef class PythonClassName :
     del self.thisptr
   def move_particles(self):
     return self.thisptr.move_particles ()
+  def fields(self):
+    return self.thisptr.fields ()
   def print_array(self, vec):
     print_array (vec)
   def bulk_distance(self, vec_a, vec_b):

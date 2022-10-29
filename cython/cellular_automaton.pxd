@@ -7,6 +7,7 @@ cdef extern from "<CAM/cellular_automaton.hxx>" :
   cdef cppclass CythonClassName C++ClassName :
     CythonClassName ( const double , const double ) except +
     const vector[ unsigned int ]& move_particles ()
+    const vector[ unsigned int ]& fields ()
 
 cdef extern from "<CAM/domain.hxx>" :
   void print_array "CAM::print_array<NX_string>" (const vector[ unsigned int ]&)
