@@ -10,7 +10,9 @@ cdef class PythonClassName :
     return self.thisptr.move_particles ()
   def fields(self):
     return self.thisptr.fields ()
-  def print_array(self, vec):
+  @staticmethod
+  def print_array(vec):
     print_array (vec)
-  def bulk_distance(self, vec_a, vec_b):
+  @staticmethod
+  def bulk_distance(vec_a, vec_b):
     return bulk_distance(vec_a, vec_b)

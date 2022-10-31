@@ -31,7 +31,6 @@ def main(debug_mode):
   const.nx         = [nx, nx]
   const.debug_mode = debug_mode
   PyCAM            = CAM.include(const)
-  CAM_wrapper      = PyCAM( 0, 0 )
 
   # ------------------------------------------------------------------------------------------------
   def run_cam(jump_size, nx, debug_mode=False):
@@ -60,7 +59,7 @@ def main(debug_mode):
 
   for iter in range(n_iter):
     data[iter] = run_cam(5, nx, debug_mode)
-  func = cil.estimator( data, radii, CAM_wrapper.bulk_distance, [20] * 5 )
+  func = cil.estimator( data, radii, PyCAM.bulk_distance, [20] * 5 )
 
   for jump_size in range(10):
     for iter in range(n_iter):
