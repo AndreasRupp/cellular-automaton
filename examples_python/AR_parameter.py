@@ -4,7 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from datetime import datetime
 
-import cil_estimator as cil
+from cil_estimator import estimator as cil
 
 import os, sys
   
@@ -59,7 +59,7 @@ def main(debug_mode):
 
   for iter in range(n_iter):
     data[iter] = run_cam(5, nx, debug_mode)
-  func = cil.estimator( data, radii, PyCAM.bulk_distance, [20] * 5 )
+  func = cil( data, radii, PyCAM.bulk_distance, [20] * 5 )
 
   for jump_size in range(10):
     for iter in range(n_iter):
