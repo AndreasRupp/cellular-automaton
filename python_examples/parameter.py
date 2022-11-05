@@ -26,7 +26,7 @@ def main(debug_mode):
     import cil_estimator as cil
   except (ImportError, ModuleNotFoundError) as error:
     print("No installed cil_estimator package found! Using local cil_estimator.")
-    sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/../../cil_estimator.git")
+    sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/../submodules/cil_estimator.git")
     import cil_estimator as cil
 
   nx = 50                                 # Size of considered domain!
