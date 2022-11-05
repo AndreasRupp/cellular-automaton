@@ -21,8 +21,8 @@
 %  This allows to run all MATLAB functions of CAM. These MATLAB functions
 %  take care of compiling and running respective C++ functions, in which
 %  the actual work is done.
-addpath('mex/CAM');
-addpath('matlab_functions');
+addpath('../mex/CAM');
+addpath('../matlab_functions');
 
 %% Define the arguments of the run_cam function.
 %  This example illustrates how to run the run_cam function, see the file

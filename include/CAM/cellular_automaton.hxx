@@ -8,53 +8,31 @@
 #include <random>
 #include <vector>
 
+#include <CAM/domain.hxx>
+
 namespace CAM
 {
-
-static constexpr unsigned int n_fields(const auto nx)
-{
-  unsigned int n_field = 1;
-  for (unsigned int i = 0; i < nx.size(); ++i)
-    n_field *= nx[i];
-  return n_field;
-}
-
 /*!*************************************************************************************************
  * \brief   This class implements a cellular automaton.
  *
  * CAM illustrates the behaviour of particles in domain.
  *
- * \tparam  nx       The size of a row for each dimension of the matrix.
+ * \tparam  nx              The size of a row for each dimension of the matrix
+ * \tparam  n_fields        Size of the domain
  *
  * \authors   Andreas Rupp, Lappeenranta-Lahti University of Technology LUT, 2022.
  * \authors   Joona Lappalainen, Lappeenranta-Lahti University of Technology LUT, 2022.
  * \authors   Simon Zech, University of Erlangen–Nuremberg, 2022.
  **************************************************************************************************/
-template <auto nx, typename fields_array_t = std::array<unsigned int, n_fields(nx)> >
+template <auto nx, typename fields_array_t = std::array<unsigned int, n_fields<nx>()> >
 class cellular_automaton
 {
  public:
-  static constexpr unsigned int n_fields_ = n_fields(nx);
+  static constexpr unsigned int n_fields_ = n_fields<nx>();
 
  private:
   static constexpr unsigned int dim = nx.size();
-  static constexpr std::array<int, 2 * dim> find_neigh()
-  {
-    static_assert(dim != 0, "Dimension of zero does not make sense.");
-    std::array<int, 2 * dim> direct_neigh;
-    direct_neigh[0] = -1;
-    direct_neigh[1] = 1;
-    for (unsigned int i = 0; i < dim - 1; ++i)
-    {
-      direct_neigh[2 * i + 2] = direct_neigh[2 * i] * nx[i];
-      direct_neigh[2 * i + 3] = direct_neigh[2 * i + 1] * nx[i];
-    }
-    return direct_neigh;
-  }
-  /*!***********************************************************************************************
-   * \brief   Array containing tentative index shifts of direct neighbors.
-   ************************************************************************************************/
-  static constexpr std::array<int, 2 * dim> direct_neigh_ = find_neigh();
+
   /*!***********************************************************************************************
    * \brief   Maximum unsigned integer.
    ************************************************************************************************/
@@ -63,27 +41,6 @@ class cellular_automaton
    * \brief   Smallest (negative) double.
    ************************************************************************************************/
   static constexpr double double_min = std::numeric_limits<double>::lowest();
-
-  /*!***********************************************************************************************
-   * \brief   Find field if one moves from position to move.
-   *
-   * \param   position  Current position of field that may move.
-   * \param   move      Index shift induced by possible move.
-   * \retval  index     Index of move target.
-   ************************************************************************************************/
-  static inline unsigned int aim(const unsigned int position, const int move)
-  {
-    unsigned int coord;
-    unsigned int new_pos = 0;
-    for (unsigned int i = 0; i < dim; ++i)
-    {
-      coord =
-        (position / direct_neigh_[2 * i + 1] + move / (int)direct_neigh_[2 * i + 1] + n_fields_) %
-        nx[i];
-      new_pos += coord * direct_neigh_[2 * i + 1];
-    }
-    return new_pos;
-  }
 
   // -----------------------------------------------------------------------------------------------
 
@@ -111,7 +68,12 @@ class cellular_automaton
      * \brief   Domain of the particle.
      **********************************************************************************************/
     cellular_automaton<nx, fields_array_t>& domain_;
-
+    /*!*********************************************************************************************
+     * \brief   Find the longest shortest path inside particle.
+     *
+     * \param   field            Location of the single particle
+     * \retval  max_distance     Length of the path
+     **********************************************************************************************/
     unsigned int max_min_distance(unsigned int field)
     {
       unsigned int max_distance = 0;
@@ -125,7 +87,7 @@ class cellular_automaton
         field = visits[i];
         for (unsigned int j = 0; j < 2 * dim; ++j)
         {
-          neigh_field = aim(field, direct_neigh_[j]);
+          neigh_field = aim<nx>(field, direct_neigh<nx>(j));
           if (domain_fields[neigh_field] == number_)
           {
             visits.push_back(neigh_field);
@@ -138,7 +100,12 @@ class cellular_automaton
                     [&](const unsigned int field_loc) { domain_fields[field_loc] = number_; });
       return max_distance;
     }
-
+    /*!*********************************************************************************************
+     * \brief   Find the longest amount of moves in certain direction inside particle.
+     *
+     * \param   dir_dim          Certain dimension
+     * \retval  max_distance     Amount of moves
+     **********************************************************************************************/
     unsigned int directed_max_min_distance(unsigned int dir_dim)
     {
       unsigned int max_distance = 0, field = fields_[0];
@@ -153,7 +120,7 @@ class cellular_automaton
         field = visits[i];
         for (unsigned int j = 0; j < 2 * dim; ++j)
         {
-          neigh_field = aim(field, direct_neigh_[j]);
+          neigh_field = aim<nx>(field, direct_neigh<nx>(j));
           if (domain_fields[neigh_field] == number_)
           {
             visits.push_back(neigh_field);
@@ -239,12 +206,16 @@ class cellular_automaton
                     [&](const unsigned int field)
                     {
                       for (unsigned int i = 0; i < 2 * dim; ++i)
-                        if (domain_fields[aim(field, direct_neigh_[i])] == 0)
+                        if (domain_fields[aim<nx>(field, direct_neigh<nx>(i))] == 0)
                           ++n_surfaces;
                     });
       return n_surfaces;
     }
-
+    /*!*********************************************************************************************
+     * \brief   Find the longest shortest path inside domain.
+     *
+     * \retval  max_distance     Length of the path.
+     **********************************************************************************************/
     unsigned int max_min_distance()
     {
       fields_array_t& domain_fields = domain_.fields_;
@@ -264,7 +235,7 @@ class cellular_automaton
             continue;
           for (unsigned int j = 0; j < 2 * dim; ++j)
           {
-            neigh_field = aim(starts[i], direct_neigh_[j]);
+            neigh_field = aim<nx>(starts[i], direct_neigh<nx>(j));
             if (domain_fields[neigh_field] == number_ &&
                 std::find(starts.begin(), starts.end(), neigh_field) == starts.end())
               starts.push_back(neigh_field);
@@ -286,7 +257,11 @@ class cellular_automaton
 
       return max_distance;
     }
-
+    /*!*********************************************************************************************
+     * \brief   Calculate the ratio of diameters for every dimension.
+     *
+     * \retval  max_diameter / min_diameter      Max dimension ratio.
+     **********************************************************************************************/
     double max_dimension_ratio()
     {
       std::array<unsigned int, dim> width_dim;
@@ -370,9 +345,9 @@ class cellular_automaton
       {
         for (; index < old_size; ++index)
           for (unsigned int i = 0; i < 2 * dim; ++i)
-            if (std::find(stencil.begin(), stencil.end(), stencil[index] + direct_neigh_[i]) ==
+            if (std::find(stencil.begin(), stencil.end(), stencil[index] + direct_neigh<nx>(i)) ==
                 stencil.end())
-              stencil.push_back(stencil[index] + direct_neigh_[i]);
+              stencil.push_back(stencil[index] + direct_neigh<nx>(i));
         old_size = stencil.size();
       }
       return stencil;
@@ -395,9 +370,9 @@ class cellular_automaton
       {
         for (; index < old_size; ++index)
           for (unsigned int i = 0; i < 2 * dim; ++i)
-            if (std::find(stencil.begin(), stencil.end(), stencil[index] + direct_neigh_[i]) ==
+            if (std::find(stencil.begin(), stencil.end(), stencil[index] + direct_neigh<nx>(i)) ==
                 stencil.end())
-              stencil.push_back(stencil[index] + direct_neigh_[i]);
+              stencil.push_back(stencil[index] + direct_neigh<nx>(i));
         old_size = stencil.size();
       }
       return stencil;
@@ -414,12 +389,12 @@ class cellular_automaton
       const fields_array_t& domain_fields = domain_.fields_;
       for (unsigned int i = 0; i < fields_.size(); ++i)
       {
-        unsigned int aiming = aim(fields_[i], move);
+        unsigned int aiming = aim<nx>(fields_[i], move);
         if (domain_fields[aiming] != number_ && domain_fields[aiming] != 0)
           return double_min;
         for (unsigned int i = 0; i < 2 * dim; ++i)
-          attraction += domain_fields[aim(aiming, direct_neigh_[i])] != number_ &&
-                        domain_fields[aim(aiming, direct_neigh_[i])] != 0;
+          attraction += domain_fields[aim<nx>(aiming, direct_neigh<nx>(i))] != number_ &&
+                        domain_fields[aim<nx>(aiming, direct_neigh<nx>(i))] != 0;
       }
       return attraction;
     }
@@ -434,12 +409,12 @@ class cellular_automaton
     {
       double attraction = 0.;
       fields_array_t& domain_fields = domain_.fields_;
-      unsigned int aiming = aim(field, move);
+      unsigned int aiming = aim<nx>(field, move);
       if (domain_fields[aiming] != 0 && move != 0)
         return double_min;
       domain_fields[field] = 0;
       for (unsigned int i = 0; i < 2 * dim; ++i)
-        attraction += domain_fields[aim(aiming, direct_neigh_[i])] != 0;
+        attraction += domain_fields[aim<nx>(aiming, direct_neigh<nx>(i))] != 0;
       domain_fields[field] = number_;
       return attraction;
     }
@@ -456,7 +431,7 @@ class cellular_automaton
                     [&](unsigned int& field)
                     {
                       domain_fields[field] -= number_;
-                      field = aim(field, move);
+                      field = aim<nx>(field, move);
                       domain_fields[field] += number_;
                     });
     }
@@ -471,7 +446,7 @@ class cellular_automaton
       fields_array_t& domain_fields = domain_.fields_;
 
       domain_fields[field] -= number_;
-      field = aim(field, move);
+      field = aim<nx>(field, move);
       domain_fields[field] += number_;
     }
     /*!*********************************************************************************************
@@ -499,7 +474,7 @@ class cellular_automaton
         field = new_fields[k];
         for (unsigned int i = 0; i < 2 * dim; ++i)
         {
-          neigh_field = aim(field, direct_neigh_[i]);
+          neigh_field = aim<nx>(field, direct_neigh<nx>(i));
           // If neigh_field is part of the same particle and it's already in new_fields.
           if (domain_fields[neigh_field] == number_ &&
               std::find(new_fields.begin(), new_fields.end(), neigh_field) == new_fields.end())
@@ -532,7 +507,7 @@ class cellular_automaton
         field = fields_[k];
         for (unsigned int i = 0; i < 2 * dim; ++i)
         {
-          neigh_field = aim(field, direct_neigh_[i]);
+          neigh_field = aim<nx>(field, direct_neigh<nx>(i));
           neigh_num = domain_fields[neigh_field];
           // If particle has a neighbour which is a part of a different particle.
           if (neigh_num == number_ || neigh_num == 0)
@@ -620,7 +595,7 @@ class cellular_automaton
     {
       static_assert(
         std::is_same<fields_array_t,
-                     std::array<typename fields_array_t::value_type, n_fields(nx)> >::value,
+                     std::array<typename fields_array_t::value_type, n_fields<nx>()> >::value,
         "The fields array has incorrect size");
       fields_.fill(0);
     }
@@ -683,15 +658,22 @@ class cellular_automaton
    * \brief   Evaluates measure parameters.
    *
    * Measure parameters:
-   * n_single_cells        number of single solid pixels without solid neighbours
-   * n_particles           number of solid particles, including single solid pixels
-   *                       and agglomorates of solid pixels
-   * n_solids              total number of solid pixels
-   * n_surfaces            total solid surface
-   * mean_particle_size    mean particle size
-   * n_connected_fluids    number of connected fluid
+   * n_single_cells                 number of cells that are not part of any larger agglomerate
+   * n_particles                    number of connected solid cells, including single cells and
+   *                                larger agglomerates
+   * n_solids                       total number of solid cells
+   * n_surfaces                     total number of faces between solid and fluid
+   * n_connected_fluids             number of connected fluids
+   * n_periodic_fluid_components    number of connected fluids which are periodic
+   * mean_particle_size             average particle size (n_solids / n_particles)
+   * variance_particle_sizes        variance of particle sizes
+   * compactness                    evaluates the degree of which a particle is compact
+   * max_max_min_distance           maximum over all particles with respect to the maximum of
+   *                                shortest distances between two solid cells within a particle
+   * mean_sphericity                sphericity rates how close a shape is to the perfect sphere
+   * max_diameters_ratio            maximum ratio of diameters with respect to one dimension
    *
-   * \retval  array     Array of measure parameters.
+   * \retval  array                 Array of measure parameters.
    ************************************************************************************************/
   std::array<double, 12> eval_measures()
   {
@@ -767,7 +749,8 @@ class cellular_automaton
   /*!***********************************************************************************************
    * \brief   Computes connected fluid areas.
    *
-   * \retval  n_connected_fluids     Number of connected fluid areas.
+   * \retval  n_fluid_comp      1st entry of array is connected fluid areas.
+   *                            2nd entry of array is periodic connected fluid areas.
    ************************************************************************************************/
   std::array<unsigned int, 2> n_fluid_comp()
   {
@@ -793,7 +776,7 @@ class cellular_automaton
         field = found_fluids[k];
         for (unsigned int i = 0; i < 2 * dim; ++i)
         {
-          neigh_field = aim(field, direct_neigh_[i]);
+          neigh_field = aim<nx>(field, direct_neigh<nx>(i));
           if (fields_[neigh_field] == 0)
           {
             fields_[neigh_field] = uint_max;
