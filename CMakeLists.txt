@@ -47,7 +47,7 @@ target_compile_features(
 )
 
 ## Add the examples subdirectory
-add_subdirectory(examples_cpp)
+add_subdirectory(cpp_examples)
 
 ## Add a namespaced alias target for the export
 add_library(CAM::CAM ALIAS CAM)
