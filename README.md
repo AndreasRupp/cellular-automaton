@@ -22,6 +22,9 @@ There is two ways of using CAM:
   Notably, for the MATLAB code to work smoothly in Ubuntu, you need to have `g++-10` installed,
   since it is currently the only compiler supporting both C++20 and MATLAB's supported libstdc++.
   In any case, you will also need `cmake`.
+- In `Python`, one has to import the module as illustrated in the Python examples. One has to run
+  `cmake` and obtain all submodules, or the `setup.sh` script to use the Python version of the code.
+  In any case, the selected compiler needs to be compatible with C++20.
 - In `C++`, one has to include the file `include/CAM/cellular_automaton.hxx`. Then, you can run the
   CAM as shown in `cpp_example.cxx` provided that you compile it using `-std=gnu++20`. A possible
   compilation command for the `cpp_example.cxx` is `clang++-12 -std=gnu++20 -Wall -Wextra -pedantic 
