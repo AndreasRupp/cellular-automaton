@@ -1,6 +1,5 @@
 from __future__ import print_function
 
-from scipy.stats import chi2
 import matplotlib.pyplot as plt
 from datetime import datetime
 
@@ -26,7 +25,8 @@ def main(debug_mode):
     import cil_estimator as cil
   except (ImportError, ModuleNotFoundError) as error:
     print("No installed cil_estimator package found! Using local cil_estimator.")
-    sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/../submodules/cil_estimator.git")
+    sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/../../cil_estimator.git")
+    # sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/../submodules/cil_estimator.git")
     import cil_estimator as cil
 
   nx = 50                                 # Size of considered domain!
@@ -53,13 +53,11 @@ def main(debug_mode):
     return CAM_wrapper.fields()
   # ------------------------------------------------------------------------------------------------
 
-  n_iter = 200
+  n_iter = 2000
   data   = [[0] * (nx * nx)] * n_iter
   values = [0] * 10
-  lower_bound = int(0.3*nx*nx)
-  upper_bound = int(0.3*nx*nx)
-  step        = 1
-  radii  = range(int(0.3*nx*nx),int(0.55*nx*nx),1)
+  radii          = range(int(0.375*nx*nx),int(0.475*nx*nx),5)
+  n_choose_radii = 20
 
   for iter in range(n_iter):
     data[iter] = run_cam(5, nx, debug_mode)
@@ -67,30 +65,30 @@ def main(debug_mode):
   end_time = datetime.now()
   print("CAM data acquired at", end_time, "after", end_time-start_time)
 
-  func = cil.estimator(data, radii, PyCAM.bulk_distance, [10] * 20)
+  func = cil.estimator(data, radii, PyCAM.bulk_distance, [40] * 50)
 
-  fig, ax = plt.subplots(nrows=1, ncols=2, figsize=(18, 5))
-  ax[0] = cil.plot_correlation_vectors(func, ax[0])
-  ax[0] = cil.plot_mean_vector(func, ax[0])
+  fig, ax = plt.subplots(nrows=2, ncols=2, figsize=(18, 5))
+  ax[0,0] = cil.plot_correlation_vectors(func, ax[0,0])
+  ax[0,0] = cil.plot_mean_vector(func, ax[0,0])
+  ax[1,0] = cil.plot_chi2_test(func, ax[1,0], 20)
 
-  func.choose_radii(10, min_value_shift=0.1, max_value_shift=-0.1)
+  func.choose_radii(n_choose_radii, min_value_shift=0.1, max_value_shift=-0.1)
   
-  ax[0] = cil.plot_correlation_vectors(func, ax[0], 'r.')
+  ax[0,0] = cil.plot_correlation_vectors(func, ax[0,0], 'r.')
+  ax[1,1] = cil.plot_chi2_test(func, ax[1,1])
   
   end_time = datetime.now()
   print("Objective function setup at", end_time, "after", end_time-start_time)
 
-  for jump_size in range(len(values)):
-    for iter in range(n_iter):
-      data[iter] = run_cam(jump_size, nx, debug_mode)
-    values[jump_size] = func.evaluate( data )
+  # for jump_size in range(len(values)):
+  #   for iter in range(n_iter):
+  #     data[iter] = run_cam(jump_size, nx, debug_mode)
+  #   values[jump_size] = func.evaluate( data )
 
-  
   end_time = datetime.now()
   print("Program ended at", end_time, "after", end_time-start_time)
   
-
-  ax[1].plot(range(len(values)), values, 'ro')
+  ax[0,1].plot(range(len(values)), values, 'ro')
   plt.show()
 
 
