@@ -80,10 +80,10 @@ def main(debug_mode):
   end_time = datetime.now()
   print("Objective function setup at", end_time, "after", end_time-start_time)
 
-  # for jump_size in range(len(values)):
-  #   for iter in range(n_iter):
-  #     data[iter] = run_cam(jump_size, nx, debug_mode)
-  #   values[jump_size] = func.evaluate( data )
+  for jump_size in range(len(values)):
+    for iter in range(n_iter):
+      data[iter] = run_cam(jump_size, nx, debug_mode)
+    values[jump_size] = func.evaluate( data )
 
   end_time = datetime.now()
   print("Program ended at", end_time, "after", end_time-start_time)
