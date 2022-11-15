@@ -35,15 +35,17 @@ def main(debug_mode):
   try:
     import CAM
   except (ImportError, ModuleNotFoundError) as error:
-    sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/../import")
+    sys.path.append(os.path.dirname(os.path.abspath(__file__)) + os.sep  + ".." + os.sep + "import")
     import CAM
 
   try:
     import cil_estimator as cil
   except (ImportError, ModuleNotFoundError) as error:
     print("No installed cil_estimator package found! Using local cil_estimator.")
-    # sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/../../cil_estimator.git")
-    sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/../submodules/cil_estimator.git")
+    # sys.path.append(os.path.dirname(os.path.abspath(__file__)) + os.sep + ".." + os.sep + ".." +
+    #   os.sep + "cil_estimator.git")
+    sys.path.append(os.path.dirname(os.path.abspath(__file__)) + os.sep + ".." + os.sep +
+      "submodules" + os.sep + "cil_estimator.git")
     import cil_estimator as cil
 
   const            = CAM.config()

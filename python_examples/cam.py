@@ -15,7 +15,7 @@ def cam_test(debug_mode=False):
   try:
     import CAM
   except (ImportError, ModuleNotFoundError) as error:
-    sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/../import")
+    sys.path.append(os.path.dirname(os.path.abspath(__file__)) + os.sep  + ".." + os.sep + "import")
     import CAM
   
   const                 = CAM.config()
