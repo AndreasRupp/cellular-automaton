@@ -1,3 +1,6 @@
 [submodule "submodules/doxymatlab.git"]
 	path = submodules/doxymatlab.git
 	url = https://github.com/simgunz/doxymatlab.git
+[submodule "submodules/ecdf_estimator.git"]
+	path = submodules/ecdf_estimator.git
+	url = https://github.com/AndreasRupp/ecdf_estimator
