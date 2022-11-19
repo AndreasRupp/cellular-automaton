@@ -81,7 +81,7 @@ def main(debug_mode):
   ax[0,0] = ecdf.plot_mean_vector(func, ax[0,0])
   ax[1,0] = ecdf.plot_chi2_test(func, ax[1,0], 20)
 
-  func.choose_bins(n_choose_bins, min_value_shift, max_value_shift, "uniform_x")
+  func.choose_bins(n_choose_bins, min_value_shift, max_value_shift)
   
   ax[0,0] = ecdf.plot_ecdf_vectors(func, ax[0,0], 'r.')
   ax[1,1] = ecdf.plot_chi2_test(func, ax[1,1])
