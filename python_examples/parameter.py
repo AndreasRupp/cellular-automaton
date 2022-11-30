@@ -19,11 +19,11 @@ def main(debug_mode):
 
   nf = np.prod(nx)
 
-  # Configure the CIL method.
+  # Configure the eCDF method.
   n_iter          = 2000                                        # Number of dataset sizes.
   values          = [0] * 10                                    # Length defines tested jump_param.
-  radii           = range(int(0.375*nf),int(0.475*nf),5)        # All radii that are checked.
-  n_choose_radii  = 20                                          # Number of selected radii for algo.
+  bins            = range(int(0.375*nf),int(0.475*nf),5)        # All radii that are checked.
+  n_choose_bins   = 20                                          # Number of selected radii for algo.
   subset_sizes    = [40] * 50                                   # Multiplies to n_iter!
   min_value_shift = 0.1                                         # Cutoff value for small values.
   max_value_shift = -0.1                                        # 1 + "cutoff value for large val."
@@ -35,16 +35,18 @@ def main(debug_mode):
   try:
     import CAM
   except (ImportError, ModuleNotFoundError) as error:
-    sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/../import")
+    sys.path.append(os.path.dirname(os.path.abspath(__file__)) + os.sep  + ".." + os.sep + "import")
     import CAM
 
   try:
-    import cil_estimator as cil
+    import ecdf_estimator as ecdf
   except (ImportError, ModuleNotFoundError) as error:
-    print("No installed cil_estimator package found! Using local cil_estimator.")
-    # sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/../../cil_estimator.git")
-    sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/../submodules/cil_estimator.git")
-    import cil_estimator as cil
+    print("No installed ecdf_estimator package found! Using local ecdf_estimator.")
+    # sys.path.append(os.path.dirname(os.path.abspath(__file__)) + os.sep + ".." + os.sep + ".." +
+    #   os.sep + "ecdf_estimator.git")
+    sys.path.append(os.path.dirname(os.path.abspath(__file__)) + os.sep + ".." + os.sep +
+      "submodules" + os.sep + "ecdf_estimator.git")
+    import ecdf_estimator as ecdf
 
   const            = CAM.config()
   const.nx         = nx
@@ -72,17 +74,17 @@ def main(debug_mode):
   end_time = datetime.now()
   print("CAM data acquired at", end_time, "after", end_time-start_time)
 
-  func = cil.estimator(data, radii, PyCAM.bulk_distance, subset_sizes)
+  func = ecdf.estimator(data, bins, PyCAM.bulk_distance, subset_sizes)
 
   fig, ax = plt.subplots(nrows=2, ncols=2, figsize=(18, 5))
-  ax[0,0] = cil.plot_correlation_vectors(func, ax[0,0])
-  ax[0,0] = cil.plot_mean_vector(func, ax[0,0])
-  ax[1,0] = cil.plot_chi2_test(func, ax[1,0], 20)
+  ax[0,0] = ecdf.plot_ecdf_vectors(func, ax[0,0])
+  ax[0,0] = ecdf.plot_mean_vector(func, ax[0,0])
+  ax[1,0] = ecdf.plot_chi2_test(func, ax[1,0], 20)
 
-  func.choose_radii(n_choose_radii, min_value_shift, max_value_shift)
+  func.choose_bins(n_choose_bins, min_value_shift, max_value_shift)
   
-  ax[0,0] = cil.plot_correlation_vectors(func, ax[0,0], 'r.')
-  ax[1,1] = cil.plot_chi2_test(func, ax[1,1])
+  ax[0,0] = ecdf.plot_ecdf_vectors(func, ax[0,0], 'r.')
+  ax[1,1] = ecdf.plot_chi2_test(func, ax[1,1])
   
   end_time = datetime.now()
   print("Objective function setup at", end_time, "after", end_time-start_time)
