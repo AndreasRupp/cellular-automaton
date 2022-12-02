@@ -17,6 +17,12 @@ def cam_test(debug_mode=False):
   except (ImportError, ModuleNotFoundError) as error:
     sys.path.append(os.path.dirname(os.path.abspath(__file__)) + os.sep  + ".." + os.sep + "import")
     import CAM
+
+  try:
+    from plot import plot
+  except (ImportError, ModuleNotFoundError) as error:
+    sys.path.append(os.path.dirname(os.path.abspath(__file__)) + os.sep  + ".." + os.sep + "python_functions")
+    from plot import plot
   
   const                 = CAM.config()
   const.nx              = [10, 10]
@@ -25,8 +31,9 @@ def cam_test(debug_mode=False):
   PyCAM = CAM.include(const)
   CAM_wrapper = PyCAM( 0.7, 5 )
 
-  helper = CAM_wrapper.move_particles()
-  CAM_wrapper.print_array(helper)
+  data = CAM_wrapper.move_particles()
+  CAM_wrapper.print_array(data)
+  plot(data)
   
   end_time = datetime.now()
   print("Program ended at", end_time, "after", end_time-start_time)
