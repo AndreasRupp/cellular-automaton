@@ -1,79 +1,103 @@
 import matplotlib.pyplot as plt
 from matplotlib import colors
 from mpl_toolkits.mplot3d import Axes3D
+import matplotlib
+matplotlib.use("TkAgg")
+import matplotlib.pyplot as plt
 import numpy as np
-import numpy.matlib
-import keyboard
-import math
+from tkinter import *
+from matplotlib.backends.backend_tkagg import (
+    FigureCanvasTkAgg, NavigationToolbar2Tk)
+# Implement the default Matplotlib key bindings.
+from matplotlib.backend_bases import key_press_handler
 
-def main():
-    axes = [5, 5]
-    data = np.ones(axes)
-    data[0][0] = 0
-    rate = 1
-    steps = 1
-
-    plot(axes, data, rate, steps)
-
-def plot(axes, data, rate, steps):
-    if rate == 0:
-        return
-
-    i = 0
-    while True:
-        # plt.title("Time step: " + str(i))
-        plot_update(axes, data)
-        event = keyboard.read_event()
-        if event.event_type == "down":
-            match event.name:
-                case "1":
-                    i = (i + 1) % steps
-                case "2":
-                    i = (i - 1) % steps
-                case other:
-                    print("Kiitos ohjelman käytöstä.")
-                    return
  
-def plot_update(axes, data):
+def plot_update(axes, data, ax):
+  dim = np.size(axes)
+  if dim == 1:
+    axes[1] = 1
+    dim = 2
 
-    dim = np.size(axes)
-    if dim == 1:
-        axes[1] = 1
-        dim = 2
+  if dim == 2:
+    data = (data != 0)
+    cmap = colors.ListedColormap(['blue', 'red'])
+    # plt.figure(figsize=(6,6))
+    ax.pcolor(data[::-1],cmap=cmap,edgecolors='k', linewidths=3)
+    # ax.show()
+  elif dim == 3:
+    data = (data != 0)
+    Colors = np.empty(axes + [4], dtype=np.float32)
+    # Control Transparency
+    alpha = .9
+    Colors[:] = [0, 0, 1, alpha]
+    # fig = plt.figure(figsize=(6,6))
+    # ax = fig.add_subplot(111, projection='3d')
+    ax.voxels(data, facecolors=Colors, edgecolors='black')
+    # plt.show()
+  return ax
 
-    x = range(axes[0])
-    y = range(axes[1])
-    if dim == 3:
-        z = range(axes[2])
 
-    # ax.clear()
 
-    if dim == 2:
-        # x = np.matlib.repmat(range(0,np.size(data)-1) % axes[0], 5)
-        # x = x[(data != 0)][:]
-        # y = np.matlib.repmat(math.floor(range(0,np.size(data)-1)/axes[0]) % axes[1], 5)
-        # y = y[(data != 0)][:]
+def plot(axes, save_data, time_step):
+  if time_step < 0 or time_step >= len(save_data):
+    print("Time step for plotting does not exist!")
+    return
 
-        cmap = colors.ListedColormap(['blue', 'red'])
-        plt.figure(figsize=(6,6))
-        plt.pcolor(data[::-1],cmap=cmap,edgecolors='k', linewidths=3)
-        plt.show()
+  root = Tk()
+  animated_cam(root, axes, save_data, time_step)
+  root.mainloop()
 
-    if dim == 3:
-        # x = np.matlib.repmat(range(0,np.size(data)-1) % axes[0], 5)
-        # x = x[(data != 0)][:]
-        # y = np.matlib.repmat(math.floor(range(0,np.size(data)-1)/axes[0]) % axes[1], 5)
-        # y = y[(data != 0)][:]
-        # z = np.matlib.repmat(math.floor(range(0,np.size(data)-1)/(axes[0]*axes[1])) % axes[2], 5)
-        # z = z[(data != 0)][:]
 
-        Colors = np.empty(axes + [4], dtype=np.float32)
-        # Control Transparency
-        alpha = .9
-        Colors[:] = [0, 0, 1, alpha]
-        fig = plt.figure(figsize=(6,6))
-        ax = fig.add_subplot(111, projection='3d')
-        ax.voxels(data, facecolors=Colors, edgecolors='black')
-        plt.show()
+def config_plot():
+    fig, ax = plt.subplots()
+    ax.set(xlabel='time (s)', ylabel='voltage (mV)',
+           title='Graph One')
+    return (fig, ax)
 
-main()
+class animated_cam:
+  def __init__(self, master, axes, save_data, time_step):
+    self.master = master
+    self.frame = Frame(self.master)
+    self.fig, self.ax = config_plot()
+    self.canvas = FigureCanvasTkAgg(self.fig, self.master)  
+    self.config_window()
+    self.axes      = axes
+    self.save_data = save_data
+    self.time_step = time_step
+    self.n_steps   = len(save_data)
+    self.draw_cam()
+    self.frame.pack(expand=YES, fill=BOTH)
+
+  def config_window(self):
+    self.canvas.mpl_connect("key_press_event", self.on_key_press)
+    toolbar = NavigationToolbar2Tk(self.canvas, self.master)
+    toolbar.update()
+    self.canvas.get_tk_widget().pack(side=TOP, fill=BOTH, expand=1)
+    self.button = Button(self.master, text="Quit", command=self._quit)
+    self.button.pack(side=BOTTOM)
+    self.button_next = Button(self.master, text="Next", command=self.plot_next)
+    self.button_next.pack(side=BOTTOM)
+    self.button_prev = Button(self.master, text="Previous", command=self.plot_previous)
+    self.button_prev.pack(side=BOTTOM)
+
+  def draw_cam(self):
+    self.ax.clear() # clear current axes
+    data = self.save_data[self.time_step]
+    self.ax = plot_update(self.axes, np.reshape(data, self.axes), self.ax)
+    self.ax.set(title='Graph One')
+    self.canvas.draw()
+
+  def on_key_press(event):
+    print("you pressed {}".format(event.key))
+    key_press_handler(event, self.canvas, toolbar)
+
+  def _quit(self):
+    self.master.quit()  # stops mainloop
+
+  def plot_next(self):
+    self.time_step = (self.time_step + 1 ) % self.n_steps
+    self.draw_cam()
+
+  def plot_previous(self):
+    self.time_step = (self.time_step - 1 + self.n_steps ) % self.n_steps
+    self.draw_cam()
