@@ -95,23 +95,18 @@ def parameter_identification_test(nx, porosity, n_steps, jump_parameter, n_iter,
 # -------------------------------------------------------------------------------------------------- 
 if __name__ == "__main__":
 
-  # Configure the cellular automaton method (CAM).
-  nx             = [50, 50]
-  porosity       = 0.3
-  n_steps        = 5
-  jump_parameter = 5
+  test_name = 'basic_test'
 
-  nf = np.prod(nx)  # This is the number of fields in the CAM and can be derived from nx.
+  try:
+    import ecdf_test
+  except (ImportError, ModuleNotFoundError) as error:
+    sys.path.append(os.path.dirname(os.path.abspath(__file__)) + os.sep  + "parameters")
+    import ecdf_test
 
-  # Configure the eCDF method.
-  n_iter          = 2000                                        # Number of dataset sizes.
-  values          = [0] * 10                                    # Length defines tested jump_param.
-  bins            = range(int(0.375*nf),int(0.475*nf),5)        # All radii that are checked.
-  n_choose_bins   = 20                                          # Number of selected radii for algo.
-  subset_sizes    = [40] * 50                                   # Multiplies to n_iter!
-  min_value_shift = 0.1                                         # Cutoff value for small values.
-  max_value_shift = -0.1                                        # 1 + "cutoff value for large val."
-
+  used_test  = getattr(ecdf_test, test_name)
   debug_mode = len(sys.argv) > 1 and sys.argv[1] == "True"
-  parameter_identification_test(nx, porosity, n_steps, jump_parameter, n_iter, values, bins,
-    n_choose_bins, subset_sizes, min_value_shift, max_value_shift, debug_mode)
+  
+  parameter_identification_test(used_test.nx, used_test.porosity, used_test.n_steps,
+    used_test.jump_parameter, used_test.n_iter, used_test.values, used_test.bins,
+    used_test.n_choose_bins, used_test.subset_sizes, used_test.min_value_shift,
+    used_test.max_value_shift, debug_mode)
