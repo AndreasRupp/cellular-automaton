@@ -12,7 +12,8 @@ from matplotlib.backends.backend_tkagg import (
 from matplotlib.backend_bases import key_press_handler
 
  
-def plot_update(axes, data, ax):
+def plot_update(axes, data, ax=plt):
+  data = np.reshape(data, axes)
   dim = np.size(axes)
   if dim == 1:
     axes[1] = 1
@@ -21,7 +22,7 @@ def plot_update(axes, data, ax):
   if dim == 2:
     data = (data != 0)
     cmap = colors.ListedColormap(['white', 'k'])
-    ax.pcolor(data[::-1],cmap=cmap,edgecolors='b', linewidths=3)
+    ax.pcolor(data[::-1],cmap=cmap,edgecolors='b', linewidths=0)
   elif dim == 3:
     data = (data != 0)
     Colors = np.empty(axes + [4], dtype=np.float32)
@@ -85,8 +86,8 @@ class animated_cam:
   def draw_cam(self):
     self.ax.clear() # clear current axes
     data = self.save_data[self.time_step]
-    self.ax = plot_update(self.axes, np.reshape(data, self.axes), self.ax)
-    self.ax.set(title='Timestep: ' + str(self.time_step + 1))
+    self.ax = plot_update(self.axes, data, self.ax)
+    self.ax.set(title='Timestep: ' + str(self.time_step))
     self.ax.set_aspect('equal', 'box')
     self.ax.axis('off')
     self.canvas.draw()

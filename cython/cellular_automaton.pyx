@@ -2,8 +2,9 @@
 
 cdef class PythonClassName :
   cdef CythonClassName *thisptr # hold a C++ instance which we're wrapping
-  def __cinit__(self, porosity, jump_param):
-    self.thisptr = new CythonClassName (porosity, jump_param)
+  def __cinit__(self, porosity, jump_param_singles, jump_param_composites="default"):
+    if jump_param_composites == "default": jump_param_composites = jump_param_singles
+    self.thisptr = new CythonClassName (porosity, jump_param_singles, jump_param_composites)
   def __dealloc__(self):
     del self.thisptr
   def move_particles(self):
