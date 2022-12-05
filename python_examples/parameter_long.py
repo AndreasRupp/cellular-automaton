@@ -111,9 +111,9 @@ if __name__ == "__main__":
 
     domain_size = [5, 10 , 25, 50, 100] 
     sigma = [1,5,10,25,50]
+    items = []
 
     used_test = ecdf_test.ecdf_parameter()
-    items = []
     for i in range(len(domain_size)):
       used_test.nx = [domain_size[i],domain_size[i]]
       name = 'domainSize' + str(domain_size[i])
@@ -123,12 +123,7 @@ if __name__ == "__main__":
           used_test.max_value_shift, debug_mode, name)
       items.append(item)
 
-    with Pool() as pool:
-      pool.starmap(parameter_identification_test,items)
-
-
-    used_test = ecdf_test.ecdf_parameter()
-    items = []
+    used_test = ecdf_test.ecdf_parameter()  
     for i in range(len(sigma)):
       used_test.jump_parameter = sigma[i]
       name = 'Sigma' + str(sigma[i])
@@ -138,12 +133,7 @@ if __name__ == "__main__":
           used_test.max_value_shift, debug_mode, name)
       items.append(item)
 
-    with Pool() as pool:
-      pool.starmap(parameter_identification_test,items)
-
-
     used_test = ecdf_test.ecdf_parameter()
-    items = []  
     domain = []
     for i in range(5):
       domain.append(50)
@@ -154,6 +144,16 @@ if __name__ == "__main__":
           used_test.n_choose_bins, used_test.subset_sizes, used_test.min_value_shift,
           used_test.max_value_shift, debug_mode, name)
       items.append(item)
-      
+
     with Pool() as pool:
       pool.starmap(parameter_identification_test,items)
+
+
+    
+
+    
+
+
+   
+
+  
