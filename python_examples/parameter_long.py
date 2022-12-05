@@ -3,7 +3,7 @@ from __future__ import print_function
 import matplotlib.pyplot as plt
 import numpy as np
 from datetime import datetime
-
+from multiprocessing import Pool
 import os, sys
   
 
@@ -104,7 +104,7 @@ if __name__ == "__main__":
     except (ImportError, ModuleNotFoundError) as error:
         sys.path.append(os.path.dirname(os.path.abspath(__file__)) + os.sep  + "parameters")
         import ecdf_test
-    used_test = ecdf_test.ecdf_parameter()
+    
 
     debug_mode = len(sys.argv) > 1 and sys.argv[1] == "True"
 
@@ -112,32 +112,48 @@ if __name__ == "__main__":
     domain_size = [5, 10 , 25, 50, 100] 
     sigma = [1,5,10,25,50]
 
-    
+    used_test = ecdf_test.ecdf_parameter()
+    items = []
     for i in range(len(domain_size)):
-        used_test.nx = [domain_size[i],domain_size[i]]
-        name = 'domainSize' + str(domain_size[i])
-        parameter_identification_test(used_test.nx, used_test.porosity, used_test.n_steps,
-            used_test.jump_parameter, used_test.n_iter, used_test.values, used_test.bins,
-            used_test.n_choose_bins, used_test.subset_sizes, used_test.min_value_shift,
-            used_test.max_value_shift, debug_mode, name)
+      used_test.nx = [domain_size[i],domain_size[i]]
+      name = 'domainSize' + str(domain_size[i])
+      item = (used_test.nx, used_test.porosity, used_test.n_steps,
+          used_test.jump_parameter, used_test.n_iter, used_test.values, used_test.bins,
+          used_test.n_choose_bins, used_test.subset_sizes, used_test.min_value_shift,
+          used_test.max_value_shift, debug_mode, name)
+      items.append(item)
+
+    with Pool() as pool:
+      pool.starmap(parameter_identification_test,items)
+
 
     used_test = ecdf_test.ecdf_parameter()
+    items = []
     for i in range(len(sigma)):
-        used_test.jump_parameter = sigma[i]
-        name = 'Sigma' + str(sigma[i])
-        parameter_identification_test(used_test.nx, used_test.porosity, used_test.n_steps,
-            used_test.jump_parameter, used_test.n_iter, used_test.values, used_test.bins,
-            used_test.n_choose_bins, used_test.subset_sizes, used_test.min_value_shift,
-            used_test.max_value_shift, debug_mode, name)
+      used_test.jump_parameter = sigma[i]
+      name = 'Sigma' + str(sigma[i])
+      item = (used_test.nx, used_test.porosity, used_test.n_steps,
+          used_test.jump_parameter, used_test.n_iter, used_test.values, used_test.bins,
+          used_test.n_choose_bins, used_test.subset_sizes, used_test.min_value_shift,
+          used_test.max_value_shift, debug_mode, name)
+      items.append(item)
 
- 
+    with Pool() as pool:
+      pool.starmap(parameter_identification_test,items)
+
+
     used_test = ecdf_test.ecdf_parameter()
+    items = []  
     domain = []
     for i in range(5):
-        domain.append(50)
-        used_test.nx = domain
-        name = 'Dim' + str(sigma[i])
-        parameter_identification_test(used_test.nx, used_test.porosity, used_test.n_steps,
-            used_test.jump_parameter, used_test.n_iter, used_test.values, used_test.bins,
-            used_test.n_choose_bins, used_test.subset_sizes, used_test.min_value_shift,
-            used_test.max_value_shift, debug_mode, name)
+      domain.append(50)
+      used_test.nx = domain
+      name = 'Dim' + str(sigma[i])
+      item =  (used_test.nx, used_test.porosity, used_test.n_steps,
+          used_test.jump_parameter, used_test.n_iter, used_test.values, used_test.bins,
+          used_test.n_choose_bins, used_test.subset_sizes, used_test.min_value_shift,
+          used_test.max_value_shift, debug_mode, name)
+      items.append(item)
+      
+    with Pool() as pool:
+      pool.starmap(parameter_identification_test,items)
