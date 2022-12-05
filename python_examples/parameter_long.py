@@ -3,7 +3,7 @@ from __future__ import print_function
 import matplotlib.pyplot as plt
 import numpy as np
 from datetime import datetime
-from multiprocessing import Pool
+import multiprocessing
 import os, sys
   
 
@@ -145,8 +145,15 @@ if __name__ == "__main__":
           used_test.max_value_shift, debug_mode, name)
       items.append(item)
 
-    with Pool() as pool:
-      pool.starmap(parameter_identification_test,items)
+    processes = [ ]
+    for i in range(len(items)):
+      t = multiprocessing.Process(target=parameter_identification_test, args=items[i])
+      processes.append(t)
+      t.start()
+
+    for one_process in processes:
+      one_process.join()
+    
 
 
     
