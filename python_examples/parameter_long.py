@@ -10,8 +10,9 @@ import os, sys
 # --------------------------------------------------------------------------------------------------
 # Parameter identification test.
 # --------------------------------------------------------------------------------------------------
-def parameter_identification_test(nx, porosity, n_steps, jump_parameter, n_iter, values, bins,
-  n_choose_bins, subset_sizes, min_value_shift, max_value_shift, debug_mode, name, isPlotted = 0,):
+def parameter_identification_test(nx, porosity, n_steps, jump_parameter, test_params, n_iter, bins,
+  n_choose_bins, subset_sizes, min_value_shift, max_value_shift,
+  debug_mode, file_name, is_plot = 0):
   start_time = datetime.now()
   print("Starting time is", start_time)
 
@@ -76,10 +77,11 @@ def parameter_identification_test(nx, porosity, n_steps, jump_parameter, n_iter,
   end_time = datetime.now()
   print("Objective function setup at", end_time, "after", end_time-start_time)
 
-  for jump_size in range(len(values)):
+  values = [0] * len(test_params)
+  for jump_index in range(len(values)):
     for iter in range(n_iter):
-      data[iter] = run_cam(jump_size, nx, porosity, n_steps, debug_mode)
-    values[jump_size] = func.evaluate( data )
+      data[iter] = run_cam(test_params[jump_index], nx, porosity, n_steps, debug_mode)
+    values[jump_index] = func.evaluate( data )
 
   end_time = datetime.now()
   print("Program ended at", end_time, "after", end_time-start_time)
@@ -87,8 +89,8 @@ def parameter_identification_test(nx, porosity, n_steps, jump_parameter, n_iter,
   ax[0,1].plot(range(len(values)), values, 'ro')
 
   if not os.path.exists('output'):  os.makedirs('output')
-  plt.savefig('output/'+ name + '_parameter.png')
-  if isPlotted :
+  plt.savefig('output/'+ file_name + '_parameter.png')
+  if is_plot :
     plt.show()
 
 
@@ -97,7 +99,10 @@ def parameter_identification_test(nx, porosity, n_steps, jump_parameter, n_iter,
 # -------------------------------------------------------------------------------------------------- 
 if __name__ == "__main__":
 
-    test_name = 'ecdf_parameter'
+    test_name   = 'ecdf_parameter'
+    domain_size = [05, 10, 25, 50, 100] 
+    sigma       = [01, 05, 10, 25, 50 ]
+    dinensions  = [01, 02, 03, 04, 05 ]
 
     try:
         import ecdf_test
@@ -105,62 +110,46 @@ if __name__ == "__main__":
         sys.path.append(os.path.dirname(os.path.abspath(__file__)) + os.sep  + "parameters")
         import ecdf_test
     
-
     debug_mode = len(sys.argv) > 1 and sys.argv[1] == "True"
-
-
-    domain_size = [5, 10 , 25, 50, 100] 
-    sigma = [1,5,10,25,50]
-    items = []
+    fun_args   = []
 
     used_test = ecdf_test.ecdf_parameter()
     for i in range(len(domain_size)):
       used_test.nx = [domain_size[i],domain_size[i]]
-      name = 'domainSize' + str(domain_size[i])
+      name = 'domain_size_' + str(domain_size[i])
       item = (used_test.nx, used_test.porosity, used_test.n_steps,
           used_test.jump_parameter, used_test.n_iter, used_test.values, used_test.bins,
           used_test.n_choose_bins, used_test.subset_sizes, used_test.min_value_shift,
           used_test.max_value_shift, debug_mode, name)
-      items.append(item)
+      fun_args.append(item)
 
     used_test = ecdf_test.ecdf_parameter()  
     for i in range(len(sigma)):
       used_test.jump_parameter = sigma[i]
-      name = 'Sigma' + str(sigma[i])
+      name = 'sigma_' + str(sigma[i])
       item = (used_test.nx, used_test.porosity, used_test.n_steps,
           used_test.jump_parameter, used_test.n_iter, used_test.values, used_test.bins,
           used_test.n_choose_bins, used_test.subset_sizes, used_test.min_value_shift,
           used_test.max_value_shift, debug_mode, name)
-      items.append(item)
+      fun_args.append(item)
 
     used_test = ecdf_test.ecdf_parameter()
     domain = []
-    for i in range(5):
-      domain.append(50)
+    for i in dimensions:
+      domain.append(used_test.nx[0])
       used_test.nx = domain
-      name = 'Dim' + str(sigma[i])
+      name = 'dimension_' + str(sigma[i])
       item =  (used_test.nx, used_test.porosity, used_test.n_steps,
           used_test.jump_parameter, used_test.n_iter, used_test.values, used_test.bins,
           used_test.n_choose_bins, used_test.subset_sizes, used_test.min_value_shift,
           used_test.max_value_shift, debug_mode, name)
-      items.append(item)
+      fun_args.append(item)
 
-    processes = [ ]
-    for i in range(len(items)):
-      t = multiprocessing.Process(target=parameter_identification_test, args=items[i])
+    processes = []
+    for i in range(len(fun_args)):
+      t = multiprocessing.Process(target=parameter_identification_test, args=fun_args[i])
       processes.append(t)
       t.start()
 
     for one_process in processes:
       one_process.join()
-    
-
-
-    
-
-    
-
-
-   
-
-  
