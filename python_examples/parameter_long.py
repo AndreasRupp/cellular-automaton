@@ -99,10 +99,10 @@ def parameter_identification_test(nx, porosity, n_steps, jump_parameter, test_pa
 # -------------------------------------------------------------------------------------------------- 
 if __name__ == "__main__":
 
-    test_name   = 'ecdf_parameter'
-    domain_size = [05, 10, 25, 50, 100] 
-    sigma       = [01, 05, 10, 25, 50 ]
-    dinensions  = [01, 02, 03, 04, 05 ]
+    test_name   = 'basic_test'
+    domain_size = [ 5, 10, 25, 50, 100] 
+    sigma       = [ 1,  5, 10, 25,  50]
+    dimensions  = [ 1,  2,  3,  4,   5]
 
     try:
         import ecdf_test
@@ -113,37 +113,42 @@ if __name__ == "__main__":
     debug_mode = len(sys.argv) > 1 and sys.argv[1] == "True"
     fun_args   = []
 
-    used_test = ecdf_test.ecdf_parameter()
+    used_test = getattr(ecdf_test, test_name)
     for i in range(len(domain_size)):
-      used_test.nx = [domain_size[i],domain_size[i]]
+      nx = [domain_size[i],domain_size[i]]
+      nf = np.prod(nx)
+      bins          = range(int(0.375*nf),int(0.475*nf),5)        # All radii that are checked.
+      n_choose_bins = np.min([20, len(bins)])                     # Number of selected radii.
       name = 'domain_size_' + str(domain_size[i])
-      item = (used_test.nx, used_test.porosity, used_test.n_steps,
-          used_test.jump_parameter, used_test.n_iter, used_test.values, used_test.bins,
-          used_test.n_choose_bins, used_test.subset_sizes, used_test.min_value_shift,
+      item = (nx, used_test.porosity, used_test.n_steps,
+          used_test.jump_parameter, used_test.jump_params, used_test.n_iter, bins,
+          n_choose_bins, used_test.subset_sizes, used_test.min_value_shift,
           used_test.max_value_shift, debug_mode, name)
       fun_args.append(item)
 
-    used_test = ecdf_test.ecdf_parameter()  
+    used_test = getattr(ecdf_test, test_name)
     for i in range(len(sigma)):
       used_test.jump_parameter = sigma[i]
       name = 'sigma_' + str(sigma[i])
       item = (used_test.nx, used_test.porosity, used_test.n_steps,
-          used_test.jump_parameter, used_test.n_iter, used_test.values, used_test.bins,
+          used_test.jump_parameter, used_test.jump_params, used_test.n_iter, used_test.bins,
           used_test.n_choose_bins, used_test.subset_sizes, used_test.min_value_shift,
           used_test.max_value_shift, debug_mode, name)
       fun_args.append(item)
 
-    used_test = ecdf_test.ecdf_parameter()
-    domain = []
+    used_test = getattr(ecdf_test, test_name)
     for i in dimensions:
-      domain.append(used_test.nx[0])
-      used_test.nx = domain
-      name = 'dimension_' + str(sigma[i])
-      item =  (used_test.nx, used_test.porosity, used_test.n_steps,
-          used_test.jump_parameter, used_test.n_iter, used_test.values, used_test.bins,
-          used_test.n_choose_bins, used_test.subset_sizes, used_test.min_value_shift,
+      nx            = [used_test.nx[0] for _ in range(i)]
+      nf = np.prod(nx)
+      bins          = range(int(0.375*nf),int(0.475*nf),5)        # All radii that are checked.
+      n_choose_bins = np.min([20, len(bins)])                     # Number of selected radii.
+      name = 'dimension_' + str(i)
+      item =  (nx, used_test.porosity, used_test.n_steps,
+          used_test.jump_parameter, used_test.jump_params, used_test.n_iter, bins,
+          n_choose_bins, used_test.subset_sizes, used_test.min_value_shift,
           used_test.max_value_shift, debug_mode, name)
       fun_args.append(item)
+
 
     processes = []
     for i in range(len(fun_args)):

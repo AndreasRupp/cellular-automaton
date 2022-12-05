@@ -16,7 +16,7 @@ class basic_test:
   n_iter          = 2000                                        # Number of dataset sizes.
   jump_params     = range(jump_parameter-5, jump_parameter+6)   # The checked jump parameters.
   bins            = range(int(0.375*nf),int(0.475*nf),5)        # All radii that are checked.
-  n_choose_bins   = np.min(20, len(bins))                       # Number of selected radii for algo.
+  n_choose_bins   = np.min([20, len(bins)])                     # Number of selected radii for algo.
   subset_sizes    = [40] * 50                                   # Multiplies to n_iter!
   min_value_shift = 0.1                                         # Cutoff value for small values.
   max_value_shift = -0.1                                        # 1 + "cutoff value for large val."
