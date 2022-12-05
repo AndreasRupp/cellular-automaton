@@ -8,29 +8,15 @@ import os, sys
   
 
 # --------------------------------------------------------------------------------------------------
-# Function main.
+# Parameter identification test.
 # --------------------------------------------------------------------------------------------------
-def main(debug_mode):
-  # Configure the cellular automaton method.
-  nx             = [50, 50]
-  porosity       = 0.3
-  n_steps        = 5
-  jump_parameter = 5
-
-  nf = np.prod(nx)
-
-  # Configure the eCDF method.
-  n_iter          = 2000                                        # Number of dataset sizes.
-  values          = [0] * 10                                    # Length defines tested jump_param.
-  bins            = range(int(0.375*nf),int(0.475*nf),5)        # All radii that are checked.
-  n_choose_bins   = 20                                          # Number of selected radii for algo.
-  subset_sizes    = [40] * 50                                   # Multiplies to n_iter!
-  min_value_shift = 0.1                                         # Cutoff value for small values.
-  max_value_shift = -0.1                                        # 1 + "cutoff value for large val."
-
-  data = [[0] * nf] * n_iter
+def parameter_identification_test(nx, porosity, n_steps, jump_parameter, n_iter, values, bins,
+  n_choose_bins, subset_sizes, min_value_shift, max_value_shift, debug_mode):
   start_time = datetime.now()
   print("Starting time is", start_time)
+
+  n_fields = np.prod(nx)
+  data = [[0] * n_fields] * n_iter
 
   try:
     import CAM
@@ -98,6 +84,9 @@ def main(debug_mode):
   print("Program ended at", end_time, "after", end_time-start_time)
   
   ax[0,1].plot(range(len(values)), values, 'ro')
+
+  if not os.path.exists('output'):  os.makedirs('output')
+  plt.savefig('output/prameter.png')
   plt.show()
 
 
@@ -105,4 +94,19 @@ def main(debug_mode):
 # Define main function.
 # -------------------------------------------------------------------------------------------------- 
 if __name__ == "__main__":
-  main(len(sys.argv) > 1 and sys.argv[1] == "True")
+
+  test_name = 'basic_test'
+
+  try:
+    import ecdf_test
+  except (ImportError, ModuleNotFoundError) as error:
+    sys.path.append(os.path.dirname(os.path.abspath(__file__)) + os.sep  + "parameters")
+    import ecdf_test
+
+  used_test  = getattr(ecdf_test, test_name)
+  debug_mode = len(sys.argv) > 1 and sys.argv[1] == "True"
+  
+  parameter_identification_test(used_test.nx, used_test.porosity, used_test.n_steps,
+    used_test.jump_parameter, used_test.n_iter, used_test.values, used_test.bins,
+    used_test.n_choose_bins, used_test.subset_sizes, used_test.min_value_shift,
+    used_test.max_value_shift, debug_mode)
