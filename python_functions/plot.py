@@ -27,7 +27,7 @@ def plot_update(axes, data, ax):
     Colors = np.empty(axes + [4], dtype=np.float32)
     # Control Transparency
     alpha = .9
-    Colors[data] = [0, 0, 1, alpha]
+    Colors[data] = [1, 0, 1, alpha]
     ax.voxels(data, facecolors=Colors, edgecolors='black')
   return ax
 
