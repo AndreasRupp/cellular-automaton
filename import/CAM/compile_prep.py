@@ -6,12 +6,12 @@ from .paths import main_dir, this_dir
 ## \brief   Generate shell commands from CMAKE parameters.
 def compile_commands(python_class, opt):
   assert isinstance(opt, options)
-  cython_command = "cd " + main_dir() + "/build/cython_files/; " \
+  cython_command = "cd " + main_dir() + "/build/cython_files/&& " \
     + opt.cython_com + " " + opt.cython_flg + " " + python_class + ".pyx";
-  compile_command = "cd " + main_dir() + "; " + opt.compile_com + " " + opt.compile_inc + " " + \
+  compile_command = "cd " + main_dir() + "&& " + opt.compile_com + " " + opt.compile_inc + " " + \
     opt.compile_flg + " --std=gnu++" + opt.compile_std + " -c ./build/cython_files/" + \
-    python_class + ".cpp -o ./build/cython_files/" + python_class + ".o";
-  link_command = "cd " + main_dir() + "; " \
+    python_class + ".cpp -o ./build/cython_files/" + python_class + ".o" + " -DMS_WIN64 -municode";
+  link_command = "cd " + main_dir() + "&& " \
     + opt.link_com + " " + opt.link_flg + " ./build/cython_files/" + python_class + ".o " \
     + " -o build/shared_objects/" + python_class + ".so " + opt.link_lib;
   return cython_command, compile_command, link_command

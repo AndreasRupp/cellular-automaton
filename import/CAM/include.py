@@ -19,8 +19,9 @@ def include(conf):
     print("Cythonizing ... ", end='', flush=True)
 
   # Create folders and log files and check for consistency.
-  os.system("mkdir -p " + main_dir() + "/build " + main_dir() + "/build/cython_files " \
-            + main_dir() + "/build/shared_objects")
+  path =  main_dir() + "/build " + main_dir() + "/build/cython_files " + main_dir() + "/build/shared_objects"
+  path = path.replace('/','\\')
+  os.system("mkdir " + path)
   if not os.path.isfile(main_dir() + "/build/cython_log.txt"):
     file = open(main_dir() + "/build/cython_log.txt", "w")
     file.write("Python version: " + str(sys.version_info))
@@ -39,7 +40,7 @@ def include(conf):
     include_string = extract_includes(conf)
   else:
     include_string = extract_includes(conf, main_dir()+"/build/cython_files/"+python_class+".hxx")
-
+  include_string =  re.sub(r'\\', '/', include_string)
   compilation_necessary = need_compile(conf, python_class, options)
   if compilation_necessary:
     # Copy pyx and pxd files from cython directory.
@@ -60,6 +61,9 @@ def include(conf):
     cython_command, compile_command, link_command = compile_commands(python_class, options)
     if not (conf.debug_mode):
       compile_command += " -DNDEBUG"
+    print(cython_command)
+    print(compile_command)
+    print(link_command)
     #Actually compile the prepared files.
     assert os.system(cython_command) == 0
     assert os.system(compile_command) == 0
