@@ -110,18 +110,11 @@ def run_test_from_class(test_class):
 if __name__ == "__main__":
 
   test_name    = 'basic_test'
-  # distances    = ["bulk_distance", "average_distance"]
-  # domain_sizes = [ 5, 10, 25, 50, 100] 
-  # sigmas       = [ 1,  5, 10, 25,  50]
-  # time_points  = [ 0,  5, 10, 25,  50]
-  # dimensions   = [ 1,  2,  3,  4,   5]
-
-
-  distances    = ["bulk_distance"]
-  domain_sizes = [ 50] 
-  sigmas       = [ 5 ]
-  time_points  = [ 5 ]
-  dimensions   = [ 2 ]
+  distances    = ["bulk_distance", "average_distance"]
+  domain_sizes = [ 5, 10, 25, 50, 100] 
+  sigmas       = [ 1,  5, 10, 25,  50]
+  time_points  = [ 0,  5, 10, 25,  50]
+  dimensions   = [ 1,  2,  3,  4,   5]
 
   try:
     import ecdf_test
