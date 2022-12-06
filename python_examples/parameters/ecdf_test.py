@@ -46,7 +46,7 @@ class basic_test:
     self.file_name  = file_name
     self.is_plot    = is_plot
 
-    if distance_fct == "default":
+    if distance_fct == "default" or distance_fct == "bulk_distance":
       try:
         import CAM
       except (ImportError, ModuleNotFoundError) as error:
@@ -58,8 +58,19 @@ class basic_test:
       const.debug_mode  = self.debug_mode
       self.PyCAM        = CAM.include(const)
       self.distance_fct = self.PyCAM.bulk_distance
-    else:
-      self.distance_fct = distance_fct
-
-  def my_distance(self, a, b):
-    return self.distance_fct(a,b)
+    elif distance_fct == "average_distance":
+      try:
+        import CAM
+      except (ImportError, ModuleNotFoundError) as error:
+        sys.path.append(os.path.dirname(os.path.abspath(__file__)) + os.sep + ".."  + os.sep + 
+          ".." + os.sep + "import")
+        import CAM
+      const             = CAM.config()
+      const.nx          = self.nx
+      const.debug_mode  = self.debug_mode
+      self.PyCAM        = CAM.include(const)
+      def my_distance(a, b):
+        avg_part_a = self.PyCAM.average_particle_size(a)
+        avg_part_b = self.PyCAM.average_particle_size(a)
+        return np.abs(avg_part_a - avg_part_b)
+      self.distance_fct = my_distance

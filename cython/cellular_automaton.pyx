@@ -16,4 +16,7 @@ cdef class PythonClassName :
     print_array (vec)
   @staticmethod
   def bulk_distance(vec_a, vec_b):
-    return bulk_distance(vec_a, vec_b)
+    return bulk_distance (vec_a, vec_b)
+  @staticmethod
+  def average_particle_size(vec):
+    return average_particle_size (vec)

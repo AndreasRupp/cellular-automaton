@@ -3,9 +3,15 @@
 #include <cmath>
 #include <iomanip>
 #include <iostream>
+#include <limits>
 
 namespace CAM
 {
+
+/*!*************************************************************************************************
+ * \brief   Maximum unsigned integer.
+ **************************************************************************************************/
+static constexpr unsigned int uint_max = std::numeric_limits<unsigned int>::max();
 
 /*!*************************************************************************************************
  * \brief   Calculates the size of the domain.
@@ -75,6 +81,52 @@ static constexpr unsigned int skeleton_distance(const fields_array_t& domain_a,
                            (domain_b[neigh_field] == 0) - (domain_b[field] == 0));
     }
   return distance;
+}
+
+template <auto nx, typename fields_array_t>
+unsigned int n_solid_comp(const fields_array_t& domain)
+{
+  constexpr unsigned int dim = nx.size();
+  fields_array_t fields = domain;
+  unsigned int n_connected_solids = 0;
+  // unsigned int n_periodic_fluids = 0;
+  unsigned int fluids_size, field, neigh_field;
+  std::vector<unsigned int> found_solids;
+
+  for_each(fields.begin(), fields.end(), [](unsigned int field) { field = (field == 0); });
+
+  for (auto first_fluid = std::find(fields.begin(), fields.end(), 0); first_fluid != fields.end();
+       first_fluid = std::find(first_fluid, fields.end(), 0))
+  {
+    found_solids = std::vector<unsigned int>(1, std::distance(fields.begin(), first_fluid));
+    fields[found_solids[0]] = uint_max;
+    fluids_size = 1;
+    for (unsigned int k = 0; k < fluids_size; ++k, fluids_size = found_solids.size())
+    {
+      field = found_solids[k];
+      for (unsigned int i = 0; i < 2 * dim; ++i)
+      {
+        neigh_field = aim<nx>(field, direct_neigh<nx>(i));
+        if (fields[neigh_field] == 0)
+        {
+          fields[neigh_field] = uint_max;
+          found_solids.push_back(neigh_field);
+        }
+      }
+    }
+    ++n_connected_solids;
+  }
+
+  return n_connected_solids;
+}
+
+template <auto nx, typename fields_array_t>
+static constexpr double average_particle_size(const fields_array_t& domain)
+{
+  unsigned int n_solids = 0;
+  for (unsigned int i = 0; i < domain.size(); ++i)
+    n_solids += (domain[i] != 0);
+  return (double)n_solids / (double)n_solid_comp<nx>(domain);
 }
 
 // -------------------------------------------------------------------------------------------------
