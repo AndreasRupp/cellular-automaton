@@ -60,7 +60,7 @@ def parameter_identification_test(nx, porosity, n_steps, jump_parameter,
   min_val, max_val, _ = ecdf.estimate_radii_values(
     data[0:subset_sizes[0]], data[subset_sizes[0]:subset_sizes[0]+subset_sizes[1]], distance_fct)
   step_size = np.floor((max_val - min_val) / 50)
-  bins = range(int(min_val), int(max_val), int(step_size))
+  bins = range(int(min_val), int(max_val), int(np.max([step_size, 1])))
 
   func = ecdf.estimator(data, bins, distance_fct, subset_sizes)
 
