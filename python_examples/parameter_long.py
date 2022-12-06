@@ -11,7 +11,7 @@ import os, sys, time
 # Parameter identification test.
 # --------------------------------------------------------------------------------------------------
 def parameter_identification_test(nx, porosity, n_steps, jump_parameter,
-  subset_sizes, n_choose_bins, min_value_shift, max_value_shift, jump_params, bins, 
+  subset_sizes, n_choose_bins, min_value_shift, max_value_shift, jump_params, bins, distance_fct,
   debug_mode, file_name, is_plot = 0):
   start_time = datetime.now()
   print("Starting time is", start_time)
@@ -43,11 +43,6 @@ def parameter_identification_test(nx, porosity, n_steps, jump_parameter,
 
   # ------------------------------------------------------------------------------------------------
   def run_cam(jump_parameter, nx, porosity, n_steps, debug_mode=False):
-    const            = CAM.config()
-    const.nx         = nx
-    const.debug_mode = debug_mode
-
-    PyCAM       = CAM.include(const)
     CAM_wrapper = PyCAM(porosity, jump_parameter)
 
     for step in range(n_steps):
@@ -62,7 +57,7 @@ def parameter_identification_test(nx, porosity, n_steps, jump_parameter,
   end_time = datetime.now()
   print("CAM data acquired at", end_time, "after", end_time-start_time)
 
-  func = ecdf.estimator(data, bins, PyCAM.bulk_distance, subset_sizes)
+  func = ecdf.estimator(data, bins, distance_fct, subset_sizes)
 
   fig, ax = plt.subplots(nrows=2, ncols=2, figsize=(18, 5))
   ax[0,0] = ecdf.plot_ecdf_vectors(func, ax[0,0])
@@ -79,8 +74,9 @@ def parameter_identification_test(nx, porosity, n_steps, jump_parameter,
   print("Objective function setup at", end_time, "after", end_time-start_time)
 
   values = [0] * len(jump_params)
+  data   = [0] * subset_sizes[0]
   for jump_index in range(len(values)):
-    for iter in range(n_iter):
+    for iter in range(subset_sizes[0]):
       data[iter] = run_cam(jump_params[jump_index], nx, porosity, n_steps, debug_mode)
     values[jump_index] = func.evaluate( data )
 
@@ -98,6 +94,7 @@ def parameter_identification_test(nx, porosity, n_steps, jump_parameter,
 def run_test_from_class(test_class):
   parameter_identification_test(test_class.nx, test_class.porosity, test_class.n_steps,
     test_class.jump_parameter, test_class.subset_sizes, test_class.n_choose_bins,
+    test_class.my_distance,
     test_class.min_value_shift, test_class.max_value_shift, test_class.jump_params, test_class.bins, 
     test_class.debug_mode, test_class.file_name, test_class.is_plot)  
 
@@ -109,12 +106,33 @@ def run_test_from_class(test_class):
 if __name__ == "__main__":
 
   test_name   = 'basic_test'
-  domain_size = [ 25, 50 ]
-  sigma       = [ 5 ]
-  dimensions  = [ 2 ]
-  # domain_size = [ 5, 10, 25, 50, 100] 
-  # sigma       = [ 1,  5, 10, 25,  50]
-  # dimensions  = [ 1,  2,  3,  4,   5]
+  domain_sizes = [ 50 ]
+  sigmas       = [ 5 ]
+  dimensions   = [ 2 ]
+  time_points  = [ 5 ]
+
+  # distances = [l1, mean_ps]
+  # domain_sizes = [ 5, 10, 25, 50, 100] 
+  # sigmas       = [ 1,  5, 10, 25,  50]
+  # time_points  = [ 0,  5, 10, 25,  50]
+  # dimensions   = [ 1,  2,  3,  4,   5]
+
+  
+
+  # if True:
+  try:
+    import CAM
+  except (ImportError, ModuleNotFoundError) as error:
+    sys.path.append(os.path.dirname(os.path.abspath(__file__)) + os.sep +  
+      ".." + os.sep + "import")
+    import CAM
+  const             = CAM.config()
+  const.nx          = [50, 50]
+  const.debug_mode  = False
+  PyCAM        = CAM.include(const)
+  distance_fct = PyCAM.bulk_distance
+
+
 
   try:
     import ecdf_test
@@ -126,23 +144,30 @@ if __name__ == "__main__":
   fun_args   = []
 
   base_test = getattr(ecdf_test, test_name)
-  for i in range(len(domain_size)):
+  for size in domain_sizes:
     fun_args.append( base_test(
-      nx        = [domain_size[i], domain_size[i]], 
-      file_name = 'domain_size_' + str(domain_size[i])
+      nx        = [size, size], 
+      file_name = 'domain_size_' + str(size),
+      distance_fct = distance_fct
       ) )
 
-  for i in range(len(sigma)):
-    fun_args.append( base_test(
-      jump_parameter = sigma[i], 
-      file_name      = 'sigma_' + str(sigma[i])
-      ) )
+  # for sigma in sigmas:
+  #   fun_args.append( base_test(
+  #     jump_parameter = sigma, 
+  #     file_name      = 'sigma_' + str(sigma)
+  #     ) )
 
-  for i in dimensions:
-    fun_args.append( base_test(
-      nx        = [ 50 for _ in range(i) ], 
-      file_name = 'dimension_' + str(i)
-      ) )
+  # for steps in time_points:
+  #   fun_args.append( base_test(
+  #     n_steps   = steps, 
+  #     file_name = 'time_steps_' + str(steps)
+  #     ) )
+
+  # for dim in dimensions:
+  #   fun_args.append( base_test(
+  #     nx        = [ 50 for _ in range(dim) ], 
+  #     file_name = 'dimension_' + str(dim)
+  #     ) )
 
   processes = []
   for i in range(len(fun_args)):
@@ -160,4 +185,3 @@ if __name__ == "__main__":
 
   for one_process in processes:
     one_process.join()
-  

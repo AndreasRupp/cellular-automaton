@@ -1,10 +1,11 @@
 import numpy as np
+import os, sys
 
 
 class basic_test:
   def __init__( self,
     nx             = [50, 50],
-    porosity       = 0.3,
+    porosity       = 0.7,
     n_steps        = 5,
     jump_parameter = 5,
 
@@ -15,9 +16,10 @@ class basic_test:
     jump_params     = "default",
     bins            = "default",
 
-    debug_mode = False,
-    file_name  = "basic_test",
-    is_plot    = 0
+    distance_fct = "default",
+    debug_mode   = False,
+    file_name    = "basic_test",
+    is_plot      = 0
     ):
     # Configure the cellular automaton method (CAM).
     self.nx             = nx
@@ -43,3 +45,21 @@ class basic_test:
     self.debug_mode = debug_mode
     self.file_name  = file_name
     self.is_plot    = is_plot
+
+    if distance_fct == "default":
+      try:
+        import CAM
+      except (ImportError, ModuleNotFoundError) as error:
+        sys.path.append(os.path.dirname(os.path.abspath(__file__)) + os.sep + ".."  + os.sep + 
+          ".." + os.sep + "import")
+        import CAM
+      const             = CAM.config()
+      const.nx          = self.nx
+      const.debug_mode  = self.debug_mode
+      self.PyCAM        = CAM.include(const)
+      self.distance_fct = self.PyCAM.bulk_distance
+    else:
+      self.distance_fct = distance_fct
+
+  def my_distance(self, a, b):
+    return self.distance_fct(a,b)
