@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from datetime import datetime
 import multiprocessing
-import os, sys
+import os, sys, time
   
 
 # --------------------------------------------------------------------------------------------------
@@ -149,6 +149,14 @@ if __name__ == "__main__":
     t = multiprocessing.Process(target=run_test_from_class, args=(fun_args[i],))
     processes.append(t)
     t.start()
+
+  while multiprocessing.active_children():
+    val = input("Enter your value: ")
+    if val == "kill_all_children":
+      active = multiprocessing.active_children()
+      for child in active:
+        child.kill()
+      time.sleep(2)
 
   for one_process in processes:
     one_process.join()
