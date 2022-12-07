@@ -9,7 +9,7 @@ class basic_test:
     n_steps        = 5,
     jump_parameter = 5,
 
-    subset_sizes    = [40] * 50,
+    subset_sizes    = [100] * 40,
     min_value_shift = 0.1,
     max_value_shift = -0.1,
     n_choose_bins   = "default",
@@ -36,7 +36,7 @@ class basic_test:
 
     if jump_params == "default":  self.jump_params = range(jump_parameter-5, jump_parameter+6)
     else:                         self.jump_params = jump_params
-    if n_choose_bins == "default":  self.n_choose_bins = np.min([20, len(bins)])
+    if n_choose_bins == "default":  self.n_choose_bins = 20
     else:                           self.n_choose_bins = n_choose_bins 
 
     self.debug_mode = debug_mode

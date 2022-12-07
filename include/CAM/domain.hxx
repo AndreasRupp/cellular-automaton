@@ -84,10 +84,9 @@ static constexpr unsigned int skeleton_distance(const fields_array_t& domain_a,
 }
 
 template <auto nx, typename fields_array_t>
-unsigned int n_solid_comp(const fields_array_t& domain)
+unsigned int n_solid_comp(fields_array_t fields)
 {
   constexpr unsigned int dim = nx.size();
-  fields_array_t fields = domain;
   unsigned int n_connected_solids = 0;
   // unsigned int n_periodic_fluids = 0;
   unsigned int fluids_size, field, neigh_field;
