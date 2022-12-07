@@ -36,8 +36,6 @@ class basic_test:
 
     if jump_params == "default":  self.jump_params = range(jump_parameter-5, jump_parameter+6)
     else:                         self.jump_params = jump_params
-    if n_choose_bins == "default":  self.n_choose_bins = 20
-    else:                           self.n_choose_bins = n_choose_bins 
 
     self.debug_mode = debug_mode
     self.file_name  = file_name
@@ -68,6 +66,14 @@ class basic_test:
       self.PyCAM        = CAM.include(const)
       def my_distance(a, b):
         avg_part_a = self.PyCAM.average_particle_size(a)
-        avg_part_b = self.PyCAM.average_particle_size(a)
+        avg_part_b = self.PyCAM.average_particle_size(b)
         return np.abs(avg_part_a - avg_part_b)
       self.distance_fct = my_distance
+
+    if n_choose_bins == "default":
+      if distance_fct == "default" or distance_fct == "bulk_distance":
+        self.n_choose_bins = 20
+      elif distance_fct == "average_distance":
+        self.n_choose_bins = 8
+    else:
+      self.n_choose_bins = n_choose_bins

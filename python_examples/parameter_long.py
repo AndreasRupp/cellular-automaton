@@ -59,8 +59,7 @@ def parameter_identification_test(nx, porosity, n_steps, jump_parameter,
 
   min_val, max_val, _ = ecdf.estimate_radii_values(
     data[0:subset_sizes[0]], data[subset_sizes[0]:subset_sizes[0]+subset_sizes[1]], distance_fct )
-  step_size = np.floor((max_val - min_val) / 50)
-  bins = range(int(min_val), int(max_val), int(np.max([step_size, 1])))
+  bins = np.linspace(min_val, max_val, 50)
 
   func = ecdf.estimator(data, bins, distance_fct, subset_sizes)
 
@@ -84,14 +83,14 @@ def parameter_identification_test(nx, porosity, n_steps, jump_parameter,
     for iter in range(subset_sizes[0]):
       data[iter] = run_cam(jump_params[jump_index], nx, porosity, n_steps, debug_mode)
     values[jump_index] = func.evaluate( data )
-
-  end_time = datetime.now()
-  print("Program ended at", end_time, "after", end_time-start_time)
   
   ax[0,1].plot(jump_params, values, 'ro')
 
   if not os.path.exists('output'):  os.makedirs('output')
   plt.savefig('output/'+ file_name + '.png')
+
+  end_time = datetime.now()
+  print("Program ended at", end_time, "after", end_time-start_time)
 
   if is_plot:  plt.show()
 
@@ -115,6 +114,7 @@ if __name__ == "__main__":
   sigmas       = [ 1,  5, 10, 25,  50]
   time_points  = [ 0,  5, 10, 25,  50]
   dimensions   = [ 1,  2,  3,  4,   5]
+
 
   try:
     import ecdf_test

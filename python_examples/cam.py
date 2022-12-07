@@ -26,11 +26,11 @@ def cam_test(n_steps, debug_mode=False):
     from plot import plot, plot_update
   
   const                 = CAM.config()
-  const.nx              = [100, 100]
+  const.nx              = [50, 50]
   const.debug_mode      = debug_mode
 
   PyCAM = CAM.include(const)
-  CAM_wrapper = PyCAM( 0.9, 1 )
+  CAM_wrapper = PyCAM( 0.7, 5 )
 
   save_data = np.zeros( (n_steps + 1, np.prod(const.nx)) ) 
   save_data[0] = CAM_wrapper.fields()
@@ -54,7 +54,7 @@ def cam_test(n_steps, debug_mode=False):
 # Function main.
 # --------------------------------------------------------------------------------------------------
 def main(debug_mode):
-  n_steps = 1000
+  n_steps = 5
   cam_test(n_steps, debug_mode)
 
 
