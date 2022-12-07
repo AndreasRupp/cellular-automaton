@@ -4,7 +4,6 @@
 #include <iomanip>
 #include <iostream>
 #include <limits>
-
 namespace CAM
 {
 
@@ -118,7 +117,41 @@ unsigned int n_solid_comp(fields_array_t fields)
 
   return n_connected_solids;
 }
+template <auto nx, typename fields_array_t>
+std::vector<unsigned int> particle_size_distribution(const fields_array_t& domain)
+{
+  fields_array_t fields = domain;
+  std::vector<unsigned int> distribution {};
+  constexpr unsigned int dim = nx.size();
+  unsigned int fluids_size, field, neigh_field;
+  std::vector<unsigned int> found_solids;
 
+  for_each(fields.begin(), fields.end(), [](unsigned int field) { field = (field == 0); });
+
+  for (auto first_fluid = std::find(fields.begin(), fields.end(), 0); first_fluid != fields.end();
+       first_fluid = std::find(first_fluid, fields.end(), 0))
+  {
+    found_solids = std::vector<unsigned int>(1, std::distance(fields.begin(), first_fluid));
+    fields[found_solids[0]] = uint_max;
+    fluids_size = 1;
+    for (unsigned int k = 0; k < fluids_size; ++k, fluids_size = found_solids.size())
+    {
+      field = found_solids[k];
+      for (unsigned int i = 0; i < 2 * dim; ++i)
+      {
+        neigh_field = aim<nx>(field, direct_neigh<nx>(i));
+        if (fields[neigh_field] == 0)
+        {
+          fields[neigh_field] = uint_max;
+          found_solids.push_back(neigh_field);
+        }
+      }
+    }
+    distribution.push_back(found_solids.size());
+  }
+  std::sort(distribution.begin(),distribution.end());
+  return distribution;
+}
 template <auto nx, typename fields_array_t>
 static constexpr double average_particle_size(const fields_array_t& domain)
 {
