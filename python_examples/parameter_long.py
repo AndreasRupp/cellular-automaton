@@ -16,10 +16,6 @@ def parameter_identification_test(nx, porosity, n_steps, jump_parameter,
   start_time = datetime.now()
   print("Starting time is", start_time)
 
-  n_fields = np.prod(nx)
-  n_iter   = np.sum(subset_sizes)
-  data = [[0] * n_fields] * n_iter
-
   try:
     import CAM
   except (ImportError, ModuleNotFoundError) as error:
@@ -51,6 +47,10 @@ def parameter_identification_test(nx, porosity, n_steps, jump_parameter,
     return CAM_wrapper.fields()
   # ------------------------------------------------------------------------------------------------
 
+  n_fields = np.prod(nx)
+  n_iter   = np.sum(subset_sizes)
+  data = [[0] * n_fields] * n_iter
+
   for iter in range(n_iter):
     data[iter] = run_cam(jump_parameter, nx, porosity, n_steps, debug_mode)
 
@@ -58,7 +58,7 @@ def parameter_identification_test(nx, porosity, n_steps, jump_parameter,
   print("CAM data acquired at", end_time, "after", end_time-start_time)
 
   min_val, max_val, _ = ecdf.estimate_radii_values(
-    data[0:subset_sizes[0]], data[subset_sizes[0]:subset_sizes[0]+subset_sizes[1]], distance_fct)
+    data[0:subset_sizes[0]], data[subset_sizes[0]:subset_sizes[0]+subset_sizes[1]], distance_fct )
   step_size = np.floor((max_val - min_val) / 50)
   bins = range(int(min_val), int(max_val), int(np.max([step_size, 1])))
 
@@ -79,7 +79,7 @@ def parameter_identification_test(nx, porosity, n_steps, jump_parameter,
   print("Objective function setup at", end_time, "after", end_time-start_time)
 
   values = [0] * len(jump_params)
-  data   = [0] * subset_sizes[0]
+  data   = [[0] * n_fields] * subset_sizes[0]
   for jump_index in range(len(values)):
     for iter in range(subset_sizes[0]):
       data[iter] = run_cam(jump_params[jump_index], nx, porosity, n_steps, debug_mode)
@@ -92,8 +92,8 @@ def parameter_identification_test(nx, porosity, n_steps, jump_parameter,
 
   if not os.path.exists('output'):  os.makedirs('output')
   plt.savefig('output/'+ file_name + '.png')
-  if is_plot :
-    plt.show()
+
+  if is_plot:  plt.show()
 
 
 def run_test_from_class(test_class):
@@ -158,8 +158,8 @@ if __name__ == "__main__":
         ) )
 
   processes = []
-  for i in range(len(fun_args)):
-    t = multiprocessing.Process(target=run_test_from_class, args=(fun_args[i],))
+  for fun_arg in fun_args:
+    t = multiprocessing.Process(target=run_test_from_class, args=(fun_arg,))
     processes.append(t)
     t.start()
 
