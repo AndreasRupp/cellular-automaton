@@ -11,7 +11,7 @@ import os, sys, time
 # Parameter identification test.
 # --------------------------------------------------------------------------------------------------
 def parameter_identification_test(nx, porosity, n_steps, jump_parameter,
-  subset_sizes, n_choose_bins, min_value_shift, max_value_shift, jump_params, bins,
+  subset_sizes, n_choose_bins, min_value_shift, max_value_shift, jump_params,
   distance_fct,  debug_mode, file_name, is_plot = 0):
   start_time = datetime.now()
   print("Starting time is", start_time)
@@ -91,7 +91,7 @@ def parameter_identification_test(nx, porosity, n_steps, jump_parameter,
   ax[0,1].plot(jump_params, values, 'ro')
 
   if not os.path.exists('output'):  os.makedirs('output')
-  plt.savefig('output/'+ file_name + '_parameter.png')
+  plt.savefig('output/'+ file_name + '.png')
   if is_plot :
     plt.show()
 
@@ -99,7 +99,7 @@ def parameter_identification_test(nx, porosity, n_steps, jump_parameter,
 def run_test_from_class(test_class):
   parameter_identification_test(test_class.nx, test_class.porosity, test_class.n_steps,
     test_class.jump_parameter, test_class.subset_sizes, test_class.n_choose_bins,
-    test_class.min_value_shift, test_class.max_value_shift, test_class.jump_params, test_class.bins,
+    test_class.min_value_shift, test_class.max_value_shift, test_class.jump_params,
     test_class.distance_fct, test_class.debug_mode, test_class.file_name, test_class.is_plot)  
 
 
@@ -133,28 +133,28 @@ if __name__ == "__main__":
       fun_args.append( base_test(
         nx           = [size, size],
         distance_fct = distance,
-        file_name    = distance + 'domain_size_' + str(size)
+        file_name    = distance + '_domain_size_' + str(size)
         ) )
 
     for sigma in sigmas:
       fun_args.append( base_test(
         jump_parameter = sigma,
         distance_fct   = distance,
-        file_name      = distance + 'sigma_' + str(sigma)
+        file_name      = distance + '_sigma_' + str(sigma)
         ) )
 
     for steps in time_points:
       fun_args.append( base_test(
         n_steps      = steps,
         distance_fct = distance,
-        file_name    = distance + 'time_steps_' + str(steps)
+        file_name    = distance + '_time_steps_' + str(steps)
         ) )
 
     for dim in dimensions:
       fun_args.append( base_test(
         nx           = [ 50 for _ in range(dim) ],
         distance_fct = distance,
-        file_name    = distance + 'dimension_' + str(dim)
+        file_name    = distance + '_dimension_' + str(dim)
         ) )
 
   processes = []
