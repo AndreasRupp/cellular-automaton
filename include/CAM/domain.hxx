@@ -89,7 +89,7 @@ std::vector<unsigned int> particle_size_distribution(fields_array_t fields)
   unsigned int fluids_size, field, neigh_field;
   std::vector<unsigned int> found_solids, distribution;
 
-  for_each(fields.begin(), fields.end(), [](unsigned int& field) { field = (field == 0); });
+  std::for_each(fields.begin(), fields.end(), [](unsigned int& field) { field = (field == 0); });
 
   for (auto first_fluid = std::find(fields.begin(), fields.end(), 0); first_fluid != fields.end();
        first_fluid = std::find(first_fluid, fields.end(), 0))
