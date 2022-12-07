@@ -62,6 +62,8 @@ def parameter_identification_test(nx, porosity, n_steps, jump_parameter,
   bins = np.linspace(min_val, max_val, 50)
 
   func = ecdf.estimator(data, bins, distance_fct, subset_sizes)
+  # func = ecdf.bootstrap_estimator(data[0:subset_sizes[0]],
+  #   data[subset_sizes[0]:subset_sizes[0]+subset_sizes[1]], bins, distance_fct)
 
   fig, ax = plt.subplots(nrows=2, ncols=2, figsize=(18, 5))
   ax[0,0] = ecdf.plot_ecdf_vectors(func, ax[0,0])
