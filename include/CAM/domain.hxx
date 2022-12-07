@@ -4,7 +4,6 @@
 #include <iomanip>
 #include <iostream>
 #include <limits>
-
 namespace CAM
 {
 
@@ -83,12 +82,20 @@ static constexpr unsigned int skeleton_distance(const fields_array_t& domain_a,
   return distance;
 }
 
+
 template <auto nx, typename fields_array_t>
 unsigned int n_solid_comp(fields_array_t fields)
 {
+  return particle_size_distribution<nx>(fields).size();
+}
+
+
+template <auto nx, typename fields_array_t>
+std::vector<unsigned int> particle_size_distribution(const fields_array_t& domain)
+{
+  fields_array_t fields = domain;
+  std::vector<unsigned int> distribution {};
   constexpr unsigned int dim = nx.size();
-  unsigned int n_connected_solids = 0;
-  unsigned int fluids_size, field, neigh_field;
   std::vector<unsigned int> found_solids;
 
   for_each(fields.begin(), fields.end(), [](unsigned int& field) { field = (field == 0); });
@@ -112,11 +119,12 @@ unsigned int n_solid_comp(fields_array_t fields)
         }
       }
     }
-    ++n_connected_solids;
+    distribution.push_back(found_solids.size());
   }
-
-  return n_connected_solids;
+  std::sort(distribution.begin(),distribution.end());
+  return distribution;
 }
+
 
 template <auto nx, typename fields_array_t>
 static constexpr double average_particle_size(const fields_array_t& domain)
