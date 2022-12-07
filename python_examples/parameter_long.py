@@ -88,7 +88,7 @@ def parameter_identification_test(nx, porosity, n_steps, jump_parameter,
   end_time = datetime.now()
   print("Program ended at", end_time, "after", end_time-start_time)
   
-  ax[0,1].plot(range(len(values)), values, 'ro')
+  ax[0,1].plot(jump_params, values, 'ro')
 
   if not os.path.exists('output'):  os.makedirs('output')
   plt.savefig('output/'+ file_name + '_parameter.png')
