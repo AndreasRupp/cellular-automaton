@@ -88,11 +88,10 @@ unsigned int n_solid_comp(fields_array_t fields)
 {
   constexpr unsigned int dim = nx.size();
   unsigned int n_connected_solids = 0;
-  // unsigned int n_periodic_fluids = 0;
   unsigned int fluids_size, field, neigh_field;
   std::vector<unsigned int> found_solids;
 
-  for_each(fields.begin(), fields.end(), [](unsigned int field) { field = (field == 0); });
+  for_each(fields.begin(), fields.end(), [](unsigned int& field) { field = (field == 0); });
 
   for (auto first_fluid = std::find(fields.begin(), fields.end(), 0); first_fluid != fields.end();
        first_fluid = std::find(first_fluid, fields.end(), 0))
