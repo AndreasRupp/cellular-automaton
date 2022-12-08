@@ -161,21 +161,21 @@ if __name__ == "__main__":
   for sigma in sigmas:
     fun_args.append( base_test(
       jump_parameter = sigma,
-      distance_fct   = distance,
+      distance_fct   = "default",
       file_name      = 'multiple_obj_sigma_' + str(sigma)
       ) )
 
   for steps in time_points:
     fun_args.append( base_test(
       n_steps      = steps,
-      distance_fct = distance,
+      distance_fct = "default",
       file_name    = 'multiple_obj_time_steps_' + str(steps)
       ) )
 
   for dim in dimensions:
     fun_args.append( base_test(
       nx           = [ 50 for _ in range(dim) ],
-      distance_fct = distance,
+      distance_fct = "default",
       file_name    = 'multiple_obj_dimension_' + str(dim)
       ) )
 
