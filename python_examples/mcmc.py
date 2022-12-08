@@ -88,19 +88,21 @@ bins = np.linspace(min_val, max_val, 50)
 
 func = ecdf.estimator(data, bins, distance_fct, subset_sizes)
 
-fig, ax = plt.subplots(nrows=2, ncols=2, figsize=(18, 5))
-ax[0,0] = ecdf.plot_ecdf_vectors(func, ax[0,0])
-ax[0,0] = ecdf.plot_mean_vector(func, ax[0,0], 'k.')
-ax[1,0] = ecdf.plot_chi2_test(func, ax[1,0], 20)
+# fig, ax = plt.subplots(nrows=2, ncols=2, figsize=(18, 5))
+# ax[0,0] = ecdf.plot_ecdf_vectors(func, ax[0,0])
+# ax[0,0] = ecdf.plot_mean_vector(func, ax[0,0], 'k.')
+# ax[1,0] = ecdf.plot_chi2_test(func, ax[1,0], 20)
 
 func.choose_bins(n_choose_bins, min_value_shift, max_value_shift)
   
-ax[0,0] = ecdf.plot_ecdf_vectors(func, ax[0,0], 'r.')
-ax[0,0] = ecdf.plot_mean_vector(func, ax[0,0], 'k.')
-ax[1,1] = ecdf.plot_chi2_test(func, ax[1,1])
+# ax[0,0] = ecdf.plot_ecdf_vectors(func, ax[0,0], 'r.')
+# ax[0,0] = ecdf.plot_mean_vector(func, ax[0,0], 'k.')
+# ax[1,1] = ecdf.plot_chi2_test(func, ax[1,1])
   
 end_time = datetime.now()
 print("Objective function setup at", end_time, "after", end_time-start_time)
+
+
 
 
 
@@ -156,4 +158,6 @@ names = results['names']  # parameter names
 # Plotting results
 f1 = mcp.plot_chain_panel(chain, names=names)
 # f2 = mcp.plot_pairwise_correlation_panel(chain, names=names)
-plt.show()
+# plt.show()
+if not os.path.exists('output'):  os.makedirs('output')
+  plt.savefig('output/mcmc.png')

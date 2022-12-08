@@ -132,10 +132,10 @@ if __name__ == "__main__":
 
   test_name    = 'basic_test'
   # distances    = ["bulk_distance", "average_distance"]
-  domain_sizes = [ 50] 
-  sigmas       = [ 5 ]
-  time_points  = [ 5 ]
-  dimensions   = [ 2 ]
+  domain_sizes = [ 5, 10, 25, 50, 100] 
+  sigmas       = [ 1,  5, 10, 25,  50]
+  time_points  = [ 0,  5, 10, 25,  50]
+  dimensions   = [ 1,  2,  3,  4,   5]
 
 
   try:
@@ -155,30 +155,29 @@ if __name__ == "__main__":
     fun_args.append( base_test(
       nx           = [size, size],
       distance_fct = "default",
-      file_name    = '_domain_size_' + str(size),
-      is_plot      = True
+      file_name    = 'multiple_obj_domain_size_' + str(size),
       ) )
 
-    # for sigma in sigmas:
-    #   fun_args.append( base_test(
-    #     jump_parameter = sigma,
-    #     distance_fct   = distance,
-    #     file_name      = distance + '_sigma_' + str(sigma)
-    #     ) )
+  for sigma in sigmas:
+    fun_args.append( base_test(
+      jump_parameter = sigma,
+      distance_fct   = distance,
+      file_name      = 'multiple_obj_sigma_' + str(sigma)
+      ) )
 
-    # for steps in time_points:
-    #   fun_args.append( base_test(
-    #     n_steps      = steps,
-    #     distance_fct = distance,
-    #     file_name    = distance + '_time_steps_' + str(steps)
-    #     ) )
+  for steps in time_points:
+    fun_args.append( base_test(
+      n_steps      = steps,
+      distance_fct = distance,
+      file_name    = 'multiple_obj_time_steps_' + str(steps)
+      ) )
 
-    # for dim in dimensions:
-    #   fun_args.append( base_test(
-    #     nx           = [ 50 for _ in range(dim) ],
-    #     distance_fct = distance,
-    #     file_name    = distance + '_dimension_' + str(dim)
-    #     ) )
+  for dim in dimensions:
+    fun_args.append( base_test(
+      nx           = [ 50 for _ in range(dim) ],
+      distance_fct = distance,
+      file_name    = 'multiple_obj_dimension_' + str(dim)
+      ) )
 
   processes = []
   for fun_arg in fun_args:
