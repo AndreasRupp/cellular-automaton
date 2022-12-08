@@ -18,7 +18,7 @@ class basic_test:
     distance_fct = "default",
     debug_mode   = False,
     file_name    = "basic_test",
-    is_plot      = 0
+    is_plot      = False
     ):
     # Configure the cellular automaton method (CAM).
     self.nx             = nx
