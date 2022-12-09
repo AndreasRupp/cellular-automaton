@@ -21,5 +21,5 @@ cdef class PythonClassName :
   def average_particle_size(vec):
     return average_particle_size (vec)
   @staticmethod
-  def particle_size_distribution(vec):
+  def particle_size_distribution(vec) -> list:
     return particle_size_distribution(vec)
