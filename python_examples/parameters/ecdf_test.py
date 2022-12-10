@@ -9,14 +9,15 @@ class basic_test:
     n_steps        = 5,
     jump_parameter = 5,
 
+    ecdf_type       = "standard",
     # subset_sizes    = [100] * 40,
     subset_sizes    = [50] * 10,
     min_value_shift = 0.1,
     max_value_shift = -0.1,
     n_choose_bins   = "default",
     jump_params     = "default",
+    distance_fct    = "default",
 
-    distance_fct = "default",
     debug_mode   = False,
     file_name    = "basic_test",
     is_plot      = False
@@ -30,10 +31,23 @@ class basic_test:
     n_fields = np.prod(nx)
 
     # Configure the eCDF method.
+    self.ecdf_type       = ecdf_type
     self.subset_sizes    = subset_sizes
     self.n_choose_bins   = n_choose_bins
     self.max_value_shift = max_value_shift
     self.min_value_shift = min_value_shift
+
+    if n_choose_bins == "default":
+      if distance_fct == "default" or distance_fct == "bulk_distance" or \
+        distance_fct == "particle_sizes":
+        self.n_choose_bins = 20
+      elif distance_fct == "average_distance":
+        self.n_choose_bins = 8
+      else:
+        print("WARNING: No default value for you distance type available!")
+        self.n_choose_bins = -1
+    else:
+      self.n_choose_bins = n_choose_bins
 
     if jump_params == "default":  self.jump_params = range(jump_parameter-5, jump_parameter+6)
     else:                         self.jump_params = jump_params
@@ -42,58 +56,36 @@ class basic_test:
     self.file_name  = file_name
     self.is_plot    = is_plot
 
-    if distance_fct == "default" or distance_fct == "bulk_distance":
-      try:
-        import CAM
-      except (ImportError, ModuleNotFoundError) as error:
-        sys.path.append(os.path.dirname(os.path.abspath(__file__)) + os.sep + ".."  + os.sep + 
-          ".." + os.sep + "import")
-        import CAM
-      const             = CAM.config()
-      const.nx          = self.nx
-      const.debug_mode  = self.debug_mode
-      self.PyCAM        = CAM.include(const)
-      self.distance_fct = self.PyCAM.bulk_distance
-    elif distance_fct == "average_distance":
-      try:
-        import CAM
-      except (ImportError, ModuleNotFoundError) as error:
-        sys.path.append(os.path.dirname(os.path.abspath(__file__)) + os.sep + ".."  + os.sep + 
-          ".." + os.sep + "import")
-        import CAM
-      const             = CAM.config()
-      const.nx          = self.nx
-      const.debug_mode  = self.debug_mode
-      self.PyCAM        = CAM.include(const)
-      def my_distance(a, b):
-        avg_part_a = self.PyCAM.average_particle_size(a)
-        avg_part_b = self.PyCAM.average_particle_size(b)
-        return np.abs(avg_part_a - avg_part_b)
-      self.distance_fct = my_distance
-    elif distance_fct == "particle_sizes":
-      try:
-        import CAM
-      except (ImportError, ModuleNotFoundError) as error:
-        sys.path.append(os.path.dirname(os.path.abspath(__file__)) + os.sep + ".."  + os.sep + 
-          ".." + os.sep + "import")
-        import CAM
-      const             = CAM.config()
-      const.nx          = self.nx
-      const.debug_mode  = self.debug_mode
-      self.PyCAM        = CAM.include(const)
-      def my_distance(a, b):
-        part_sizes_a = self.PyCAM.particle_size_distribution(a)
-        part_sizes_b = self.PyCAM.particle_size_distribution(b)
-        for item in part_sizes_b:
-          part_sizes_a.append(item)
-        return part_sizes_a
-      self.distance_fct = my_distance
+    try:
+      import CAM
+    except (ImportError, ModuleNotFoundError) as error:
+      sys.path.append(os.path.dirname(os.path.abspath(__file__)) + os.sep + ".."  + os.sep + 
+        ".." + os.sep + "import")
+      import CAM
+    const             = CAM.config()
+    const.nx          = self.nx
+    const.debug_mode  = self.debug_mode
+    self.PyCAM        = CAM.include(const)
 
-
-    if n_choose_bins == "default":
+    def return_distance_fct( distance_fct ):
       if distance_fct == "default" or distance_fct == "bulk_distance":
-        self.n_choose_bins = 20
+        return self.PyCAM.bulk_distance
       elif distance_fct == "average_distance":
-        self.n_choose_bins = 8
+        def my_distance(a, b):
+          avg_part_a = self.PyCAM.average_particle_size(a)
+          avg_part_b = self.PyCAM.average_particle_size(b)
+          return np.abs(avg_part_a - avg_part_b)
+        return my_distance
+      elif distance_fct == "particle_sizes":
+        def my_distance(a, b):
+          part_sizes_a = self.PyCAM.particle_size_distribution(a)
+          part_sizes_b = self.PyCAM.particle_size_distribution(b)
+          for item in part_sizes_b:
+            part_sizes_a.append(item)
+          return part_sizes_a
+        return my_distance
+
+    if isinstance(distance_fct, list):
+      self.distance_fct = [return_distance_fct(entry) for entry in distance_fct]
     else:
-      self.n_choose_bins = n_choose_bins
+      self.distance_fct = return_distance_fct(distance_fct)

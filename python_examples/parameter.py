@@ -1,102 +1,23 @@
 from __future__ import print_function
 
-import matplotlib.pyplot as plt
-import numpy as np
 from datetime import datetime
-
-import os, sys
+import multiprocessing
+import os, sys, time
   
-
-# --------------------------------------------------------------------------------------------------
-# Parameter identification test.
-# --------------------------------------------------------------------------------------------------
-def parameter_identification_test(nx, porosity, n_steps, jump_parameter, n_iter, values, bins,
-  n_choose_bins, subset_sizes, min_value_shift, max_value_shift, debug_mode):
-  start_time = datetime.now()
-  print("Starting time is", start_time)
-
-  n_fields = np.prod(nx)
-  data = [[0] * n_fields] * n_iter
-
-  try:
-    import CAM
-  except (ImportError, ModuleNotFoundError) as error:
-    sys.path.append(os.path.dirname(os.path.abspath(__file__)) + os.sep  + ".." + os.sep + "import")
-    import CAM
-
-  try:
-    import ecdf_estimator as ecdf
-  except (ImportError, ModuleNotFoundError) as error:
-    print("No installed ecdf_estimator package found! Using local ecdf_estimator.")
-    # sys.path.append(os.path.dirname(os.path.abspath(__file__)) + os.sep + ".." + os.sep + ".." +
-    #   os.sep + "ecdf_estimator.git")
-    sys.path.append(os.path.dirname(os.path.abspath(__file__)) + os.sep + ".." + os.sep +
-      "submodules" + os.sep + "ecdf_estimator.git")
-    import ecdf_estimator as ecdf
-
-  const            = CAM.config()
-  const.nx         = nx
-  const.debug_mode = debug_mode
-  PyCAM            = CAM.include(const)
-
-  # ------------------------------------------------------------------------------------------------
-  def run_cam(jump_parameter, nx, porosity, n_steps, debug_mode=False):
-    const            = CAM.config()
-    const.nx         = nx
-    const.debug_mode = debug_mode
-
-    PyCAM       = CAM.include(const)
-    CAM_wrapper = PyCAM(porosity, jump_parameter)
-
-    for step in range(n_steps):
-      CAM_wrapper.move_particles()
-
-    return CAM_wrapper.fields()
-  # ------------------------------------------------------------------------------------------------
-
-  for iter in range(n_iter):
-    data[iter] = run_cam(jump_parameter, nx, porosity, n_steps, debug_mode)
-
-  end_time = datetime.now()
-  print("CAM data acquired at", end_time, "after", end_time-start_time)
-
-  func = ecdf.estimator(data, bins, PyCAM.bulk_distance, subset_sizes)
-
-  fig, ax = plt.subplots(nrows=2, ncols=2, figsize=(18, 5))
-  ax[0,0] = ecdf.plot_ecdf_vectors(func, ax[0,0])
-  ax[0,0] = ecdf.plot_mean_vector(func, ax[0,0], 'k.')
-  ax[1,0] = ecdf.plot_chi2_test(func, ax[1,0], 20)
-
-  func.choose_bins(n_choose_bins, min_value_shift, max_value_shift)
-  
-  ax[0,0] = ecdf.plot_ecdf_vectors(func, ax[0,0], 'r.')
-  ax[0,0] = ecdf.plot_mean_vector(func, ax[0,0], 'k.')
-  ax[1,1] = ecdf.plot_chi2_test(func, ax[1,1])
-  
-  end_time = datetime.now()
-  print("Objective function setup at", end_time, "after", end_time-start_time)
-
-  for jump_size in range(len(values)):
-    for iter in range(n_iter):
-      data[iter] = run_cam(jump_size, nx, porosity, n_steps, debug_mode)
-    values[jump_size] = func.evaluate( data )
-
-  end_time = datetime.now()
-  print("Program ended at", end_time, "after", end_time-start_time)
-  
-  ax[0,1].plot(range(len(values)), values, 'ro')
-
-  if not os.path.exists('output'):  os.makedirs('output')
-  plt.savefig('output/prameter.png')
-  plt.show()
 
 
 # --------------------------------------------------------------------------------------------------
 # Define main function.
 # -------------------------------------------------------------------------------------------------- 
 if __name__ == "__main__":
+  debug_mode = len(sys.argv) > 1 and sys.argv[1] == "True"
 
-  test_name = 'basic_test'
+  try:
+    from parameter_identification import run_test_from_class
+  except (ImportError, ModuleNotFoundError) as error:
+    sys.path.append(os.path.dirname(os.path.abspath(__file__)) + os.sep  + ".." + os.sep + 
+      "python_functions")
+    from parameter_identification import run_test_from_class
 
   try:
     import ecdf_test
@@ -104,10 +25,95 @@ if __name__ == "__main__":
     sys.path.append(os.path.dirname(os.path.abspath(__file__)) + os.sep  + "parameters")
     import ecdf_test
 
-  used_test  = getattr(ecdf_test, test_name)
-  debug_mode = len(sys.argv) > 1 and sys.argv[1] == "True"
+
+  test_name    = 'basic_test'
   
-  parameter_identification_test(used_test.nx, used_test.porosity, used_test.n_steps,
-    used_test.jump_parameter, used_test.n_iter, used_test.values, used_test.bins,
-    used_test.n_choose_bins, used_test.subset_sizes, used_test.min_value_shift,
-    used_test.max_value_shift, debug_mode)
+  distances    = [ "bulk_distance", "average_distance", "particle_sizes" ]
+  ecdf_types   = [ "standard", "bootstrap" ]
+  subset_sizes = [ [100] * 40, [1000] * 2 ] 
+  domain_sizes = [ 5, 10, 25, 50, 100] 
+  sigmas       = [ 1,  5, 10, 25,  50]
+  time_points  = [ 0,  5, 10, 25,  50]
+  dimensions   = [ 1,  2,  3,  4,   5]
+
+  distances    = [ "bulk_distance" ]
+  ecdf_types   = [ "standard", "bootstrap" ]
+  subset_sizes = [ [50] * 10, [100] * 2 ] 
+  domain_sizes = [ 50] 
+  sigmas       = [ 5 ]
+  time_points  = [ 5 ]
+  dimensions   = [ 2 ]
+
+  mult_ecdf_types = [ "standard", "standard" ]
+  mult_distances  = [ "bulk_distance", "average_distance" ]
+  mult_n_bins     = [ 20, 8 ]
+  
+  
+  fun_args  = []
+  base_test = getattr(ecdf_test, test_name)
+
+  fun_args.append( base_test(
+    distance_fct  = mult_distances,
+    ecdf_type     = mult_ecdf_types,
+    n_choose_bins = mult_n_bins,
+    file_name     = 'multiple'
+    ) )
+
+  for type_index in range(len(ecdf_types)):
+    ecdf_type = ecdf_types[type_index]
+    subsets   = subset_sizes[type_index]
+
+    for distance in distances:
+    
+      for size in domain_sizes:
+        fun_args.append( base_test(
+          nx           = [size, size],
+          distance_fct = distance,
+          ecdf_type    = ecdf_type,
+          subset_sizes = subsets,
+          file_name    = ecdf_type + '_' + distance + '_domain-size_' + str(size)
+          ) )
+
+      for sigma in sigmas:
+        fun_args.append( base_test(
+          jump_parameter = sigma,
+          distance_fct = distance,
+          ecdf_type    = ecdf_type,
+          subset_sizes = subsets,
+          file_name      = ecdf_type + '_' + distance + '_jump-param_' + str(sigma)
+          ) )
+
+      for steps in time_points:
+        fun_args.append( base_test(
+          n_steps      = steps,
+          distance_fct = distance,
+          ecdf_type    = ecdf_type,
+          subset_sizes = subsets,
+          file_name    = ecdf_type + '_' + distance + '_time-steps_' + str(steps)
+          ) )
+
+      for dim in dimensions:
+        fun_args.append( base_test(
+          nx           = [ 50 for _ in range(dim) ],
+          distance_fct = distance,
+          ecdf_type    = ecdf_type,
+          subset_sizes = subsets,
+          file_name    = ecdf_type + '_' + distance + '_dimension_' + str(dim)
+          ) )
+
+  processes = []
+  for fun_arg in fun_args:
+    t = multiprocessing.Process(target=run_test_from_class, args=(fun_arg,))
+    processes.append(t)
+    t.start()
+
+  while multiprocessing.active_children():
+    val = input("Enter your value: ")
+    if val == "kill_all_children":
+      active = multiprocessing.active_children()
+      for child in active:
+        child.kill()
+      time.sleep(2)
+
+  for one_process in processes:
+    one_process.join()
