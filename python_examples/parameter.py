@@ -36,14 +36,6 @@ if __name__ == "__main__":
   time_points  = [ 0,  5, 10, 25,  50]
   dimensions   = [ 1,  2,  3,  4,   5]
 
-  distances    = [ "bulk_distance" ]
-  ecdf_types   = [ "standard", "bootstrap" ]
-  subset_sizes = [ [50] * 10, [100] * 2 ] 
-  domain_sizes = [ 50] 
-  sigmas       = [ 5 ]
-  time_points  = [ 5 ]
-  dimensions   = [ 2 ]
-
   mult_ecdf_types = [ "standard", "standard" ]
   mult_distances  = [ "bulk_distance", "average_distance" ]
   mult_n_bins     = [ 20, 8 ]
