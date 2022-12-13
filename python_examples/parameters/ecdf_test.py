@@ -1,6 +1,13 @@
 import numpy as np
 import os, sys
 
+try:
+  import CAM
+except (ImportError, ModuleNotFoundError) as error:
+  sys.path.append(os.path.dirname(os.path.abspath(__file__)) + os.sep + ".."  + os.sep +
+    ".." + os.sep + "import")
+  import CAM
+
 
 class basic_test:
   def __init__( self,
@@ -55,12 +62,6 @@ class basic_test:
     self.file_name  = file_name
     self.is_plot    = is_plot
 
-    try:
-      import CAM
-    except (ImportError, ModuleNotFoundError) as error:
-      sys.path.append(os.path.dirname(os.path.abspath(__file__)) + os.sep + ".."  + os.sep + 
-        ".." + os.sep + "import")
-      import CAM
     const             = CAM.config()
     const.nx          = self.nx
     const.debug_mode  = self.debug_mode

@@ -3,7 +3,19 @@ from __future__ import print_function
 from datetime import datetime
 import multiprocessing
 import os, sys, time
-  
+
+try:
+  from parameter_identification import run_test_from_class
+except (ImportError, ModuleNotFoundError) as error:
+  sys.path.append(os.path.dirname(os.path.abspath(__file__)) + os.sep  + ".." + os.sep +
+    "python_functions")
+  from parameter_identification import run_test_from_class
+
+try:
+  import ecdf_test
+except (ImportError, ModuleNotFoundError) as error:
+  sys.path.append(os.path.dirname(os.path.abspath(__file__)) + os.sep  + "parameters")
+  import ecdf_test
 
 
 # --------------------------------------------------------------------------------------------------
@@ -11,20 +23,6 @@ import os, sys, time
 # -------------------------------------------------------------------------------------------------- 
 if __name__ == "__main__":
   debug_mode = len(sys.argv) > 1 and sys.argv[1] == "True"
-
-  try:
-    from parameter_identification import run_test_from_class
-  except (ImportError, ModuleNotFoundError) as error:
-    sys.path.append(os.path.dirname(os.path.abspath(__file__)) + os.sep  + ".." + os.sep + 
-      "python_functions")
-    from parameter_identification import run_test_from_class
-
-  try:
-    import ecdf_test
-  except (ImportError, ModuleNotFoundError) as error:
-    sys.path.append(os.path.dirname(os.path.abspath(__file__)) + os.sep  + "parameters")
-    import ecdf_test
-
 
   test_name    = 'basic_test'
   
@@ -36,19 +34,30 @@ if __name__ == "__main__":
   time_points  = [ 0,  5, 10, 25,  50]
   dimensions   = [ 1,  2,  3,  4,   5]
 
-  mult_ecdf_types = [ "standard", "standard" ]
-  mult_distances  = [ "bulk_distance", "average_distance" ]
-  mult_n_bins     = [ 20, 8 ]
+  mult_ecdf_types_2 = [ "standard",      "standard",        ]
+  mult_distances_2  = [ "bulk_distance", "average_distance" ]
+  mult_n_bins_2     = [ 20,              8,                 ]
+
+  mult_ecdf_types_3 = [ "standard",      "standard",         "standard"       ]
+  mult_distances_3  = [ "bulk_distance", "average_distance", "particle_sizes" ]
+  mult_n_bins_3     = [ 20,              8,                   20              ]
   
   
   fun_args  = []
   base_test = getattr(ecdf_test, test_name)
 
   fun_args.append( base_test(
-    distance_fct  = mult_distances,
-    ecdf_type     = mult_ecdf_types,
-    n_choose_bins = mult_n_bins,
-    file_name     = 'multiple'
+    distance_fct  = mult_distances_2,
+    ecdf_type     = mult_ecdf_types_2,
+    n_choose_bins = mult_n_bins_2,
+    file_name     = 'multiple_2'
+    ) )
+
+  fun_args.append( base_test(
+    distance_fct  = mult_distances_3,
+    ecdf_type     = mult_ecdf_types_3,
+    n_choose_bins = mult_n_bins_3,
+    file_name     = 'multiple_3'
     ) )
 
   for type_index in range(len(ecdf_types)):

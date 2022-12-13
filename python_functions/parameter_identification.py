@@ -50,52 +50,43 @@ def ecdf_identify(nx, porosity, n_steps, jump_parameter, ecdf_type, subset_sizes
   fig, ax = plt.subplots(nrows=2, ncols=2, figsize=(18, 5))
 
   if ecdf_type == "standard":
-    min_val, max_val, _ = ecdf.estimate_radii_values(data[0:subset_sizes[0]],
+    min_val, max_val, distance_data = ecdf.estimate_radii_values(data[0:subset_sizes[0]],
       data[subset_sizes[0]:subset_sizes[0]+subset_sizes[1]], distance_fct )
-    bins = np.linspace(min_val, max_val, 50)
-    func = ecdf.estimator(data, bins, distance_fct, subset_sizes)
-    ax[0,0] = ecdf.plot_ecdf_vectors(func, ax[0,0])
-    ax[0,0] = ecdf.plot_mean_vector(func, ax[0,0], 'k.')
-    ax[1,0] = ecdf.plot_chi2_test(func, ax[1,0], 20)
-    func.choose_bins(n_choose_bins, min_value_shift, max_value_shift)
+    bins = ecdf.choose_bins(distance_data, np.linspace(min_val, max_val, 50), n_choose_bins)
+    func = ecdf.standard(data, bins, distance_fct, subset_sizes)
   elif ecdf_type == "bootstrap":
-    min_val, max_val, _ = ecdf.estimate_radii_values(data[0:subset_sizes[0]],
+    min_val, max_val, distance_data = ecdf.estimate_radii_values(data[0:subset_sizes[0]],
       data[subset_sizes[0]:subset_sizes[0]+subset_sizes[1]], distance_fct )
-    bins = np.linspace(min_val, max_val, 50)
-    func = ecdf.bootstrap_estimator(data[0:subset_sizes[0]],
+    bins = ecdf.choose_bins(distance_data, np.linspace(min_val, max_val, 50), n_choose_bins)
+    func = ecdf.bootstrap(data[0:subset_sizes[0]],
             data[subset_sizes[0]:subset_sizes[0]+subset_sizes[1]], bins, distance_fct)
-    ax[0,0] = ecdf.plot_ecdf_vectors(func, ax[0,0])
-    ax[0,0] = ecdf.plot_mean_vector(func, ax[0,0], 'k.')
-    ax[1,0] = ecdf.plot_chi2_test(func, ax[1,0], 20)
-    func.choose_bins(n_choose_bins, min_value_shift, max_value_shift)
   elif isinstance(ecdf_type,list):
     if not len(distance_fct) == len(n_choose_bins) and len(n_choose_bins) == len(ecdf_type):
       print("ERROR: Same amount of distance, bin, and type choices needed.")
     func_list = []
     for index in range(len(distance_fct)):
       distance, n_bins = distance_fct[index], n_choose_bins[index]
-      min_val, max_val, _ = ecdf.estimate_radii_values(data[0:subset_sizes[0]],
-        data[subset_sizes[0]:subset_sizes[0]+subset_sizes[1]], distance )
-      bins = np.linspace(min_val, max_val, 50)
+      min_val, max_val, distance_data = ecdf.estimate_radii_values(data[0:subset_sizes[0]],
+      data[subset_sizes[0]:subset_sizes[0]+subset_sizes[1]], distance )
+      bins = ecdf.choose_bins(distance_data, np.linspace(min_val, max_val, 50), n_bins)
       if ecdf_type[index] == "standard":
-        aux_func = ecdf.estimator(data, bins, distance, subset_sizes)
+        aux_func = ecdf.standard(data, bins, distance, subset_sizes)
       elif ecdf_type[index] == "bootstrap":
-        aux_func = ecdf.bootstrap_estimator(data[0:subset_sizes[0]],
+        aux_func = ecdf.bootstrap(data[0:subset_sizes[0]],
                    data[subset_sizes[0]:subset_sizes[0]+subset_sizes[1]], bins, distance)
-      aux_func.choose_bins(n_choose_bins[index], min_value_shift, max_value_shift)
       func_list.append(aux_func)
     func = ecdf.multiple_estimator( func_list )
   else:
     print("ERROR: Type of ecdf is invalid.")
 
-  ax[0,0] = ecdf.plot_ecdf_vectors(func, ax[0,0], 'r.')
+  ax[0,0] = ecdf.plot_ecdf_vectors(func, ax[0,0])
   ax[0,0] = ecdf.plot_mean_vector(func, ax[0,0], 'k.')
-  ax[1,1] = ecdf.plot_chi2_test(func, ax[1,1])
+  ax[1,0] = ecdf.plot_chi2_test(func, ax[1,0], 20)
 
   end_time = datetime.now()
   print("Objective function setup at", end_time, "after", end_time-start_time)
 
-  values = [ func.evaluate( [ run_cam(jump_param, nx, porosity, n_steps, debug_mode) \
+  values = [ ecdf.evaluate( func, [ run_cam(jump_param, nx, porosity, n_steps, debug_mode) \
              for _ in range(subset_sizes[0]) ] ) for jump_param in jump_params ]
 
   ax[0,1].plot(jump_params, values, 'ro')
