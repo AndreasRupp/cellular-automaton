@@ -4,6 +4,22 @@ import matplotlib.pyplot as plt
 import numpy as np
 import os, sys
 from datetime import datetime
+
+try:
+  import CAM
+except (ImportError, ModuleNotFoundError) as error:
+  sys.path.append(os.path.dirname(os.path.abspath(__file__)) + os.sep  + ".." + os.sep + "import")
+  import CAM
+
+try:
+  import ecdf_estimator as ecdf
+except (ImportError, ModuleNotFoundError) as error:
+  print("No installed ecdf_estimator package found! Using local ecdf_estimator.")
+  sys.path.append(os.path.dirname(os.path.abspath(__file__)) + os.sep + ".." + os.sep + ".." +
+    os.sep + "cil_estimator.git")
+  # sys.path.append(os.path.dirname(os.path.abspath(__file__)) + os.sep + ".." + os.sep +
+  #   "submodules" + os.sep + "ecdf_estimator.git")
+  import ecdf_estimator as ecdf
   
 
 # --------------------------------------------------------------------------------------------------
@@ -11,36 +27,19 @@ from datetime import datetime
 # --------------------------------------------------------------------------------------------------
 def ecdf_identify(nx, porosity, n_steps, jump_parameter, ecdf_type, subset_sizes, n_choose_bins,
   min_value_shift, max_value_shift, jump_params, distance_fct, debug_mode, file_name, is_plot):
+
+  def run_cam(jump_parameter, nx, porosity, n_steps, debug_mode=False):
+    CAM_wrapper = PyCAM(porosity, jump_parameter)
+    for step in range(n_steps):  CAM_wrapper.move_particles()
+    return CAM_wrapper.fields()
+
   start_time = datetime.now()
   print("Starting time is", start_time)
-
-  try:
-    import CAM
-  except (ImportError, ModuleNotFoundError) as error:
-    sys.path.append(os.path.dirname(os.path.abspath(__file__)) + os.sep  + ".." + os.sep + "import")
-    import CAM
-
-  try:
-    import ecdf_estimator as ecdf
-  except (ImportError, ModuleNotFoundError) as error:
-    print("No installed ecdf_estimator package found! Using local ecdf_estimator.")
-    sys.path.append(os.path.dirname(os.path.abspath(__file__)) + os.sep + ".." + os.sep + ".." +
-      os.sep + "cil_estimator.git")
-    # sys.path.append(os.path.dirname(os.path.abspath(__file__)) + os.sep + ".." + os.sep +
-    #   "submodules" + os.sep + "ecdf_estimator.git")
-    import ecdf_estimator as ecdf
 
   const            = CAM.config()
   const.nx         = nx
   const.debug_mode = debug_mode
   PyCAM            = CAM.include(const)
-
-  # ------------------------------------------------------------------------------------------------
-  def run_cam(jump_parameter, nx, porosity, n_steps, debug_mode=False):
-    CAM_wrapper = PyCAM(porosity, jump_parameter)
-    for step in range(n_steps):  CAM_wrapper.move_particles()
-    return CAM_wrapper.fields()
-  # ------------------------------------------------------------------------------------------------
 
   n_fields, n_iter = np.prod(nx), np.sum(subset_sizes)
   data = [ run_cam(jump_parameter, nx, porosity, n_steps, debug_mode) for _ in range(n_iter) ]
