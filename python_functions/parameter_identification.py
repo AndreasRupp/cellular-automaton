@@ -75,7 +75,7 @@ def ecdf_identify(nx, porosity, n_steps, jump_parameter, ecdf_type, subset_sizes
         aux_func = ecdf.bootstrap(data[0:subset_sizes[0]],
                    data[subset_sizes[0]:subset_sizes[0]+subset_sizes[1]], bins, distance)
       func_list.append(aux_func)
-    func = ecdf.multiple_estimator( func_list )
+    func = ecdf.multiple( func_list )
   else:
     print("ERROR: Type of ecdf is invalid.")
 
