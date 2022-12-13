@@ -10,8 +10,7 @@ class basic_test:
     jump_parameter = 5,
 
     ecdf_type       = "standard",
-    # subset_sizes    = [100] * 40,
-    subset_sizes    = [50] * 10,
+    subset_sizes    = [100] * 40,
     min_value_shift = 0.1,
     max_value_shift = -0.1,
     n_choose_bins   = "default",

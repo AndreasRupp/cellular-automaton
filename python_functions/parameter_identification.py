@@ -83,6 +83,7 @@ def ecdf_identify(nx, porosity, n_steps, jump_parameter, ecdf_type, subset_sizes
       elif ecdf_type[index] == "bootstrap":
         aux_func = ecdf.bootstrap_estimator(data[0:subset_sizes[0]],
                    data[subset_sizes[0]:subset_sizes[0]+subset_sizes[1]], bins, distance)
+      func.choose_bins(n_choose_bins[index], min_value_shift, max_value_shift)
       func_list.append(aux_func)
     func = ecdf.multiple_estimator( func_list )
   else:

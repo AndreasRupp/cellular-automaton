@@ -30,7 +30,7 @@ if __name__ == "__main__":
   
   distances    = [ "bulk_distance", "average_distance", "particle_sizes" ]
   ecdf_types   = [ "standard", "bootstrap" ]
-  subset_sizes = [ [100] * 40, [1000] * 2 ] 
+  subset_sizes = [ [100] * 40, [1000] * 2  ]
   domain_sizes = [ 5, 10, 25, 50, 100] 
   sigmas       = [ 1,  5, 10, 25,  50]
   time_points  = [ 0,  5, 10, 25,  50]
