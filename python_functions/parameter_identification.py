@@ -95,7 +95,7 @@ def ecdf_identify(nx, porosity, n_steps, jump_parameter, ecdf_type, subset_sizes
   values = [ np.exp(-0.5 * value) / np.sqrt(((2*np.pi) ** covar.shape[0]) * np.linalg.det(covar)) \
              for value in values ]
 
-  ax[0,1].plot(jump_params, values, 'bo')
+  ax[1,1].plot(jump_params, values, 'bo')
 
   if not os.path.exists('output'):  os.makedirs('output')
   plt.savefig('output/'+ file_name + '.png')
