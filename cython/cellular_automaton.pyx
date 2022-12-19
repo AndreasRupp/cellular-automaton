@@ -2,8 +2,9 @@
 
 cdef class PythonClassName :
   cdef CythonClassName *thisptr # hold a C++ instance which we're wrapping
-  def __cinit__(self, porosity, jump_param):
-    self.thisptr = new CythonClassName (porosity, jump_param)
+  def __cinit__(self, porosity, jump_param_singles, jump_param_composites="default"):
+    if jump_param_composites == "default": jump_param_composites = jump_param_singles
+    self.thisptr = new CythonClassName (porosity, jump_param_singles, jump_param_composites)
   def __dealloc__(self):
     del self.thisptr
   def move_particles(self):
@@ -15,4 +16,10 @@ cdef class PythonClassName :
     print_array (vec)
   @staticmethod
   def bulk_distance(vec_a, vec_b):
-    return bulk_distance(vec_a, vec_b)
+    return bulk_distance (vec_a, vec_b)
+  @staticmethod
+  def average_particle_size(vec):
+    return average_particle_size (vec)
+  @staticmethod
+  def particle_size_distribution(vec) -> list:
+    return particle_size_distribution(vec)
