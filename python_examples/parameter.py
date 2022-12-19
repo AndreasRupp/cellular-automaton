@@ -27,20 +27,21 @@ if __name__ == "__main__":
   test_name    = 'basic_test'
   
   distances    = [ "bulk_distance", "average_distance", "particle_sizes" ]
-  ecdf_types   = [ "standard", "bootstrap" ]
-  subset_sizes = [ [100] * 40, [1000] * 2  ]
-  domain_sizes = [ 5, 10, 25, 50, 100] 
-  sigmas       = [ 1,  5, 10, 25,  50]
+  n_bins       = [ 20,              8,                  10               ]
+  ecdf_types   = [ "standard" ]
+  subset_sizes = [ [100] * 40 ]
+  domain_sizes = [ 50 ] 
+  sigmas       = [ 5  ]
   time_points  = [ 0,  5, 10, 25,  50]
   dimensions   = [ 1,  2,  3,  4,   5]
 
   mult_ecdf_types_2 = [ "standard",      "standard",        ]
   mult_distances_2  = [ "bulk_distance", "average_distance" ]
-  mult_n_bins_2     = [ 20,              8,                 ]
+  mult_n_bins_2     = [ 8,               4                  ]
 
   mult_ecdf_types_3 = [ "standard",      "standard",         "standard"       ]
   mult_distances_3  = [ "bulk_distance", "average_distance", "particle_sizes" ]
-  mult_n_bins_3     = [ 20,              8,                   20              ]
+  mult_n_bins_3     = [ 5,               2,                   5               ]
   
   
   fun_args  = []
@@ -64,43 +65,40 @@ if __name__ == "__main__":
     ecdf_type = ecdf_types[type_index]
     subsets   = subset_sizes[type_index]
 
-    for distance in distances:
+    for distance_index in range(len(distances)):
+      distance      = distances[distance_index]
+      n_choose_bins = n_bins[distance_index]
     
       for size in domain_sizes:
-        fun_args.append( base_test(
-          nx           = [size, size],
-          distance_fct = distance,
-          ecdf_type    = ecdf_type,
-          subset_sizes = subsets,
-          file_name    = ecdf_type + '_' + distance + '_domain-size_' + str(size)
-          ) )
+        for sigma in sigmas:
+          fun_args.append( base_test(
+            nx             = [size, size],
+            n_choose_bins  = n_choose_bins,
+            jump_parameter = sigma,
+            distance_fct   = distance,
+            ecdf_type      = ecdf_type,
+            subset_sizes   = subsets,
+            file_name      = ecdf_type + '_' + distance + '_jump-param_' + str(sigma) + \
+                             '_size_' + str(size)
+            ) )
 
-      for sigma in sigmas:
-        fun_args.append( base_test(
-          jump_parameter = sigma,
-          distance_fct = distance,
-          ecdf_type    = ecdf_type,
-          subset_sizes = subsets,
-          file_name      = ecdf_type + '_' + distance + '_jump-param_' + str(sigma)
-          ) )
+      # for steps in time_points:
+      #   fun_args.append( base_test(
+      #     n_steps      = steps,
+      #     distance_fct = distance,
+      #     ecdf_type    = ecdf_type,
+      #     subset_sizes = subsets,
+      #     file_name    = ecdf_type + '_' + distance + '_time-steps_' + str(steps)
+      #     ) )
 
-      for steps in time_points:
-        fun_args.append( base_test(
-          n_steps      = steps,
-          distance_fct = distance,
-          ecdf_type    = ecdf_type,
-          subset_sizes = subsets,
-          file_name    = ecdf_type + '_' + distance + '_time-steps_' + str(steps)
-          ) )
-
-      for dim in dimensions:
-        fun_args.append( base_test(
-          nx           = [ 50 for _ in range(dim) ],
-          distance_fct = distance,
-          ecdf_type    = ecdf_type,
-          subset_sizes = subsets,
-          file_name    = ecdf_type + '_' + distance + '_dimension_' + str(dim)
-          ) )
+      # for dim in dimensions:
+      #   fun_args.append( base_test(
+      #     nx           = [ 50 for _ in range(dim) ],
+      #     distance_fct = distance,
+      #     ecdf_type    = ecdf_type,
+      #     subset_sizes = subsets,
+      #     file_name    = ecdf_type + '_' + distance + '_dimension_' + str(dim)
+      #     ) )
 
   processes = []
   for fun_arg in fun_args:
