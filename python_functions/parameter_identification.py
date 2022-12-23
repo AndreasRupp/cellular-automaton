@@ -86,17 +86,21 @@ def ecdf_identify(nx, porosity, n_steps, jump_parameter, ecdf_type, subset_sizes
   end_time = datetime.now()
   print("Objective function setup at", end_time, "after", end_time-start_time)
 
-  values = [ ecdf.evaluate( func, [ run_cam(jump_param, nx, porosity, n_steps, debug_mode) \
+  n_runs = 10
+  means_log = [0.] * len(jump_params)
+  means_nor = [0.] * len(jump_params)
+  for _ in range(n_runs):
+    values = [ ecdf.evaluate( func, [ run_cam(jump_param, nx, porosity, n_steps, debug_mode) \
              for _ in range(subset_sizes[0]) ] ) for jump_param in jump_params ]
+    ax[0,1].plot(jump_params, values, 'ro')
+    means_log = [ means_log[i] + values[i] / n_runs for i in range(len(jump_params))]
+    values = [ np.exp(-0.5 * value)   for value in values ]
+    values = [ value / np.sum(values) for value in values ]
+    ax[1,1].plot(jump_params, values, 'ro')
+    means_nor = [ means_nor[i] + values[i] / n_runs for i in range(len(jump_params))]
 
-  ax[0,1].plot(jump_params, values, 'ro')
-
-  # ecdf.save_data(func)
-
-  values = [ np.exp(-0.5 * value)   for value in values ]
-  values = [ value / np.sum(values) for value in values ]
-
-  ax[1,1].plot(jump_params, values, 'ro')
+  ax[0,1].plot(jump_params, means_log, 'bo')
+  ax[1,1].plot(jump_params, means_nor, 'bo')
 
   if not os.path.exists('output'):  os.makedirs('output')
   plt.savefig('output/'+ file_name + '.png')
