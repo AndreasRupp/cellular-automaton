@@ -28,12 +28,8 @@ if __name__ == "__main__":
   
   distances    = [ "bulk_distance", "average_distance", "particle_sizes" ]
   n_bins       = [ 20,              8,                  10               ]
-  ecdf_types   = [ "standard" ]
-  subset_sizes = [ [100] * 40 ]
-  domain_sizes = [ 50 ] 
-  sigmas       = [ 5  ]
-  time_points  = [ 0,  5, 10, 25,  50]
-  dimensions   = [ 1,  2,  3,  4,   5]
+  domain_sizes = [ 10, 25, 50, 100 ] 
+  time_points  = [  0, 10, 25,  50 ]
 
   mult_ecdf_types_2 = [ "standard",      "standard",        ]
   mult_distances_2  = [ "bulk_distance", "average_distance" ]
@@ -61,44 +57,26 @@ if __name__ == "__main__":
     file_name     = 'multiple_3'
     ) )
 
-  for type_index in range(len(ecdf_types)):
-    ecdf_type = ecdf_types[type_index]
-    subsets   = subset_sizes[type_index]
+  for size in domain_sizes:
+    fun_args.append( base_test(
+      nx             = [size, size],
+      file_name      = 'size_' + str(size)
+      ) )
 
-    for distance_index in range(len(distances)):
-      distance      = distances[distance_index]
-      n_choose_bins = n_bins[distance_index]
-    
-      for size in domain_sizes:
-        for sigma in sigmas:
-          fun_args.append( base_test(
-            nx             = [size, size],
-            n_choose_bins  = n_choose_bins,
-            jump_parameter = sigma,
-            distance_fct   = distance,
-            ecdf_type      = ecdf_type,
-            subset_sizes   = subsets,
-            file_name      = ecdf_type + '_' + distance + '_jump-param_' + str(sigma) + \
-                             '_size_' + str(size)
-            ) )
+  for steps in time_points:
+    fun_args.append( base_test(
+      n_steps      = steps,
+      file_name    = 'time-steps_' + str(steps)
+      ) )
 
-      # for steps in time_points:
-      #   fun_args.append( base_test(
-      #     n_steps      = steps,
-      #     distance_fct = distance,
-      #     ecdf_type    = ecdf_type,
-      #     subset_sizes = subsets,
-      #     file_name    = ecdf_type + '_' + distance + '_time-steps_' + str(steps)
-      #     ) )
-
-      # for dim in dimensions:
-      #   fun_args.append( base_test(
-      #     nx           = [ 50 for _ in range(dim) ],
-      #     distance_fct = distance,
-      #     ecdf_type    = ecdf_type,
-      #     subset_sizes = subsets,
-      #     file_name    = ecdf_type + '_' + distance + '_dimension_' + str(dim)
-      #     ) )
+  for distance_index in range(len(distances)):
+    distance      = distances[distance_index]
+    n_choose_bins = n_bins[distance_index]
+    fun_args.append( base_test(
+      n_choose_bins  = n_choose_bins,
+      distance_fct   = distance,
+      file_name      = "distance_" + distance
+    ) )
 
   processes = []
   for fun_arg in fun_args:

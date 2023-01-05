@@ -25,7 +25,7 @@ except (ImportError, ModuleNotFoundError) as error:
 # --------------------------------------------------------------------------------------------------
 # Parameter identification test.
 # --------------------------------------------------------------------------------------------------
-def ecdf_identify(nx, porosity, n_steps, jump_parameter, ecdf_type, subset_sizes, n_choose_bins,
+def ecdf_identify(nx, porosity, n_steps, jump_parameter, ecdf_type, subset_sizes, n_bins,
   min_value_shift, max_value_shift, jump_params, distance_fct, debug_mode, file_name, is_plot):
 
   def run_cam(jump_parameter, nx, porosity, n_steps, debug_mode=False):
@@ -33,13 +33,33 @@ def ecdf_identify(nx, porosity, n_steps, jump_parameter, ecdf_type, subset_sizes
     for step in range(n_steps):  CAM_wrapper.move_particles()
     return CAM_wrapper.fields()
 
+  def generate_ecdf(data, subset_sizes, distance_fct, n_bins, ecdf_type, ax=None):
+    min_val, max_val, distance_data = ecdf.estimate_radii_values(data[0:subset_sizes[0]],
+      data[subset_sizes[0]:subset_sizes[0]+subset_sizes[1]], distance_fct )
+    bins = np.linspace(min_val, max_val, 50)
+    if ax is not None:
+      if ecdf_type == "standard":
+        aux_func = ecdf.standard(data, bins, distance_fct, subset_sizes)
+      elif ecdf_type == "bootstrap":
+        aux_func = ecdf.bootstrap(data[0:subset_sizes[0]],
+                     data[subset_sizes[0]:subset_sizes[0]+subset_sizes[1]], bins, distance_fct)
+      ax = ecdf.plot_ecdf_vectors(aux_func, ax, 'm.')
+    bins = ecdf.choose_bins(distance_data, bins, n_bins)
+    if ecdf_type == "standard":
+      func = ecdf.standard(data, bins, distance_fct, subset_sizes)
+    elif ecdf_type == "bootstrap":
+      func = ecdf.bootstrap(data[0:subset_sizes[0]],
+               data[subset_sizes[0]:subset_sizes[0]+subset_sizes[1]], bins, distance_fct)
+    return func, ax
+
+
   start_time = datetime.now()
   print("Starting time is", start_time)
 
-  const            = CAM.config()
-  const.nx         = nx
-  const.debug_mode = debug_mode
-  PyCAM            = CAM.include(const)
+  CAM_config            = CAM.config()
+  CAM_config.nx         = nx
+  CAM_config.debug_mode = debug_mode
+  PyCAM                 = CAM.include(CAM_config)
 
   n_fields, n_iter = np.prod(nx), np.sum(subset_sizes)
   data = [ run_cam(jump_parameter, nx, porosity, n_steps, debug_mode) for _ in range(n_iter) ]
@@ -49,37 +69,20 @@ def ecdf_identify(nx, porosity, n_steps, jump_parameter, ecdf_type, subset_sizes
 
   fig, ax = plt.subplots(nrows=2, ncols=2, figsize=(18, 5))
 
-  if ecdf_type == "standard":
-    min_val, max_val, distance_data = ecdf.estimate_radii_values(data[0:subset_sizes[0]],
-      data[subset_sizes[0]:subset_sizes[0]+subset_sizes[1]], distance_fct )
-    bins = ecdf.choose_bins(distance_data, np.linspace(min_val, max_val, 50), n_choose_bins)
-    func = ecdf.standard(data, bins, distance_fct, subset_sizes)
-  elif ecdf_type == "bootstrap":
-    min_val, max_val, distance_data = ecdf.estimate_radii_values(data[0:subset_sizes[0]],
-      data[subset_sizes[0]:subset_sizes[0]+subset_sizes[1]], distance_fct )
-    bins = ecdf.choose_bins(distance_data, np.linspace(min_val, max_val, 50), n_choose_bins)
-    func = ecdf.bootstrap(data[0:subset_sizes[0]],
-            data[subset_sizes[0]:subset_sizes[0]+subset_sizes[1]], bins, distance_fct)
+  if ecdf_type == "standard" or ecdf_type == "bootstrap":
+    func, ax[0,0] = generate_ecdf(data, subset_sizes, distance_fct, n_bins, ecdf_type, ax[0,0])
   elif isinstance(ecdf_type,list):
-    if not len(distance_fct) == len(n_choose_bins) and len(n_choose_bins) == len(ecdf_type):
+    if not len(distance_fct) == len(n_bins) and len(n_bins) == len(ecdf_type):
       print("ERROR: Same amount of distance, bin, and type choices needed.")
     func_list = []
     for index in range(len(distance_fct)):
-      distance, n_bins = distance_fct[index], n_choose_bins[index]
-      min_val, max_val, distance_data = ecdf.estimate_radii_values(data[0:subset_sizes[0]],
-      data[subset_sizes[0]:subset_sizes[0]+subset_sizes[1]], distance )
-      bins = ecdf.choose_bins(distance_data, np.linspace(min_val, max_val, 50), n_bins)
-      if ecdf_type[index] == "standard":
-        aux_func = ecdf.standard(data, bins, distance, subset_sizes)
-      elif ecdf_type[index] == "bootstrap":
-        aux_func = ecdf.bootstrap(data[0:subset_sizes[0]],
-                   data[subset_sizes[0]:subset_sizes[0]+subset_sizes[1]], bins, distance)
-      func_list.append(aux_func)
+      distance, _n_bins = distance_fct[index], n_bins[index]
+      func_list.append( generate_ecdf(data, subset_sizes, distance, _n_bins, ecdf_type) )
     func = ecdf.multiple( func_list )
   else:
     print("ERROR: Type of ecdf is invalid.")
 
-  ax[0,0] = ecdf.plot_ecdf_vectors(func, ax[0,0])
+  ax[0,0] = ecdf.plot_ecdf_vectors(func, ax[0,0], 'c.')
   ax[0,0] = ecdf.plot_mean_vector(func, ax[0,0], 'k.')
   ax[1,0] = ecdf.plot_chi2_test(func, ax[1,0])
 
