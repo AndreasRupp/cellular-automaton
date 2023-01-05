@@ -75,9 +75,9 @@ def ecdf_identify(nx, porosity, n_steps, jump_parameter, ecdf_type, subset_sizes
     if not len(distance_fct) == len(n_bins) and len(n_bins) == len(ecdf_type):
       print("ERROR: Same amount of distance, bin, and type choices needed.")
     func_list = []
-    for index in range(len(distance_fct)):
-      distance, _n_bins = distance_fct[index], n_bins[index]
-      func_list.append( generate_ecdf(data, subset_sizes, distance, _n_bins, ecdf_type) )
+    for i in range(len(distance_fct)):
+      aux_func, _ = generate_ecdf(data, subset_sizes, distance_fct[i], n_bins[i], ecdf_type[i])
+      func_list.append( aux_func )
     func = ecdf.multiple( func_list )
   else:
     print("ERROR: Type of ecdf is invalid.")

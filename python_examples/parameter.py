@@ -28,8 +28,10 @@ if __name__ == "__main__":
   
   distances    = [ "bulk_distance", "average_distance", "particle_sizes" ]
   n_bins       = [ 20,              8,                  10               ]
-  domain_sizes = [ 10, 25, 50, 100 ] 
-  time_points  = [  0, 10, 25,  50 ]
+
+  n_choose_bins = range(2, 30, 4)
+  domain_sizes  = [ 10, 25, 50, 100 ] 
+  time_points   = [  0, 10, 25,  50 ]
 
   mult_ecdf_types_2 = [ "standard",      "standard",        ]
   mult_distances_2  = [ "bulk_distance", "average_distance" ]
@@ -67,6 +69,12 @@ if __name__ == "__main__":
     fun_args.append( base_test(
       n_steps      = steps,
       file_name    = 'time-steps_' + str(steps)
+      ) )
+
+  for n_choose_bin in n_choose_bins:
+    fun_args.append( base_test(
+      n_choose_bins = n_choose_bin,
+      file_name     = 'n-bins_' + str(n_choose_bin)
       ) )
 
   for distance_index in range(len(distances)):
