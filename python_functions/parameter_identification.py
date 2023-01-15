@@ -25,7 +25,7 @@ except (ImportError, ModuleNotFoundError) as error:
 # --------------------------------------------------------------------------------------------------
 # Parameter identification test.
 # --------------------------------------------------------------------------------------------------
-def ecdf_identify(nx, porosity, n_steps, jump_parameter, ecdf_type, subset_sizes, n_bins,
+def ecdf_identify(nx, porosity, n_steps, jump_parameter, ecdf_type, subset_sizes, n_bins, n_runs,
   min_value_shift, max_value_shift, jump_params, distance_fct, debug_mode, file_name, is_plot):
 
   def run_cam(jump_parameter, nx, porosity, n_steps, debug_mode=False):
@@ -89,7 +89,6 @@ def ecdf_identify(nx, porosity, n_steps, jump_parameter, ecdf_type, subset_sizes
   end_time = datetime.now()
   print("Objective function setup at", end_time, "after", end_time-start_time)
 
-  n_runs = 10
   means_log = [0.] * len(jump_params)
   means_nor = [0.] * len(jump_params)
   for _ in range(n_runs):
@@ -116,6 +115,6 @@ def ecdf_identify(nx, porosity, n_steps, jump_parameter, ecdf_type, subset_sizes
 
 def run_test_from_class(test_class):
   ecdf_identify(test_class.nx, test_class.porosity, test_class.n_steps, test_class.jump_parameter,
-    test_class.ecdf_type, test_class.subset_sizes, test_class.n_choose_bins,
+    test_class.ecdf_type, test_class.subset_sizes, test_class.n_bins, test_class.n_runs,
     test_class.min_value_shift, test_class.max_value_shift, test_class.jump_params,
     test_class.distance_fct, test_class.debug_mode, test_class.file_name, test_class.is_plot)

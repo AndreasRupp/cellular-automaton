@@ -20,9 +20,10 @@ class basic_test:
     subset_sizes    = [100] * 40,
     min_value_shift = 0.1,
     max_value_shift = -0.1,
-    n_choose_bins   = "default",
-    jump_params     = "default",
-    distance_fct    = "default",
+    n_bins          = None,
+    n_runs          = 10,
+    jump_params     = None,
+    distance_fct    = "bulk_distance",
 
     debug_mode   = False,
     file_name    = "basic_test",
@@ -39,24 +40,17 @@ class basic_test:
     # Configure the eCDF method.
     self.ecdf_type       = ecdf_type
     self.subset_sizes    = subset_sizes
-    self.n_choose_bins   = n_choose_bins
+    self.n_bins          = n_bins
+    self.n_runs          = n_runs
     self.max_value_shift = max_value_shift
     self.min_value_shift = min_value_shift
 
-    if n_choose_bins == "default":
-      if distance_fct == "default" or distance_fct == "bulk_distance" or \
-        distance_fct == "particle_sizes":
-        self.n_choose_bins = 20
-      elif distance_fct == "average_distance":
-        self.n_choose_bins = 8
-      else:
-        print("WARNING: No default value for you distance type available!")
-        self.n_choose_bins = -1
-    else:
-      self.n_choose_bins = n_choose_bins
+    if n_bins is None:
+      if distance_fct == "bulk_distance" or distance_fct == "particle_sizes":  self.n_bins = 20
+      elif distance_fct == "average_distance":                                 self.n_bins = 8
 
-    if jump_params == "default":  self.jump_params = range(jump_parameter-5, jump_parameter+6)
-    else:                         self.jump_params = jump_params
+    if jump_params is None:  self.jump_params = range(jump_parameter-5, jump_parameter+6)
+    else:                    self.jump_params = jump_params
 
     self.debug_mode = debug_mode
     self.file_name  = file_name
@@ -68,7 +62,7 @@ class basic_test:
     self.PyCAM        = CAM.include(const)
 
     def return_distance_fct( distance_fct ):
-      if distance_fct == "default" or distance_fct == "bulk_distance":
+      if distance_fct == "bulk_distance":
         return self.PyCAM.bulk_distance
       elif distance_fct == "average_distance":
         def my_distance(a, b):

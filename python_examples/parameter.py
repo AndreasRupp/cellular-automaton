@@ -33,30 +33,24 @@ if __name__ == "__main__":
   domain_sizes  = [ 10, 25, 50, 100 ] 
   time_points   = [  0, 10, 25,  50 ]
 
-  mult_ecdf_types_2 = [ "standard",      "standard",        ]
-  mult_distances_2  = [ "bulk_distance", "average_distance" ]
-  mult_n_bins_2     = [ 8,               4                  ]
 
-  mult_ecdf_types_3 = [ "standard",      "standard",         "standard"       ]
-  mult_distances_3  = [ "bulk_distance", "average_distance", "particle_sizes" ]
-  mult_n_bins_3     = [ 5,               2,                   5               ]
-  
-  
   fun_args  = []
   base_test = getattr(ecdf_test, test_name)
 
   fun_args.append( base_test(
-    distance_fct  = mult_distances_2,
-    ecdf_type     = mult_ecdf_types_2,
-    n_choose_bins = mult_n_bins_2,
-    file_name     = 'multiple_2'
+    distance_fct = [ "bulk_distance", "average_distance" ],
+    ecdf_type    = [ "standard",      "standard",        ],
+    n_bins       = [ 8,               4                  ],
+    n_runs       = 100,
+    file_name    = 'multiple_2'
     ) )
 
   fun_args.append( base_test(
-    distance_fct  = mult_distances_3,
-    ecdf_type     = mult_ecdf_types_3,
-    n_choose_bins = mult_n_bins_3,
-    file_name     = 'multiple_3'
+    distance_fct = [ "bulk_distance", "average_distance", "particle_sizes" ],
+    ecdf_type    = [ "standard",      "standard",         "standard"       ],
+    n_bins       = [ 5,               3,                   5               ],
+    n_runs       = 100,
+    file_name    = 'multiple_3'
     ) )
 
   for size in domain_sizes:
@@ -71,19 +65,19 @@ if __name__ == "__main__":
       file_name    = 'time-steps_' + str(steps)
       ) )
 
-  for n_choose_bin in n_choose_bins:
+  for n_choose_bin in n_bins:
     fun_args.append( base_test(
-      n_choose_bins = n_choose_bin,
-      file_name     = 'n-bins_' + str(n_choose_bin)
+      n_bins    = n_choose_bin,
+      file_name = 'n-bins_' + str(n_choose_bin)
       ) )
 
   for distance_index in range(len(distances)):
     distance      = distances[distance_index]
     n_choose_bins = n_bins[distance_index]
     fun_args.append( base_test(
-      n_choose_bins  = n_choose_bins,
-      distance_fct   = distance,
-      file_name      = "distance_" + distance
+      n_bins       = n_choose_bins,
+      distance_fct = distance,
+      file_name    = "distance_" + distance
     ) )
 
   processes = []
