@@ -117,7 +117,7 @@ std::vector<unsigned int> particle_size_distribution(fields_array_t fields)
 }
 
 template <auto nx, typename fields_array_t>
-unsigned int n_solid_comp(fields_array_t fields)
+unsigned int n_solid_comp(const fields_array_t& fields)
 {
   return particle_size_distribution<nx>(fields).size();
 }
