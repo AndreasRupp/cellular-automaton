@@ -71,11 +71,9 @@ In addition to the terms imposed by the LGPL v2.1 or later, we ask for the follo
 
 > Every publication presenting numerical results obtained with the help of CAM should state the name
 > of the library and cite one or more of the following references  
-> - N. Ray, A. Rupp, and A. Prechtel  
->   ***Discrete-continuum multiscale model for transport, biomass development and solid
-    restructuring in porous media***  
->   Advances in Water Resources, doi: [10.1016/j.advwatres.2017.04.001](
-    https://doi.org/10.1016/j.advwatres.2017.04.001)
+> - A. Kazarnikov, N. Ray, H. Haario, J. Lappalainen, and A. Rupp  
+>   ***Parameter estimation for cellular automata***  
+>   arXiv preprint, doi: [10.48550/arXiv.2301.13320](https://doi.org/10.48550/arXiv.2301.13320)
 > - A. Rupp, M. Gahn, and G. Kanschat  
 > ***Partial differential equations on hypergraphs and networks of surfaces: Derivation and hybrid
   discretizations***  
