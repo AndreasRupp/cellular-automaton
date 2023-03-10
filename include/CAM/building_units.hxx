@@ -7,7 +7,7 @@ namespace CAM
 {
 struct BuildingUnit
 {  
-    ~BuildingUnit(){};
+    virtual ~BuildingUnit(){};
     unsigned int number;
     unsigned int jump_parameter;
     std::vector<unsigned int> referencePoints;
@@ -25,7 +25,7 @@ struct ParticleBU : public BuildingUnit
         jump_parameter = _jump_parameter;
         
     }
-    ~ParticleBU(){}
+    ~ParticleBU()override{}
    
     std::vector<unsigned int> getFieldIndices() override
     {

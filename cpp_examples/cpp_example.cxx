@@ -22,12 +22,12 @@ int main()
   // const double jump_param = 1.;
 
 std::vector<unsigned int> vect(1, 10);
-  CAM::ParticleBU p(1,4, vect);
+  CAM::ParticleBU* p =  new CAM::ParticleBU(1,4, vect);
   //CAM::BuildingUnit p1;
   // p.move(3);
   // p1.move(3);
   std::vector<CAM::BuildingUnit*> buildingUnits;
-  buildingUnits.push_back(&p);
+  buildingUnits.push_back(p);
   std::for_each(buildingUnits.begin(), buildingUnits.end(), [&](CAM::BuildingUnit* unit) { std::cout<<"dsf"<<unit->number<<std::endl; });
   for(auto unit : buildingUnits) 
   {
@@ -43,8 +43,13 @@ std::vector<unsigned int> vect(1, 10);
   domain.print_array();
 
   for (unsigned int i = 0; i < n_moves; ++i)
+  {
+    std::cout<<"NeuerDurchgang"<<std::endl;
     CAM::CellularAutomaton<nx>::apply(domain);
-  domain.print_array();
+    domain.print_array();
+  }
+    
+  
 
 
 

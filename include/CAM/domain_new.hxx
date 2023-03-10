@@ -7,6 +7,7 @@
 #include <chrono>
 
 #include <CAM/building_units.hxx>
+#include <CAM/aggregate.hxx>
 namespace CAM
 {
         /*!*************************************************************************************************
@@ -69,6 +70,11 @@ class Domain
 {
   public:
     static constexpr unsigned int n_fields_ = n_fields<nx>();
+    ~Domain()
+    {
+      std::for_each(buildingUnits.begin(), buildingUnits.end(), [&](CAM::BuildingUnit* unit){delete unit;});
+      std::for_each(aggregates.begin(), aggregates.end(), [&](CAM::Aggregate* aggregate){delete aggregate;});
+    }
     Domain()
     {
      if constexpr (std::is_same<fields_array_t,
@@ -139,7 +145,7 @@ class Domain
    * \brief   Vector of particles.
    ************************************************************************************************/
   std::vector<CAM::BuildingUnit*> buildingUnits;
-  std::vector<CAM::BuildingUnit*> aggregates;
+  std::vector<CAM::Aggregate*> aggregates;
   /*!***********************************************************************************************
    * \brief   Random seed.
    ************************************************************************************************/

@@ -35,7 +35,7 @@ class CellularAutomaton
       std::for_each(possible_moves.begin(), possible_moves.end(),
                     [&](int move)
                     {
-                      double current_attraction = getAttraction(move, _unit, _domainFields);
+                      double current_attraction = getAttractionBU(move, _unit, _domainFields);
                       if (current_attraction > attraction)
                       {
                         best_moves = std::vector<int>(1, move);
@@ -58,18 +58,19 @@ class CellularAutomaton
         std::vector<unsigned int> fields_new = _unit->getFieldIndices();
         for(unsigned int i = 0; i < fields_new.size(); i++)
         {
-            _domainFields[fields_old[i]] -= _unit->number;
-            _domainFields[fields_new[i]] += _unit->number;
+            // _domainFields[fields_old[i]] -= _unit->number;
+            // _domainFields[fields_new[i]] += _unit->number;
             // _domainFields[fields_new[i]] = _domainFields[fields_old[i]];
             // _domainFields[fields_old[i]] = 0;
+            _domainFields[fields_old[i]] = 0;
+            _domainFields[fields_new[i]] = _unit->number;
             
         }
 
     }
-    static void findAggregates(fields_array_t _domainFields)
+    static void findAggregates(Domain<nx>& _domain)
     {
-      std::cout<<"Bla"<<std::endl;
-      fields_array_t fields = _domainFields;
+      fields_array_t fields = _domain.domainFields;
       constexpr unsigned int dim = nx.size();
       unsigned int solids_size, field, neigh_field;
       std::vector<unsigned int> found_solids, distribution;
@@ -84,12 +85,7 @@ class CellularAutomaton
         found_solids = std::vector<unsigned int>(1, std::distance(fields.begin(), first_solid));
         fields[found_solids[0]] = uint_max;
 
-        // std::find_if(fields_.begin(), fields_.end(),
-        //                                     [&](const unsigned int field) -> bool
-        //                                     { return domain_fields[field] == number_; });
-
-
-        aggregateComponents.push_back(_domainFields[found_solids[0]]);
+        aggregateComponents.push_back(_domain.domainFields[found_solids[0]]);
         solids_size = 1;
         for (unsigned int k = 0; k < solids_size; ++k, solids_size = found_solids.size())
         {
@@ -101,7 +97,7 @@ class CellularAutomaton
             {
               fields[neigh_field] = uint_max;
               found_solids.push_back(neigh_field);
-              unsigned int number = _domainFields[neigh_field];
+              unsigned int number = _domain.domainFields[neigh_field];
               if(std::find(aggregateComponents.begin(), aggregateComponents.end(), number) == aggregateComponents.end())
               {
                 aggregateComponents.push_back(number);
@@ -109,16 +105,29 @@ class CellularAutomaton
             }
           }
         }
-        
-        for(unsigned int i = 0; i<aggregateComponents.size();i++)
+        if(aggregateComponents.size() > 1)
         {
-          std::cout<<aggregateComponents[i] <<" ";
+          
+          CAM::Aggregate* newAggregate = new CAM::Aggregate();
+          for(unsigned int i = 0; i<aggregateComponents.size();i++)
+          {
+            std::cout<<aggregateComponents[i] <<" ";
+
+            std::vector<CAM::BuildingUnit*>::iterator it =  std::find_if(_domain.buildingUnits.begin(), _domain.buildingUnits.end(),
+                                      [&](CAM::BuildingUnit* unit) -> bool
+                                      { return unit->number == aggregateComponents[i]; });
+            newAggregate->buildingUnits.push_back(*it);
+            newAggregate->fieldIndices = found_solids;
+          }
+
+          _domain.aggregates.push_back(newAggregate);
         }
+
         std::cout<<std::endl;
         distribution.push_back(found_solids.size());
       }
       std::sort(distribution.begin(), distribution.end());
-      std::cout<<"sdfsdf"<<std::endl;
+      std::cout<<"Distribution"<<std::endl;
       for(unsigned int i = 0; i<distribution.size();i++)
         std::cout<<distribution[i] <<" ";
       std::cout<<std::endl;
@@ -129,7 +138,21 @@ class CellularAutomaton
         std::shuffle(_domain.buildingUnits.begin(), _domain.buildingUnits.end(), std::default_random_engine(std::rand()));
         std::for_each(_domain.buildingUnits.begin(), _domain.buildingUnits.end(), [&](CAM::BuildingUnit* unit) { 
         moveBU(unit, _domain.domainFields);});
-        findAggregates(_domain.domainFields);
+        std::cout<<"numberofBU" << _domain.buildingUnits.size()<<std::endl;
+        _domain.aggregates.clear();
+        std::cout<<"numberofBU " << _domain.buildingUnits.size()<<std::endl;
+        findAggregates(_domain);
+        std::for_each(_domain.aggregates.begin(), _domain.aggregates.end(), [&](CAM::Aggregate* aggregate) { 
+        moveAggregate(aggregate, _domain.domainFields);});
+        std::cout<<"numberofAgg "<<_domain.aggregates.size()<<" "<<std::endl;
+        for(unsigned int i = 0; i < _domain.aggregates.size(); i++)
+        {
+            std::cout<<"das waren nummern ";
+            std::for_each(_domain.aggregates[i]->buildingUnits.begin(),_domain.aggregates[i]->buildingUnits.end(), [&](CAM::BuildingUnit* unit){std::cout<<unit->number<<" ";});
+          	std::cout<<std::endl;
+        }
+        
+
     //     for (unsigned int k = 0; k < particles_size; ++k, particles_size = particles_.size())
     //   particles_[k].update_particle();
     // particles_.erase(
@@ -154,7 +177,38 @@ class CellularAutomaton
         particles_.end()); */
 
     }
-    
+    static void moveAggregate(CAM::Aggregate* _aggregate, fields_array_t& _domainFields)
+    {
+      std::vector<int> possible_moves = getStencil(_aggregate->jump_parameter);
+      std::vector<int> best_moves(1, 0);
+      double attraction = 0.;
+      for (unsigned int i = 0; i < _aggregate->fieldIndices.size(); ++i)
+      {
+          _domainFields[_aggregate->fieldIndices[i]] = 0;
+      }
+      std::for_each(possible_moves.begin(), possible_moves.end(),
+                    [&](int move)
+                    {
+                      double current_attraction = getAttractionAggregate(move, _aggregate, _domainFields);
+                      if (current_attraction > attraction)
+                      {
+                        best_moves = std::vector<int>(1, move);
+                        attraction = current_attraction;
+                      }
+                      else if (current_attraction == attraction)
+                        best_moves.push_back(move);
+                    });
+      int best_move = best_moves[std::rand() % best_moves.size()];
+      for(int i = 0; i < _aggregate->buildingUnits.size(); i++)
+      {
+          doMoveBU(best_move, _aggregate->buildingUnits[i], _domainFields);
+      }
+      
+      // for (unsigned int i = 0; i < _aggregate->fieldIndices.size(); ++i)
+      // {
+      //     _domainFields[_aggregate->fieldIndices[i]] = 0;
+      // }
+    }
     static std::vector<int> getStencil(double _jump_parameter)
     {
       unsigned int layers = std::max(1., _jump_parameter);
@@ -173,7 +227,7 @@ class CellularAutomaton
       }
       return stencil;
     }
-    static double getAttraction(const int move, CAM::BuildingUnit* _BU, fields_array_t& _domainFields)
+    static double getAttractionBU(const int move, CAM::BuildingUnit* _BU, fields_array_t& _domainFields)
     {
        double attraction = 0.;
        
@@ -185,6 +239,20 @@ class CellularAutomaton
         for (unsigned int i = 0; i < 2 * dim; ++i)
           attraction += _domainFields[aim<nx>(aiming, direct_neigh<nx>(i))] != _BU->number &&
                         _domainFields[aim<nx>(aiming, direct_neigh<nx>(i))] != 0;
+      }
+      return attraction;
+    }
+
+    static double getAttractionAggregate(const int move, Aggregate* _aggregate, fields_array_t& _domainFields)
+    {
+       double attraction = 0.;
+      for (unsigned int i = 0; i < _aggregate->fieldIndices.size(); ++i)
+      {
+        unsigned int aiming = aim<nx>(_aggregate->fieldIndices[i], move);
+        if (_domainFields[aiming] != 0 && move != 0)
+          return double_min;
+        for (unsigned int i = 0; i < 2 * dim; ++i)
+            attraction += _domainFields[aim<nx>(aiming, direct_neigh<nx>(i))] != 0;
       }
       return attraction;
     }
