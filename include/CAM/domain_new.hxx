@@ -9,6 +9,15 @@
 #include <CAM/building_units.hxx>
 namespace CAM
 {
+        /*!*************************************************************************************************
+  * \brief   Maximum unsigned integer.
+  **************************************************************************************************/
+  static constexpr unsigned int uint_max = std::numeric_limits<unsigned int>::max();
+    /*!***********************************************************************************************
+    * \brief   Smallest (negative) double.
+    ************************************************************************************************/
+    static constexpr double double_min = std::numeric_limits<double>::lowest();
+    
     /*!*************************************************************************************************
  * \brief   Calculates the size of the domain.
  *
@@ -78,11 +87,12 @@ class Domain
     bool placeBU()//std::vector<int> _location , CAM::BuildingUnit* _unit
     {
         //_domainFields[aim<nx>(aiming, direct_neigh<nx>(i))] != _BU->number
-        std::vector<unsigned int> vect(1, 10);
-        buildingUnits.push_back(new ParticleBU(1, vect));
+        unsigned int jump_parameter = 2;
+        std::vector<unsigned int> vect(1,  10);
+        buildingUnits.push_back(new ParticleBU(1, jump_parameter, vect));
         domainFields[10] = 1;
         std::vector<unsigned int> vect1(1, 14);
-        buildingUnits.push_back(new ParticleBU(2, vect1));
+        buildingUnits.push_back(new ParticleBU(2, jump_parameter, vect1));
         domainFields[14] = 2;
 
         return true;
@@ -129,10 +139,90 @@ class Domain
    * \brief   Vector of particles.
    ************************************************************************************************/
   std::vector<CAM::BuildingUnit*> buildingUnits;
+  std::vector<CAM::BuildingUnit*> aggregates;
   /*!***********************************************************************************************
    * \brief   Random seed.
    ************************************************************************************************/
   unsigned int rand_seed;
+
+
+
+static constexpr unsigned int bulk_distance(const fields_array_t& domain_a,
+                                            const fields_array_t& domain_b)
+{
+  unsigned int distance = 0;
+  for (unsigned int field = 0; field < domain_a.size(); ++field)
+    distance += (domain_a[field] == 0) != (domain_b[field] == 0);
+  return distance;
+}
+
+static constexpr unsigned int skeleton_distance(const fields_array_t& domain_a,
+                                                const fields_array_t& domain_b)
+{
+  unsigned int neigh_field, distance = 0;
+  for (unsigned int field = 0; field < domain_a.size(); ++field)
+    for (unsigned int j = 0; j < 2 * nx.size(); j += 2)
+    {
+      neigh_field = aim<nx>(field, direct_neigh<nx>(j));
+      distance += std::abs((domain_a[field] == 0) - (domain_a[neigh_field] == 0) +
+                           (domain_b[neigh_field] == 0) - (domain_b[field] == 0));
+    }
+  return distance;
+}
+
+std::vector<unsigned int> particle_size_distribution()
+{
+  //TODO: easier to calculate by evaluating building unit vector
+  constexpr unsigned int dim = nx.size();
+  unsigned int fluids_size, field, neigh_field;
+  std::vector<unsigned int> found_solids, distribution;
+
+  std::for_each(domainFields.begin(), domainFields.end(), [](unsigned int& field) { field = (field == 0); });
+
+  for (auto first_fluid = std::find(domainFields.begin(), domainFields.end(), 0); first_fluid != domainFields.end();
+       first_fluid = std::find(first_fluid, domainFields.end(), 0))
+  {
+    found_solids = std::vector<unsigned int>(1, std::distance(domainFields.begin(), first_fluid));
+    domainFields[found_solids[0]] = CAM::uint_max;
+    fluids_size = 1;
+    for (unsigned int k = 0; k < fluids_size; ++k, fluids_size = found_solids.size())
+    {
+      field = found_solids[k];
+      for (unsigned int i = 0; i < 2 * dim; ++i)
+      {
+        neigh_field = aim<nx>(field, direct_neigh<nx>(i));
+        if (domainFields[neigh_field] == 0)
+        {
+          domainFields[neigh_field] = uint_max;
+          found_solids.push_back(neigh_field);
+        }
+      }
+    }
+    distribution.push_back(found_solids.size());
+  }
+  std::sort(distribution.begin(), distribution.end());
+  return distribution;
+}
+
+
+unsigned int n_solid_comp()
+{
+  return particle_size_distribution<nx>().size();
+}
+
+constexpr double average_particle_size()
+{
+  unsigned int n_solids = 0;
+  for (unsigned int i = 0; i < domainFields.size(); ++i)
+    n_solids += (domainFields[i] != 0);
+  return (double)n_solids / (double)n_solid_comp<nx>();
+}
+
+
+
+
+
+
 
     // -------------------------------------------------------------------------------------------------
     // PRINTING SECTION STARTS HERE

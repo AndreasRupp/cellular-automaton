@@ -2,6 +2,7 @@
 #include <CAM/cellular_automaton_new.hxx>
 #include <CAM/domain_new.hxx>
 #include <CAM/building_units.hxx>
+#include <iostream>
 /*!*************************************************************************************************
  * \brief   Main function.
  *
@@ -16,16 +17,15 @@
 int main()
 {
   constexpr std::array<unsigned int, 2> nx = {10, 10};
-  //const unsigned int n_moves = 1;
-  const double porosity = 0.5;
-  const double jump_param = 1.;
+  const unsigned int n_moves = 5;
+  // const double porosity = 0.5;
+  // const double jump_param = 1.;
 
-
-  CAM::ParticleBU p;
+std::vector<unsigned int> vect(1, 10);
+  CAM::ParticleBU p(1,4, vect);
   //CAM::BuildingUnit p1;
   // p.move(3);
   // p1.move(3);
-  p.number = 2;
   std::vector<CAM::BuildingUnit*> buildingUnits;
   buildingUnits.push_back(&p);
   std::for_each(buildingUnits.begin(), buildingUnits.end(), [&](CAM::BuildingUnit* unit) { std::cout<<"dsf"<<unit->number<<std::endl; });
@@ -42,7 +42,8 @@ int main()
   domain.placeBU();
   domain.print_array();
 
-  CAM::CellularAutomaton<nx>::apply(domain);
+  for (unsigned int i = 0; i < n_moves; ++i)
+    CAM::CellularAutomaton<nx>::apply(domain);
   domain.print_array();
 
 
