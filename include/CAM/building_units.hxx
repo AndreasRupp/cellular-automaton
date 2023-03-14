@@ -36,13 +36,27 @@ struct ParticleBU : public BuildingUnit
         return (std::find(referencePoints.begin(), referencePoints.end(), _index) != referencePoints.end());
     }
 };
-// struct Aggregates : public BuildingUnit
-// {
-//         Aggregates(unsigned int _number, vector<unsigned int>  unsigned int _jump_parameter, std::vector<unsigned int> _fieldIndices ) : BuildingUnit(){
-//         number = _number;
-//         referencePoints = _fieldIndices;
-//         jump_parameter = _jump_parameter;
+struct SphereBU : public BuildingUnit
+{
+    double radius;
+    SphereBU(unsigned int _number, unsigned int _jump_parameter, unsigned int _centerPoint, double _radius ) : BuildingUnit(){
+    number = _number;
+    referencePoints = {_centerPoint};
+    radius = _radius;
+    jump_parameter = _jump_parameter;
         
-//     }
-// };
+    }
+    ~SphereBU()override{}
+   
+    std::vector<unsigned int> getFieldIndices() override
+    {
+        //TODO calculate Sphere
+        return {1};
+    }
+    bool isMember(unsigned int _index) override
+    {
+        return true;
+    }
+};
+
 }

@@ -7,17 +7,8 @@ namespace CAM
     {
         std::vector<CAM::BuildingUnit*> buildingUnits;
         unsigned int jump_parameter;
-        std::vector<unsigned int> fieldIndices;
-        // std::vector<unsigned int> getFieldIndices()
-        // {
-        //     std::vector<unsigned int> fieldIndices;
-        //     std::for_each(buildingUnits.begin(), buildingUnits.end(), [&](BuildingUnit* unit)
-        //     {
-        //         fieldIndices.push_back(unit->getFieldIndices());
-        //     });
-        //     return fieldIndices;
-        // }
-        
+        //is not updated -> implement fct getFieldIndices iterating over BUs
+        std::vector<unsigned int> fieldIndices;     
     };
 
 }
