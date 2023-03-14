@@ -104,25 +104,30 @@ class Domain
         return true;
         
     }
-    // bool placeBURandomly(CAM::BuildingUnit* _unit, unsigned int rand_seed = 0)
-    // {
-    //     if (random_seed == 0)
-    //     {
-    //         rand_seed = std::chrono::system_clock::now().time_since_epoch().count();
-    //     }
-    //     else
-    //         rand_seed = random_seed;
+    void placeBURandomly(double _porosity = 0.90, double _jump_parameter = 1, unsigned int random_seed = 0)
+    {
+        if (random_seed == 0)
+        {
+            rand_seed = std::chrono::system_clock::now().time_since_epoch().count();
+        }
+        else
+            rand_seed = random_seed;
         
-    //     std::srand(rand_seed);
+        std::srand(rand_seed);
 
-    //     // unsigned int position = std::rand() % (n_fields_);
-    //     // for (unsigned int i = 0; i < n_particles; ++i)
-    //     // {
-    //     // while (fields_[position] != 0)
-    //     //     position = std::rand() % (n_fields_);
-
-    //     // particles_.push_back(particle(position, *this, i + 1));
-    // }
+        unsigned int n_particles = (1. - _porosity) * n_fields_;
+        std::cout<<"n_particles "<<n_particles<<std::endl;
+        unsigned int position = std::rand() % (n_fields_);
+        for (unsigned int i = 0; i < n_particles; ++i)
+        {
+          while (domainFields[position] != 0)
+            position = std::rand() % (n_fields_);
+          std::vector<unsigned int> pos(1,  position);
+          buildingUnits.push_back(new ParticleBU(i + 1, _jump_parameter, pos));
+          domainFields[position] = i + 1;
+            //particle(position, *this, i + 1));
+        }
+    }
     
   // -----------------------------------------------------------------------------------------------
  

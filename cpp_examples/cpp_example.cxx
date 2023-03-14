@@ -17,7 +17,7 @@
 int main()
 {
   constexpr std::array<unsigned int, 2> nx = {10, 10};
-  const unsigned int n_moves = 5;
+  const unsigned int n_moves = 10;
   // const double porosity = 0.5;
   // const double jump_param = 1.;
 
@@ -39,7 +39,8 @@ std::vector<unsigned int> vect(1, 10);
 
 
   CAM::Domain<nx> domain;
-  domain.placeBU();
+  //domain.placeBU();
+  domain.placeBURandomly(.98);
   domain.print_array();
 
   for (unsigned int i = 0; i < n_moves; ++i)
@@ -48,7 +49,7 @@ std::vector<unsigned int> vect(1, 10);
     CAM::CellularAutomaton<nx>::apply(domain);
     domain.print_array();
   }
-    
+    //domain.print_array();
   
 
 

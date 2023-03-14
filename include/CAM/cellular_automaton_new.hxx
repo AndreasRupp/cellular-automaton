@@ -118,6 +118,7 @@ class CellularAutomaton
                                       { return unit->number == aggregateComponents[i]; });
             newAggregate->buildingUnits.push_back(*it);
             newAggregate->fieldIndices = found_solids;
+            newAggregate->jump_parameter =  std::max(1., 1 / std::pow(newAggregate->fieldIndices.size(), 1.0 / (double)dim));
           }
 
           _domain.aggregates.push_back(newAggregate);
@@ -147,10 +148,22 @@ class CellularAutomaton
         std::cout<<"numberofAgg "<<_domain.aggregates.size()<<" "<<std::endl;
         for(unsigned int i = 0; i < _domain.aggregates.size(); i++)
         {
-            std::cout<<"das waren nummern ";
-            std::for_each(_domain.aggregates[i]->buildingUnits.begin(),_domain.aggregates[i]->buildingUnits.end(), [&](CAM::BuildingUnit* unit){std::cout<<unit->number<<" ";});
+            std::cout<<"das waren nummern "<<std::endl;;
+            std::for_each(_domain.aggregates[i]->buildingUnits.begin(),_domain.aggregates[i]->buildingUnits.end(), [&](CAM::BuildingUnit* unit){
+              //std::cout<<unit<<" "<<unit->number<<" "<<unit->getFieldIndices()[0]<< std::endl;
+              //  std::cout<<unit->number<<" "<<unit->getFieldIndices()[0]<< std::endl;
+             //doMoveBU(1,unit,_domain.domainFields);
+              // std::cout<<unit->number<<" "<<unit->getFieldIndices()[0]<< std::endl;
+              // std::cout<<std::endl;
+              });
           	std::cout<<std::endl;
+            //std::cout<<"sizeField "<<_domain.aggregates[i]->fieldIndices.size()<<std::endl;
         }
+        std::for_each(_domain.buildingUnits.begin(),_domain.buildingUnits.end(), [&](CAM::BuildingUnit* unit){
+             // std::cout<<unit<<" "<<unit->number<<" "<<unit->getFieldIndices()[0]<< std::endl;
+
+              doMoveBU(0,unit,_domain.domainFields);
+               });
         
 
     //     for (unsigned int k = 0; k < particles_size; ++k, particles_size = particles_.size())
@@ -182,7 +195,7 @@ class CellularAutomaton
       std::vector<int> possible_moves = getStencil(_aggregate->jump_parameter);
       std::vector<int> best_moves(1, 0);
       double attraction = 0.;
-      for (unsigned int i = 0; i < _aggregate->fieldIndices.size(); ++i)
+      for (unsigned int i = 0; i < _aggregate->fieldIndices.size(); i++)
       {
           _domainFields[_aggregate->fieldIndices[i]] = 0;
       }
@@ -198,8 +211,8 @@ class CellularAutomaton
                       else if (current_attraction == attraction)
                         best_moves.push_back(move);
                     });
-      int best_move = best_moves[std::rand() % best_moves.size()];
-      for(int i = 0; i < _aggregate->buildingUnits.size(); i++)
+      int best_move = 1;//best_moves[std::rand() % best_moves.size()];
+      for(unsigned int i = 0; i < _aggregate->buildingUnits.size(); i++)
       {
           doMoveBU(best_move, _aggregate->buildingUnits[i], _domainFields);
       }
