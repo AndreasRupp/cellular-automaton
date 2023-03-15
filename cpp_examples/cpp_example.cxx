@@ -31,9 +31,8 @@ int main()
     domain.print_array();
     std::cout << std::endl;
   }
-  domain.eval_measures();
-  // std::cout << std::endl << "Characteristics / Measures:" << std::endl;
-  // const std::array<double, 12> meas = domain.eval_measures();
-  // for (unsigned int k = 0; k < 12; ++k)
-  //   std::cout << "Meas[" << k << "] = " << meas[k] << std::endl;
+  std::cout << std::endl << "Characteristics / Measures:" << std::endl;
+  const std::array<double, 12> meas = domain.eval_measures();
+  for (unsigned int k = 0; k < 12; ++k)
+    std::cout << "Meas[" << k << "] = " << meas[k] << std::endl;
 }

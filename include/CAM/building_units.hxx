@@ -55,7 +55,7 @@ struct SphereBU : public BuildingUnit
     }
     bool isMember(unsigned int _index) override
     {
-        return true;
+        return _index == 42;
     }
 };
 

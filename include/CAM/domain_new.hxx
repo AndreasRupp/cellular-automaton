@@ -135,7 +135,6 @@ class Domain
         std::srand(rand_seed);
 
         unsigned int n_particles = (1. - _porosity) * n_fields_;
-        std::cout<<"n_particles "<<n_particles<<std::endl;
         unsigned int position = std::rand() % (n_fields_);
         for (unsigned int i = 0; i < n_particles; ++i)
         {
@@ -156,6 +155,7 @@ class Domain
       unsigned int solids_size, field, neigh_field;
       std::vector<unsigned int> found_solids;
       solidDistribution.clear();
+      particles.clear();
       std::for_each(fields.begin(), fields.end(), [](unsigned int& field) { field = (field == 0); });
 
       for (auto first_solid = std::find(fields.begin(), fields.end(), 0); first_solid != fields.end();
@@ -202,6 +202,7 @@ class Domain
           aggregates.push_back(newAggregate);
         }
         solidDistribution.push_back(found_solids.size());
+        particles.push_back(found_solids);
       }
     }
   // -----------------------------------------------------------------------------------------------
@@ -227,6 +228,7 @@ class Domain
   std::vector<CAM::BuildingUnit*> buildingUnits;
   std::vector<CAM::Aggregate*> aggregates;
   std::vector<unsigned int> solidDistribution;
+  std::vector<std::vector<unsigned int>> particles;
   /*!***********************************************************************************************
    * \brief   Random seed.
    ************************************************************************************************/
@@ -295,12 +297,10 @@ unsigned int n_solid_comp()
 {
   return particle_size_distribution<nx>().size();
 }
-unsigned int n_surfaces(BuildingUnit * _unit) const
+unsigned int getNSurfaces(std::vector<unsigned int> _fields)
 {
   unsigned int n_surfaces = 0;
-  const fields_array_t& domain_fields = domainFields;
-  std::vector<unsigned int> fields = _unit->getFieldIndices();
-  std::for_each(fields.begin(), fields.end(),
+  std::for_each(_fields.begin(), _fields.end(),
                 [&](const unsigned int field)
                 {
                   for (unsigned int i = 0; i < 2 * dim; ++i)
@@ -309,138 +309,139 @@ unsigned int n_surfaces(BuildingUnit * _unit) const
                 });
   return n_surfaces;
 }
-// /*!*********************************************************************************************
-//      * \brief   Find the longest shortest path inside domain.
-//      *
-//      * \retval  max_distance     Length of the path.
-//      **********************************************************************************************/
-//     unsigned int max_min_distance()
-//     {
-//       fields_array_t& domain_fields = domain_.fields_;
-//       std::vector<unsigned int> starts(1, fields_[0]);
-//       std::vector<bool> bigger(1, true);
-//       unsigned int start_index = 0, end_index = 1, neigh_field;
-//       unsigned int max_distance = max_min_distance(starts[0]);
-//       bool found_larger = true;
+    /*!*********************************************************************************************
+     * \brief   Find the longest shortest path inside domain.
+     *
+     * \retval  max_distance     Length of the path.
+     **********************************************************************************************/
+unsigned int max_min_distance(BuildingUnit* _unit)
+{
+  std::vector<unsigned int> starts(1, _unit->getFieldIndices()[0]);
+  std::vector<bool> bigger(1, true);
+  unsigned int start_index = 0, end_index = 1, neigh_field;
+  unsigned int max_distance = max_min_distance(starts[0], _unit);
+  bool found_larger = true;
 
-//       while (found_larger)
-//       {
-//         found_larger = false;
+  while (found_larger)
+  {
+    found_larger = false;
 
-//         for (unsigned int i = start_index; i < end_index; ++i)
-//         {
-//           if (!bigger[i - start_index])
-//             continue;
-//           for (unsigned int j = 0; j < 2 * dim; ++j)
-//           {
-//             neigh_field = aim<nx>(starts[i], direct_neigh<nx>(j));
-//             if (domain_fields[neigh_field] == number_ &&
-//                 std::find(starts.begin(), starts.end(), neigh_field) == starts.end())
-//               starts.push_back(neigh_field);
-//           }
-//         }
-//         start_index = end_index;
-//         end_index = starts.size();
-//         bigger = std::vector<bool>(end_index - start_index, true);
+    for (unsigned int i = start_index; i < end_index; ++i)
+    {
+      if (!bigger[i - start_index])
+        continue;
+      for (unsigned int j = 0; j < 2 * dim; ++j)
+      {
+        neigh_field = aim<nx>(starts[i], direct_neigh<nx>(j));
+        if (domainFields[neigh_field] == _unit->number &&
+            std::find(starts.begin(), starts.end(), neigh_field) == starts.end())
+          starts.push_back(neigh_field);
+      }
+    }
+    start_index = end_index;
+    end_index = starts.size();
+    bigger = std::vector<bool>(end_index - start_index, true);
 
-//         for (unsigned int i = start_index; i < end_index; ++i)
-//           if (max_min_distance(starts[i]) > max_distance)
-//             found_larger = true;
-//           else
-//             bigger[i - start_index] = false;
+    for (unsigned int i = start_index; i < end_index; ++i)
+      if (max_min_distance(starts[i], _unit) > max_distance)
+        found_larger = true;
+      else
+        bigger[i - start_index] = false;
 
-//         if (found_larger)
-//           ++max_distance;
-//       }
+    if (found_larger)
+      ++max_distance;
+  }
 
-//       return max_distance;
-//     }
+  return max_distance;
+}
 //     /*!*********************************************************************************************
 //      * \brief   Calculate the ratio of diameters for every dimension.
 //      *
 //      * \retval  max_diameter / min_diameter      Max dimension ratio.
 //      **********************************************************************************************/
-//     double max_dimension_ratio()
-//     {
-//       std::array<unsigned int, dim> width_dim;
-//       for (unsigned int i = 0; i < dim; ++i)
-//         width_dim[i] = directed_max_min_distance(i);
-//       unsigned int max_diameter = *std::max_element(width_dim.begin(), width_dim.end());
-//       unsigned int min_diameter = *std::min_element(width_dim.begin(), width_dim.end());
-//       return (double)max_diameter / (double)min_diameter;
-//     }
-//         unsigned int max_min_distance(unsigned int field)
-//     {
-//       unsigned int max_distance = 0;
-//       fields_array_t& domain_fields = domain_.fields_;
-//       std::vector<unsigned int> visits(1, field);
-//       domain_fields[field] = uint_max;
+    double max_dimension_ratio(BuildingUnit* _unit)
+    {
+      std::array<unsigned int, dim> width_dim;
+      for (unsigned int i = 0; i < dim; ++i)
+        width_dim[i] = directed_max_min_distance(i, _unit);
+      unsigned int max_diameter = *std::max_element(width_dim.begin(), width_dim.end());
+      unsigned int min_diameter = *std::min_element(width_dim.begin(), width_dim.end());
+      return (double)max_diameter / (double)min_diameter;
+    }
+        unsigned int max_min_distance(unsigned int field, BuildingUnit* _unit)
+    {
+      unsigned int max_distance = 0;
+      fields_array_t& domain_fields = domainFields;
+      std::vector<unsigned int> visits(1, field);
+      domain_fields[field] = uint_max;
 
-//       unsigned int neigh_field, visits_size = visits.size();
-//       for (unsigned int i = 0; i < visits_size; ++i, visits_size = visits.size())
-//       {
-//         field = visits[i];
-//         for (unsigned int j = 0; j < 2 * dim; ++j)
-//         {
-//           neigh_field = aim<nx>(field, direct_neigh<nx>(j));
-//           if (domain_fields[neigh_field] == number_)
-//           {
-//             visits.push_back(neigh_field);
-//             domain_fields[neigh_field] = domain_fields[field] - 1;
-//           }
-//         }
-//       }
-//       max_distance = uint_max - domain_fields[field];
-//       std::for_each(fields_.begin(), fields_.end(),
-//                     [&](const unsigned int field_loc) { domain_fields[field_loc] = number_; });
-//       return max_distance;
-//     }
+      unsigned int neigh_field, visits_size = visits.size();
+      for (unsigned int i = 0; i < visits_size; ++i, visits_size = visits.size())
+      {
+        field = visits[i];
+        for (unsigned int j = 0; j < 2 * dim; ++j)
+        {
+          neigh_field = aim<nx>(field, direct_neigh<nx>(j));
+          if (domain_fields[neigh_field] == _unit->number)
+          {
+            visits.push_back(neigh_field);
+            domain_fields[neigh_field] = domain_fields[field] - 1;
+          }
+        }
+      }
+      max_distance = uint_max - domain_fields[field];
+      std::vector<unsigned int> fields = _unit->getFieldIndices();
+      std::for_each(fields.begin(), fields.end(),
+                    [&](const unsigned int field_loc) { domain_fields[field_loc] = _unit->number; });
+      return max_distance;
+    }
 //     /*!*********************************************************************************************
 //      * \brief   Find the longest amount of moves in certain direction inside particle.
 //      *
 //      * \param   dir_dim          Certain dimension
 //      * \retval  max_distance     Amount of moves
 //      **********************************************************************************************/
-//     unsigned int directed_max_min_distance(unsigned int dir_dim)
-//     {
-//       unsigned int max_distance = 0, field = fields_[0];
-//       fields_array_t& domain_fields = domain_.fields_;
-//       std::vector<unsigned int> visits(1, field);
-//       domain_fields[field] = uint_max - n_fields_;
-//       unsigned int min_val = domain_fields[field], max_val = domain_fields[field];
+    unsigned int directed_max_min_distance(unsigned int dir_dim, BuildingUnit* _unit)
+    {
+      std::vector<unsigned int> fields = _unit->getFieldIndices();
+      unsigned int max_distance = 0, field = fields[0];
+      fields_array_t& domain_fields = domainFields;
+      std::vector<unsigned int> visits(1, field);
+      domain_fields[field] = uint_max - n_fields_;
+      unsigned int min_val = domain_fields[field], max_val = domain_fields[field];
 
-//       unsigned int neigh_field, visits_size = visits.size();
-//       for (unsigned int i = 0; i < visits_size; ++i, visits_size = visits.size())
-//       {
-//         field = visits[i];
-//         for (unsigned int j = 0; j < 2 * dim; ++j)
-//         {
-//           neigh_field = aim<nx>(field, direct_neigh<nx>(j));
-//           if (domain_fields[neigh_field] == number_)
-//           {
-//             visits.push_back(neigh_field);
-//             if (j / 2 == dir_dim && j % 2 == 0)
-//             {
-//               domain_fields[neigh_field] = domain_fields[field] - 1;
-//               if (domain_fields[neigh_field] < min_val)
-//                 min_val = domain_fields[neigh_field];
-//             }
-//             else if (j / 2 == dir_dim)  // && j % 2 == 1
-//             {
-//               domain_fields[neigh_field] = domain_fields[field] + 1;
-//               if (domain_fields[neigh_field] > max_val)
-//                 max_val = domain_fields[neigh_field];
-//             }
-//             else  // j / 2 != dir_dim
-//               domain_fields[neigh_field] = domain_fields[field];
-//           }
-//         }
-//       }
-//       max_distance = max_val - min_val + 1;
-//       std::for_each(fields_.begin(), fields_.end(),
-//                     [&](const unsigned int field_loc) { domain_fields[field_loc] = number_; });
-//       return max_distance;
-//     }
+      unsigned int neigh_field, visits_size = visits.size();
+      for (unsigned int i = 0; i < visits_size; ++i, visits_size = visits.size())
+      {
+        field = visits[i];
+        for (unsigned int j = 0; j < 2 * dim; ++j)
+        {
+          neigh_field = aim<nx>(field, direct_neigh<nx>(j));
+          if (domain_fields[neigh_field] == _unit->number)
+          {
+            visits.push_back(neigh_field);
+            if (j / 2 == dir_dim && j % 2 == 0)
+            {
+              domain_fields[neigh_field] = domain_fields[field] - 1;
+              if (domain_fields[neigh_field] < min_val)
+                min_val = domain_fields[neigh_field];
+            }
+            else if (j / 2 == dir_dim)  // && j % 2 == 1
+            {
+              domain_fields[neigh_field] = domain_fields[field] + 1;
+              if (domain_fields[neigh_field] > max_val)
+                max_val = domain_fields[neigh_field];
+            }
+            else  // j / 2 != dir_dim
+              domain_fields[neigh_field] = domain_fields[field];
+          }
+        }
+      }
+      max_distance = max_val - min_val + 1;
+      std::for_each(fields.begin(), fields.end(),
+                    [&](const unsigned int field_loc) { domain_fields[field_loc] = _unit->number; });
+      return max_distance;
+    }
 
 constexpr double average_particle_size()
 {
@@ -470,14 +471,14 @@ constexpr double average_particle_size()
    *
    * \retval  array                 Array of measure parameters.
    ************************************************************************************************/
-   void eval_measures()//std::array<double, 12>
+   std::array<double, 12> eval_measures()
   {
     findAggregates();
     unsigned int n_single_cells =
-      std::count_if(solidDistribution.begin(), solidDistribution.end(),
-                    [](unsigned int n_solids) -> bool { return n_solids == 1; });
+      std::count_if(particles.begin(), particles.end(),
+                    [](std::vector<unsigned int> particle) -> bool { return particle.size() == 1; });
 
-    unsigned int n_particles = solidDistribution.size();
+    unsigned int n_particles = particles.size();
 
     unsigned int n_solids = 0;
     unsigned int n_surfaces = 0;
@@ -492,56 +493,56 @@ constexpr double average_particle_size()
     double local_diameters_ratio = 0;
 
 
-    // std::for_each(buildingUnits.begin(), buildingUnits.end(),
-    //               [&](BuildingUnit* unit)
-    //               {
-    //                 n_solids_part = unit.getFieldIndices().size();
-    //                 n_surfaces_part = n_surfaces(unit);
+    std::for_each(particles.begin(), particles.end(),
+                  [&](std::vector<unsigned int> particle)
+                  {
+                    n_solids_part = particle.size();
+                    n_surfaces_part = getNSurfaces(particle);
 
-    //                 n_solids += n_solids_part;
-    //                 n_surfaces += n_surfaces_part;
+                    n_solids += n_solids_part;
+                    n_surfaces += n_surfaces_part;
 
-    //                 local_sphericity =
-    //                   std::pow((double)n_solids_part, (double)(dim - 1) / (double)dim) /
-    //                   (double)n_surfaces_part;
-    //                 mean_sphericity += local_sphericity;
+                    local_sphericity =
+                      std::pow((double)n_solids_part, (double)(dim - 1) / (double)dim) /
+                      (double)n_surfaces_part;
+                    mean_sphericity += local_sphericity;
 
-    //                 local_max_min_distance = part.max_min_distance();
-    //                 max_max_min_distance = std::max(max_max_min_distance, local_max_min_distance);
+                    // local_max_min_distance = max_min_distance(unit);
+                    // max_max_min_distance = std::max(max_max_min_distance, local_max_min_distance);
 
-    //                 local_diameters_ratio = part.max_dimension_ratio();
-    //                 max_diameters_ratio = std::max(max_diameters_ratio, local_diameters_ratio);
-    //               });
-    // mean_sphericity /= particles_.size();
+                    // local_diameters_ratio = max_dimension_ratio(unit);
+                    // max_diameters_ratio = std::max(max_diameters_ratio, local_diameters_ratio);
+                  });
+    mean_sphericity /= n_particles;
 
-    // double mean_particle_size = (double)n_solids / (double)n_particles;
+    double mean_particle_size = (double)n_solids / (double)n_particles;
 
-    // double compactness =
-    //   std::pow((double)n_surfaces, ((double)dim / (double)(dim - 1))) / (double)n_solids;
+    double compactness =
+      std::pow((double)n_surfaces, ((double)dim / (double)(dim - 1))) / (double)n_solids;
 
-    // double variance_particle_sizes = 0;
-    // for (unsigned int i = 0; i < particles_.size(); ++i)
-    // {
-    //   variance_particle_sizes += std::pow(particles_[i].size() - mean_particle_size, 2);
-    // }
-    // variance_particle_sizes /= (double)particles_.size();
+    double variance_particle_sizes = 0;
+    for (unsigned int i = 0; i < n_particles; ++i)
+    {
+      variance_particle_sizes += std::pow(particles[i].size() - mean_particle_size, 2);
+    }
+    variance_particle_sizes /= (double)n_particles;
 
-    // std::array<unsigned int, 2> n_fluid_components = n_fluid_comp();
-    // unsigned int n_connected_fluids = n_fluid_components[0];
-    // unsigned int n_periodic_fluid_components = n_fluid_components[1];
+    std::array<unsigned int, 2> n_fluid_components = n_fluid_comp();
+    unsigned int n_connected_fluids = n_fluid_components[0];
+    unsigned int n_periodic_fluid_components = n_fluid_components[1];
 
-    // return {(double)n_single_cells,
-    //         (double)n_particles,
-    //         (double)n_solids,
-    //         (double)n_surfaces,
-    //         (double)n_connected_fluids,
-    //         (double)n_periodic_fluid_components,
-    //         mean_particle_size,
-    //         variance_particle_sizes,
-    //         compactness,
-    //         (double)max_max_min_distance,
-    //         mean_sphericity,
-    //         max_diameters_ratio};
+    return {(double)n_single_cells,
+            (double)n_particles,
+            (double)n_solids,
+            (double)n_surfaces,
+            (double)n_connected_fluids,
+            (double)n_periodic_fluid_components,
+            mean_particle_size,
+            variance_particle_sizes,
+            compactness,
+            (double)max_max_min_distance,
+            mean_sphericity,
+            max_diameters_ratio};
   }
   // /*!***********************************************************************************************
   //  * \brief   Computes connected fluid areas.
@@ -549,57 +550,57 @@ constexpr double average_particle_size()
   //  * \retval  n_fluid_comp      1st entry of array is connected fluid areas.
   //  *                            2nd entry of array is periodic connected fluid areas.
   //  ************************************************************************************************/
-  // std::array<unsigned int, 2> n_fluid_comp()
-  // {
-  //   unsigned int n_connected_fluids = 0;
-  //   unsigned int n_periodic_fluids = 0;
-  //   unsigned int fluids_size, field, neigh_field;
-  //   std::vector<unsigned int> found_fluids;
+  std::array<unsigned int, 2> n_fluid_comp()
+  {
+    unsigned int n_connected_fluids = 0;
+    unsigned int n_periodic_fluids = 0;
+    unsigned int fluids_size, field, neigh_field;
+    std::vector<unsigned int> found_fluids;
 
-  //   bool periodic;
-  //   std::vector<std::array<int, dim> > ref_dist(n_fields_);
-  //   std::for_each(ref_dist.begin(), ref_dist.end(),
-  //                 [](std::array<int, dim> dist) { dist.fill(0); });
+    bool periodic;
+    std::vector<std::array<int, dim> > ref_dist(n_fields_);
+    std::for_each(ref_dist.begin(), ref_dist.end(),
+                  [](std::array<int, dim> dist) { dist.fill(0); });
 
-  //   for (auto first_fluid = std::find(domainFields.begin(), domainFields.end(), 0);
-  //        first_fluid != domainFields.end(); first_fluid = std::find(first_fluid, domainFields.end(), 0))
-  //   {
-  //     periodic = false;
-  //     found_fluids = std::vector<unsigned int>(1, std::distance(domainFields.begin(), first_fluid));
-  //     domainFields[found_fluids[0]] = uint_max;
-  //     fluids_size = 1;
-  //     for (unsigned int k = 0; k < fluids_size; ++k, fluids_size = found_fluids.size())
-  //     {
-  //       field = found_fluids[k];
-  //       for (unsigned int i = 0; i < 2 * dim; ++i)
-  //       {
-  //         neigh_field = aim<nx>(field, direct_neigh<nx>(i));
-  //         if (domainFields[neigh_field] == 0)
-  //         {
-  //           domainFields[neigh_field] = uint_max;
-  //           found_fluids.push_back(neigh_field);
-  //           ref_dist[neigh_field] = ref_dist[field];
-  //           ref_dist[neigh_field][i / 2] += 2 * (i % 2) - 1;
-  //         }
-  //         else if (domainFields[neigh_field] == uint_max)
-  //           for (unsigned int j = 0; j < dim; ++j)
-  //             if ((unsigned int)std::abs(ref_dist[field][j] - ref_dist[neigh_field][j]) > nx[j] - 2)
-  //               periodic = true;
-  //       }
-  //     }
-  //     ++n_connected_fluids;
-  //     n_periodic_fluids += periodic;
-  //   }
+    for (auto first_fluid = std::find(domainFields.begin(), domainFields.end(), 0);
+         first_fluid != domainFields.end(); first_fluid = std::find(first_fluid, domainFields.end(), 0))
+    {
+      periodic = false;
+      found_fluids = std::vector<unsigned int>(1, std::distance(domainFields.begin(), first_fluid));
+      domainFields[found_fluids[0]] = uint_max;
+      fluids_size = 1;
+      for (unsigned int k = 0; k < fluids_size; ++k, fluids_size = found_fluids.size())
+      {
+        field = found_fluids[k];
+        for (unsigned int i = 0; i < 2 * dim; ++i)
+        {
+          neigh_field = aim<nx>(field, direct_neigh<nx>(i));
+          if (domainFields[neigh_field] == 0)
+          {
+            domainFields[neigh_field] = uint_max;
+            found_fluids.push_back(neigh_field);
+            ref_dist[neigh_field] = ref_dist[field];
+            ref_dist[neigh_field][i / 2] += 2 * (i % 2) - 1;
+          }
+          else if (domainFields[neigh_field] == uint_max)
+            for (unsigned int j = 0; j < dim; ++j)
+              if ((unsigned int)std::abs(ref_dist[field][j] - ref_dist[neigh_field][j]) > nx[j] - 2)
+                periodic = true;
+        }
+      }
+      ++n_connected_fluids;
+      n_periodic_fluids += periodic;
+    }
 
-  //   std::for_each(domainFields.begin(), domainFields.end(),
-  //                 [](unsigned int& field)
-  //                 {
-  //                   if (field == uint_max)
-  //                     field = 0;
-  //                 });
+    std::for_each(domainFields.begin(), domainFields.end(),
+                  [](unsigned int& field)
+                  {
+                    if (field == uint_max)
+                      field = 0;
+                  });
 
-  //   return {n_connected_fluids, n_periodic_fluids};
-  // }
+    return {n_connected_fluids, n_periodic_fluids};
+  }
 
 
 
