@@ -517,7 +517,8 @@ class Domain
     double compactness =
       std::pow((double)n_surfaces, ((double)dim / (double)(dim - 1))) / (double)n_solids;
 
-    double variance_particle_sizes = 0 for (unsigned int i = 0; i < n_particles; ++i)
+    double variance_particle_sizes = 0;
+    for (unsigned int i = 0; i < n_particles; ++i)
     {
       variance_particle_sizes += std::pow(particles[i].fieldIndices.size() - mean_particle_size, 2);
     }
