@@ -1,7 +1,7 @@
 
+#include <CAM/building_units.hxx>
 #include <CAM/cellular_automaton.hxx>
 #include <CAM/domain.hxx>
-#include <CAM/building_units.hxx>
 #include <iostream>
 /*!*************************************************************************************************
  * \brief   Main function.
