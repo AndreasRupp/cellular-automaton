@@ -1,6 +1,6 @@
-//#include <CAM/cellular_automaton.hxx>
-#include <CAM/cellular_automaton_new.hxx>
-#include <CAM/domain_new.hxx>
+
+#include <CAM/cellular_automaton.hxx>
+#include <CAM/domain.hxx>
 #include <CAM/building_units.hxx>
 #include <iostream>
 /*!*************************************************************************************************
