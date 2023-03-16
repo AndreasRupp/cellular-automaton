@@ -18,20 +18,20 @@ namespace CAM
     /*!***********************************************************************************************
     * \brief   Smallest (negative) double.
     ************************************************************************************************/
-    static constexpr double double_min = std::numeric_limits<double>::lowest();
-    
-    /*!*************************************************************************************************
- * \brief   Calculates the size of the domain.
- *
- * \retval n_field        size of the domain
- **************************************************************************************************/
-template <auto nx>
-static constexpr unsigned int n_fields()
-{
-unsigned int n_field = 1;
-for (unsigned int i = 0; i < nx.size(); ++i)
-    n_field *= nx[i];
-return n_field;
+  static constexpr double double_mingit = std::numeric_limits<double>::lowest();
+
+  /*!*************************************************************************************************
+   * \brief   Calculates the size of the domain.
+   *
+   * \retval n_field        size of the domain
+   **************************************************************************************************/
+  template <auto nx>
+  static constexpr unsigned int n_fields()
+  {
+    unsigned int n_field = 1;
+    for (unsigned int i = 0; i < nx.size(); ++i)
+      n_field *= nx[i];
+    return n_field;
 }
 
 template <auto nx>
@@ -203,19 +203,7 @@ class Domain
         particles.push_back(Particle(found_solids, aggregateComponents));
       }
     }
-  // -----------------------------------------------------------------------------------------------
- 
- 
-//  /*!***********************************************************************************************
-//    * \brief   Jump parameter.
-//    ************************************************************************************************/
-//   const double jump_parameter_singles_;
 
-//   const double jump_parameter_composites_;
-//  /*!***********************************************************************************************
-//    * \brief   Number of particles.
-//    ************************************************************************************************/
-//   unsigned int n_particles;
   /*!***********************************************************************************************
    * \brief   Array of particle locations.
    ************************************************************************************************/
