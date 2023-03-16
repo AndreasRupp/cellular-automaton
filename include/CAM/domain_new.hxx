@@ -154,7 +154,6 @@ class Domain
       constexpr unsigned int dim = nx.size();
       unsigned int solids_size, field, neigh_field;
       std::vector<unsigned int> found_solids;
-      solidDistribution.clear();
       particles.clear();
       std::for_each(fields.begin(), fields.end(), [](unsigned int& field) { field = (field == 0); });
 
@@ -201,8 +200,7 @@ class Domain
           }
           aggregates.push_back(newAggregate);
         }
-        solidDistribution.push_back(found_solids.size());
-        particles.push_back(found_solids);
+        particles.push_back(Particle(found_solids, aggregateComponents));
       }
     }
   // -----------------------------------------------------------------------------------------------
@@ -227,8 +225,18 @@ class Domain
    ************************************************************************************************/
   std::vector<CAM::BuildingUnit*> buildingUnits;
   std::vector<CAM::Aggregate*> aggregates;
-  std::vector<unsigned int> solidDistribution;
-  std::vector<std::vector<unsigned int>> particles;
+
+  struct Particle
+  {
+    Particle(std::vector<unsigned int> _fieldIndices, std::vector<unsigned int> _numbers)
+    {
+      fieldIndices = _fieldIndices;
+      numbers = _numbers;
+    } 
+    std::vector<unsigned int> numbers;
+    std::vector<unsigned int> fieldIndices;
+  };
+  std::vector<Particle> particles;
   /*!***********************************************************************************************
    * \brief   Random seed.
    ************************************************************************************************/
@@ -314,12 +322,12 @@ unsigned int getNSurfaces(std::vector<unsigned int> _fields)
      *
      * \retval  max_distance     Length of the path.
      **********************************************************************************************/
-unsigned int max_min_distance(BuildingUnit* _unit)
+unsigned int max_min_distance(Particle _particle)
 {
-  std::vector<unsigned int> starts(1, _unit->getFieldIndices()[0]);
+  std::vector<unsigned int> starts(1, _particle.fieldIndices[0]);
   std::vector<bool> bigger(1, true);
   unsigned int start_index = 0, end_index = 1, neigh_field;
-  unsigned int max_distance = max_min_distance(starts[0], _unit);
+  unsigned int max_distance = max_min_distance(starts[0], _particle);
   bool found_larger = true;
 
   while (found_larger)
@@ -333,7 +341,7 @@ unsigned int max_min_distance(BuildingUnit* _unit)
       for (unsigned int j = 0; j < 2 * dim; ++j)
       {
         neigh_field = aim<nx>(starts[i], direct_neigh<nx>(j));
-        if (domainFields[neigh_field] == _unit->number &&
+        if (std::find(_particle.numbers.begin(),_particle.numbers.end(), domainFields[neigh_field]) != _particle.numbers.end() &&
             std::find(starts.begin(), starts.end(), neigh_field) == starts.end())
           starts.push_back(neigh_field);
       }
@@ -343,7 +351,7 @@ unsigned int max_min_distance(BuildingUnit* _unit)
     bigger = std::vector<bool>(end_index - start_index, true);
 
     for (unsigned int i = start_index; i < end_index; ++i)
-      if (max_min_distance(starts[i], _unit) > max_distance)
+      if (max_min_distance(starts[i], _particle) > max_distance)
         found_larger = true;
       else
         bigger[i - start_index] = false;
@@ -359,19 +367,20 @@ unsigned int max_min_distance(BuildingUnit* _unit)
 //      *
 //      * \retval  max_diameter / min_diameter      Max dimension ratio.
 //      **********************************************************************************************/
-    double max_dimension_ratio(BuildingUnit* _unit)
+    double max_dimension_ratio(Particle _particle)
     {
       std::array<unsigned int, dim> width_dim;
       for (unsigned int i = 0; i < dim; ++i)
-        width_dim[i] = directed_max_min_distance(i, _unit);
+        width_dim[i] = directed_max_min_distance(i, _particle);
       unsigned int max_diameter = *std::max_element(width_dim.begin(), width_dim.end());
       unsigned int min_diameter = *std::min_element(width_dim.begin(), width_dim.end());
       return (double)max_diameter / (double)min_diameter;
     }
-        unsigned int max_min_distance(unsigned int field, BuildingUnit* _unit)
+
+    unsigned int max_min_distance(unsigned int field, Particle _particle)
     {
       unsigned int max_distance = 0;
-      fields_array_t& domain_fields = domainFields;
+      fields_array_t domain_fields = domainFields;
       std::vector<unsigned int> visits(1, field);
       domain_fields[field] = uint_max;
 
@@ -382,7 +391,7 @@ unsigned int max_min_distance(BuildingUnit* _unit)
         for (unsigned int j = 0; j < 2 * dim; ++j)
         {
           neigh_field = aim<nx>(field, direct_neigh<nx>(j));
-          if (domain_fields[neigh_field] == _unit->number)
+          if (std::find(_particle.numbers.begin(),_particle.numbers.end(), domain_fields[neigh_field]) != _particle.numbers.end())
           {
             visits.push_back(neigh_field);
             domain_fields[neigh_field] = domain_fields[field] - 1;
@@ -390,9 +399,6 @@ unsigned int max_min_distance(BuildingUnit* _unit)
         }
       }
       max_distance = uint_max - domain_fields[field];
-      std::vector<unsigned int> fields = _unit->getFieldIndices();
-      std::for_each(fields.begin(), fields.end(),
-                    [&](const unsigned int field_loc) { domain_fields[field_loc] = _unit->number; });
       return max_distance;
     }
 //     /*!*********************************************************************************************
@@ -401,11 +407,10 @@ unsigned int max_min_distance(BuildingUnit* _unit)
 //      * \param   dir_dim          Certain dimension
 //      * \retval  max_distance     Amount of moves
 //      **********************************************************************************************/
-    unsigned int directed_max_min_distance(unsigned int dir_dim, BuildingUnit* _unit)
+    unsigned int directed_max_min_distance(unsigned int dir_dim, Particle _particle)
     {
-      std::vector<unsigned int> fields = _unit->getFieldIndices();
-      unsigned int max_distance = 0, field = fields[0];
-      fields_array_t& domain_fields = domainFields;
+      unsigned int max_distance = 0, field = _particle.fieldIndices[0];
+      fields_array_t domain_fields = domainFields;
       std::vector<unsigned int> visits(1, field);
       domain_fields[field] = uint_max - n_fields_;
       unsigned int min_val = domain_fields[field], max_val = domain_fields[field];
@@ -417,7 +422,7 @@ unsigned int max_min_distance(BuildingUnit* _unit)
         for (unsigned int j = 0; j < 2 * dim; ++j)
         {
           neigh_field = aim<nx>(field, direct_neigh<nx>(j));
-          if (domain_fields[neigh_field] == _unit->number)
+          if (std::find(_particle.numbers.begin(),_particle.numbers.end(), domain_fields[neigh_field]) != _particle.numbers.end())
           {
             visits.push_back(neigh_field);
             if (j / 2 == dir_dim && j % 2 == 0)
@@ -438,8 +443,6 @@ unsigned int max_min_distance(BuildingUnit* _unit)
         }
       }
       max_distance = max_val - min_val + 1;
-      std::for_each(fields.begin(), fields.end(),
-                    [&](const unsigned int field_loc) { domain_fields[field_loc] = _unit->number; });
       return max_distance;
     }
 
@@ -448,7 +451,7 @@ constexpr double average_particle_size()
   unsigned int n_solids = 0;
   for (unsigned int i = 0; i < domainFields.size(); ++i)
     n_solids += (domainFields[i] != 0);
-  return (double)n_solids / (double)n_solid_comp<nx>();
+  return (double)n_solids / (double)n_solid_comp();
 }
 /*!***********************************************************************************************
    * \brief   Evaluates measure parameters.
@@ -476,7 +479,7 @@ constexpr double average_particle_size()
     findAggregates();
     unsigned int n_single_cells =
       std::count_if(particles.begin(), particles.end(),
-                    [](std::vector<unsigned int> particle) -> bool { return particle.size() == 1; });
+                    [](Particle particle) -> bool { return particle.fieldIndices.size() == 1; });
 
     unsigned int n_particles = particles.size();
 
@@ -494,10 +497,10 @@ constexpr double average_particle_size()
 
 
     std::for_each(particles.begin(), particles.end(),
-                  [&](std::vector<unsigned int> particle)
+                  [&](Particle particle)
                   {
-                    n_solids_part = particle.size();
-                    n_surfaces_part = getNSurfaces(particle);
+                    n_solids_part = particle.fieldIndices.size();
+                    n_surfaces_part = getNSurfaces(particle.fieldIndices);
 
                     n_solids += n_solids_part;
                     n_surfaces += n_surfaces_part;
@@ -507,11 +510,11 @@ constexpr double average_particle_size()
                       (double)n_surfaces_part;
                     mean_sphericity += local_sphericity;
 
-                    // local_max_min_distance = max_min_distance(unit);
-                    // max_max_min_distance = std::max(max_max_min_distance, local_max_min_distance);
+                    local_max_min_distance = max_min_distance(particle);
+                    max_max_min_distance = std::max(max_max_min_distance, local_max_min_distance);
 
-                    // local_diameters_ratio = max_dimension_ratio(unit);
-                    // max_diameters_ratio = std::max(max_diameters_ratio, local_diameters_ratio);
+                    local_diameters_ratio = max_dimension_ratio(particle);
+                    max_diameters_ratio = std::max(max_diameters_ratio, local_diameters_ratio);
                   });
     mean_sphericity /= n_particles;
 
@@ -523,7 +526,7 @@ constexpr double average_particle_size()
     double variance_particle_sizes = 0;
     for (unsigned int i = 0; i < n_particles; ++i)
     {
-      variance_particle_sizes += std::pow(particles[i].size() - mean_particle_size, 2);
+      variance_particle_sizes += std::pow(particles[i].fieldIndices.size() - mean_particle_size, 2);
     }
     variance_particle_sizes /= (double)n_particles;
 
