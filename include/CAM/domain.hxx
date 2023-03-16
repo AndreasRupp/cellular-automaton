@@ -5,7 +5,7 @@
 #include <iomanip>
 #include <iostream>
 #include <limits>
-
+#include <array>
 #include <CAM/aggregate.hxx>
 #include <CAM/building_units.hxx>
 namespace CAM
@@ -296,7 +296,7 @@ class Domain
     return distribution;
   }
 
-  unsigned int n_solid_comp() { return particle_size_distribution<nx>().size(); }
+  unsigned int n_solid_comp() { return particle_size_distribution().size(); }
   unsigned int getNSurfaces(std::vector<unsigned int> _fields)
   {
     unsigned int n_surfaces = 0;
