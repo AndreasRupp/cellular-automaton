@@ -18,7 +18,7 @@ namespace CAM
     /*!***********************************************************************************************
     * \brief   Smallest (negative) double.
     ************************************************************************************************/
-  static constexpr double double_mingit = std::numeric_limits<double>::lowest();
+  static constexpr double double_min = std::numeric_limits<double>::lowest();
 
   /*!*************************************************************************************************
    * \brief   Calculates the size of the domain.
