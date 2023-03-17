@@ -39,17 +39,15 @@ def ecdf_identify(nx, porosity, n_steps, jump_parameter, ecdf_type, subset_sizes
     bins = np.linspace(min_val, max_val, 50)
     if ax is not None:
       if ecdf_type == "standard":
-        aux_func = ecdf.standard(data, bins, distance_fct, subset_sizes)
+        aux_func = ecdf.standard(data, bins, distance_fct, subset_sizes, compare_all=False)
       elif ecdf_type == "bootstrap":
-        aux_func = ecdf.bootstrap(data[0:subset_sizes[0]],
-                     data[subset_sizes[0]:subset_sizes[0]+subset_sizes[1]], bins, distance_fct)
+        aux_func = ecdf.bootstrap(data, bins, distance_fct, subset_sizes[0], subset_sizes[1])
       ax = ecdf.plot_ecdf_vectors(aux_func, ax, 'm.')
     bins = ecdf.choose_bins(distance_data, bins, n_bins)
     if ecdf_type == "standard":
-      func = ecdf.standard(data, bins, distance_fct, subset_sizes)
+      func = ecdf.standard(data, bins, distance_fct, subset_sizes, compare_all=False)
     elif ecdf_type == "bootstrap":
-      func = ecdf.bootstrap(data[0:subset_sizes[0]],
-               data[subset_sizes[0]:subset_sizes[0]+subset_sizes[1]], bins, distance_fct)
+      func = ecdf.bootstrap(data, bins, distance_fct, subset_sizes[0], subset_sizes[1])
     return func, ax
 
 
@@ -61,7 +59,7 @@ def ecdf_identify(nx, porosity, n_steps, jump_parameter, ecdf_type, subset_sizes
   CAM_config.debug_mode = debug_mode
   PyCAM                 = CAM.include(CAM_config)
 
-  n_fields, n_iter = np.prod(nx), np.sum(subset_sizes)
+  n_fields, n_iter = np.prod(nx), subset_sizes[0] # Small subsets come first
   data = [ run_cam(jump_parameter, nx, porosity, n_steps, debug_mode) for _ in range(n_iter) ]
 
   end_time = datetime.now()
@@ -69,31 +67,32 @@ def ecdf_identify(nx, porosity, n_steps, jump_parameter, ecdf_type, subset_sizes
 
   fig, ax = plt.subplots(nrows=2, ncols=2, figsize=(18, 5))
 
-  if ecdf_type == "standard" or ecdf_type == "bootstrap":
-    func, ax[0,0] = generate_ecdf(data, subset_sizes, distance_fct, n_bins, ecdf_type, ax[0,0])
-  elif isinstance(ecdf_type,list):
-    if not len(distance_fct) == len(n_bins) and len(n_bins) == len(ecdf_type):
-      print("ERROR: Same amount of distance, bin, and type choices needed.")
-    func_list = []
-    for i in range(len(distance_fct)):
-      aux_func, _ = generate_ecdf(data, subset_sizes, distance_fct[i], n_bins[i], ecdf_type[i])
-      func_list.append( aux_func )
-    func = ecdf.multiple( func_list )
-  else:
-    print("ERROR: Type of ecdf is invalid.")
-
-  ax[0,0] = ecdf.plot_ecdf_vectors(func, ax[0,0], 'c.')
-  ax[0,0] = ecdf.plot_mean_vector(func, ax[0,0], 'k.')
-  ax[1,0] = ecdf.plot_chi2_test(func, ax[1,0])
-
-  end_time = datetime.now()
-  print("Objective function setup at", end_time, "after", end_time-start_time)
+  # end_time = datetime.now()
+  # print("Objective function setup at", end_time, "after", end_time-start_time)
 
   means_log = [0.] * len(jump_params)
   means_nor = [0.] * len(jump_params)
+  values = [0.] * len(jump_params)
   for _ in range(n_runs):
-    values = [ ecdf.evaluate( func, [ run_cam(jump_param, nx, porosity, n_steps, debug_mode) \
-             for _ in range(subset_sizes[0]) ] ) for jump_param in jump_params ]
+    for i,jump_param in enumerate(jump_params):
+
+      data_param = [ run_cam(jump_param, nx, porosity, n_steps, debug_mode) for _ in range(np.sum(subset_sizes)) ]
+
+      if ecdf_type == "standard" or ecdf_type == "bootstrap":
+        func, ax[0,0] = generate_ecdf(data_param, subset_sizes, distance_fct, n_bins, ecdf_type, ax[0,0])
+      elif isinstance(ecdf_type,list):
+        if not len(distance_fct) == len(n_bins) and len(n_bins) == len(ecdf_type):
+          print("ERROR: Same amount of distance, bin, and type choices needed.")
+        func_list = []
+        for i in range(len(distance_fct)):
+          aux_func, _ = generate_ecdf(data_param, subset_sizes, distance_fct[i], n_bins[i], ecdf_type[i])
+          func_list.append( aux_func )
+        func = ecdf.multiple( func_list )
+      else:
+        print("ERROR: Type of ecdf is invalid.")
+
+      values[i] = ecdf.evaluate( func, data )
+
     ax[0,1].plot(jump_params, values, 'ro')
     means_log = [ means_log[i] + values[i] / n_runs for i in range(len(jump_params))]
     values = [ np.exp(-0.5 * value)   for value in values ]
@@ -113,7 +112,7 @@ def ecdf_identify(nx, porosity, n_steps, jump_parameter, ecdf_type, subset_sizes
   if is_plot:  plt.show()
 
 
-def run_test_from_class(test_class):
+def run_test_from_class_sl(test_class):
   ecdf_identify(test_class.nx, test_class.porosity, test_class.n_steps, test_class.jump_parameter,
     test_class.ecdf_type, test_class.subset_sizes, test_class.n_bins, test_class.n_runs,
     test_class.min_value_shift, test_class.max_value_shift, test_class.jump_params,
