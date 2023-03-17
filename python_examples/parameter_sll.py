@@ -57,7 +57,7 @@ if __name__ == "__main__":
     fun_args.append( base_test(
       nx             = [size, size],
       ecdf_type      = "bootstrap",
-      subset_sizes   = [ 50, 1000 ],
+      subset_sizes   = [ 100, 200 ],
       n_runs         = 1,
       file_name      = 'size_' + str(size)
       ) )

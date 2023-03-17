@@ -37,48 +37,56 @@ if __name__ == "__main__":
   fun_args  = []
   base_test = getattr(ecdf_test, test_name)
 
+  # fun_args.append( base_test(
+  #   distance_fct = [ "bulk_distance", "average_distance" ],
+  #   ecdf_type    = [ "standard",      "standard",        ],
+  #   n_bins       = [ 8,               4                  ],
+  #   n_runs       = 100,
+  #   file_name    = 'multiple_2'
+  #   ) )
+
   fun_args.append( base_test(
-    distance_fct = [ "bulk_distance", "average_distance" ],
+    distance_fct = [ "bulk_distance", "bulk_distance"    ],
     ecdf_type    = [ "standard",      "standard",        ],
-    n_bins       = [ 8,               4                  ],
-    n_runs       = 100,
-    file_name    = 'multiple_2'
+    n_bins       = [ 20,               4                 ],
+    n_steps      = [ 5,                10                ],
+    file_name    = 'multiple_times'
     ) )
 
-  fun_args.append( base_test(
-    distance_fct = [ "bulk_distance", "average_distance", "particle_sizes" ],
-    ecdf_type    = [ "standard",      "standard",         "standard"       ],
-    n_bins       = [ 5,               3,                   5               ],
-    n_runs       = 100,
-    file_name    = 'multiple_3'
-    ) )
+  # fun_args.append( base_test(
+  #   distance_fct = [ "bulk_distance", "average_distance", "particle_sizes" ],
+  #   ecdf_type    = [ "standard",      "standard",         "standard"       ],
+  #   n_bins       = [ 5,               3,                   5               ],
+  #   n_runs       = 100,
+  #   file_name    = 'multiple_3'
+  #   ) )
 
-  for size in domain_sizes:
-    fun_args.append( base_test(
-      nx             = [size, size],
-      file_name      = 'size_' + str(size)
-      ) )
+  # for size in domain_sizes:
+  #   fun_args.append( base_test(
+  #     nx             = [size, size],
+  #     file_name      = 'size_' + str(size)
+  #     ) )
 
-  for steps in time_points:
-    fun_args.append( base_test(
-      n_steps      = steps,
-      file_name    = 'time-steps_' + str(steps)
-      ) )
+  # for steps in time_points:
+  #   fun_args.append( base_test(
+  #     n_steps      = steps,
+  #     file_name    = 'time-steps_' + str(steps)
+  #     ) )
 
-  for n_choose_bin in n_bins:
-    fun_args.append( base_test(
-      n_bins    = n_choose_bin,
-      file_name = 'n-bins_' + str(n_choose_bin)
-      ) )
+  # for n_choose_bin in n_bins:
+  #   fun_args.append( base_test(
+  #     n_bins    = n_choose_bin,
+  #     file_name = 'n-bins_' + str(n_choose_bin)
+  #     ) )
 
-  for distance_index in range(len(distances)):
-    distance      = distances[distance_index]
-    n_choose_bins = n_bins[distance_index]
-    fun_args.append( base_test(
-      n_bins       = n_choose_bins,
-      distance_fct = distance,
-      file_name    = "distance_" + distance
-    ) )
+  # for distance_index in range(len(distances)):
+  #   distance      = distances[distance_index]
+  #   n_choose_bins = n_bins[distance_index]
+  #   fun_args.append( base_test(
+  #     n_bins       = n_choose_bins,
+  #     distance_fct = distance,
+  #     file_name    = "distance_" + distance
+  #   ) )
 
   processes = []
   for fun_arg in fun_args:
