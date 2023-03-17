@@ -41,15 +41,13 @@ def ecdf_identify(nx, porosity, n_steps, jump_parameter, ecdf_type, subset_sizes
       if ecdf_type == "standard":
         aux_func = ecdf.standard(data, bins, distance_fct, subset_sizes)
       elif ecdf_type == "bootstrap":
-        aux_func = ecdf.bootstrap(data[0:subset_sizes[0]],
-                     data[subset_sizes[0]:subset_sizes[0]+subset_sizes[1]], bins, distance_fct)
+        aux_func = ecdf.bootstrap(data, bins, distance_fct, subset_sizes[0], subset_sizes[1])
       ax = ecdf.plot_ecdf_vectors(aux_func, ax, 'm.')
     bins = ecdf.choose_bins(distance_data, bins, n_bins)
     if ecdf_type == "standard":
       func = ecdf.standard(data, bins, distance_fct, subset_sizes)
     elif ecdf_type == "bootstrap":
-      func = ecdf.bootstrap(data[0:subset_sizes[0]],
-               data[subset_sizes[0]:subset_sizes[0]+subset_sizes[1]], bins, distance_fct)
+      func = ecdf.bootstrap(data, bins, distance_fct, subset_sizes[0], subset_sizes[1])
     return func, ax
 
 
