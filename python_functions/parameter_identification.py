@@ -30,8 +30,16 @@ def ecdf_identify(nx, porosity, n_steps, jump_parameter, ecdf_type, subset_sizes
 
   def run_cam(jump_parameter, nx, porosity, n_steps, debug_mode=False):
     CAM_wrapper = PyCAM(porosity, jump_parameter)
-    for step in range(n_steps):  CAM_wrapper.move_particles()
-    return CAM_wrapper.fields()
+    if isinstance(n_steps, list):
+      for _ in range(n_steps[0]):  CAM_wrapper.move_particles()
+      data = [ CAM_wrapper.fields() ]
+      for i in range(len(n_steps) - 1):
+        for _ in range(n_steps[i], n_steps[i+1]): CAM_wrapper.move_particles()
+        data.append( CAM_wrapper.fields() )
+      return data
+    else:
+      for _ in range(n_steps):  CAM_wrapper.move_particles()
+      return CAM_wrapper.fields()
 
   def generate_ecdf(data, subset_sizes, distance_fct, n_bins, ecdf_type, ax=None):
     min_val, max_val, distance_data = ecdf.estimate_radii_values(data[0:subset_sizes[0]],
@@ -67,14 +75,25 @@ def ecdf_identify(nx, porosity, n_steps, jump_parameter, ecdf_type, subset_sizes
 
   fig, ax = plt.subplots(nrows=2, ncols=2, figsize=(18, 5))
 
-  if ecdf_type == "standard" or ecdf_type == "bootstrap":
+  if not isinstance(n_steps, list) and (ecdf_type == "standard" or ecdf_type == "bootstrap"):
     func, ax[0,0] = generate_ecdf(data, subset_sizes, distance_fct, n_bins, ecdf_type, ax[0,0])
-  elif isinstance(ecdf_type,list):
+  elif not isinstance(n_steps, list) and isinstance(ecdf_type,list):
     if not len(distance_fct) == len(n_bins) and len(n_bins) == len(ecdf_type):
       print("ERROR: Same amount of distance, bin, and type choices needed.")
     func_list = []
     for i in range(len(distance_fct)):
       aux_func, _ = generate_ecdf(data, subset_sizes, distance_fct[i], n_bins[i], ecdf_type[i])
+      func_list.append( aux_func )
+    func = ecdf.multiple( func_list )
+  elif isinstance(n_steps, list):
+    if not all(n_steps[i] <= n_steps[i+1] for i in range(len(n_steps) - 1)):
+      raise Exception("Number of stps must be ascending!")
+    if not len(n_steps) == len(distance_fct) == len(ecdf_type) == len(n_bins) == len(n_steps):
+      raise Exception("Illegal combination of parameter lists.")
+    data = np.transpose(data, (1,0,2))
+    func_list = []
+    for i in range(len(distance_fct)):
+      aux_func, _ = generate_ecdf(data[i], subset_sizes, distance_fct[i], n_bins[i], ecdf_type[i])
       func_list.append( aux_func )
     func = ecdf.multiple( func_list )
   else:
