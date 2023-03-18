@@ -15,10 +15,10 @@ try:
   import ecdf_estimator as ecdf
 except (ImportError, ModuleNotFoundError) as error:
   print("No installed ecdf_estimator package found! Using local ecdf_estimator.")
-  sys.path.append(os.path.dirname(os.path.abspath(__file__)) + os.sep + ".." + os.sep + ".." +
-    os.sep + "cil_estimator.git")
-  # sys.path.append(os.path.dirname(os.path.abspath(__file__)) + os.sep + ".." + os.sep +
-  #   "submodules" + os.sep + "ecdf_estimator.git")
+  # sys.path.append(os.path.dirname(os.path.abspath(__file__)) + os.sep + ".." + os.sep + ".." +
+  #   os.sep + "cil_estimator.git")
+  sys.path.append(os.path.dirname(os.path.abspath(__file__)) + os.sep + ".." + os.sep +
+    "submodules" + os.sep + "ecdf_estimator.git")
   import ecdf_estimator as ecdf
   
 
