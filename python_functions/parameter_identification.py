@@ -77,14 +77,6 @@ def ecdf_identify(nx, porosity, n_steps, jump_parameter, ecdf_type, subset_sizes
 
   if not isinstance(n_steps, list) and (ecdf_type == "standard" or ecdf_type == "bootstrap"):
     func, ax[0,0] = generate_ecdf(data, subset_sizes, distance_fct, n_bins, ecdf_type, ax[0,0])
-  elif not isinstance(n_steps, list) and isinstance(ecdf_type,list):
-    if not len(distance_fct) == len(n_bins) and len(n_bins) == len(ecdf_type):
-      print("ERROR: Same amount of distance, bin, and type choices needed.")
-    func_list = []
-    for i in range(len(distance_fct)):
-      aux_func, _ = generate_ecdf(data, subset_sizes, distance_fct[i], n_bins[i], ecdf_type[i])
-      func_list.append( aux_func )
-    func = ecdf.multiple( func_list )
   elif isinstance(n_steps, list):
     if not all(n_steps[i] <= n_steps[i+1] for i in range(len(n_steps) - 1)):
       raise Exception("Number of stps must be ascending!")
