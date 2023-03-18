@@ -101,8 +101,13 @@ def ecdf_identify(nx, porosity, n_steps, jump_parameter, ecdf_type, subset_sizes
   means_log = [0.] * len(jump_params)
   means_nor = [0.] * len(jump_params)
   for _ in range(n_runs):
-    values = [ ecdf.evaluate( func, [ run_cam(jump_param, nx, porosity, n_steps, debug_mode) \
-             for _ in range(subset_sizes[0]) ] ) for jump_param in jump_params ]
+    if not isinstance(n_steps, list):
+      values = [ ecdf.evaluate( func, [ run_cam(jump_param, nx, porosity, n_steps, debug_mode) \
+                 for _ in range(subset_sizes[0]) ] ) for jump_param in jump_params ]
+    else:
+      values = [ ecdf.evaluate( func, np.transpose( [ \
+        run_cam(jump_param, nx, porosity, n_steps, debug_mode) for _ in range(subset_sizes[0]) \
+        ], (1,0,2) ) ) for jump_param in jump_params ]
     ax[0,1].plot(jump_params, values, 'ro')
     means_log = [ means_log[i] + values[i] / n_runs for i in range(len(jump_params))]
     values = [ np.exp(-0.5 * value)   for value in values ]
