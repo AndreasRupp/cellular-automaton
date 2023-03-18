@@ -42,7 +42,7 @@ if __name__ == "__main__":
     ecdf_type    = [ "standard",      "standard",        ],
     n_bins       = [ 8,               4                  ],
     n_steps      = [ 5,               5                  ],
-    # n_runs       = 100,
+    n_runs       = 100,
     file_name    = 'multiple_2'
     ) )
 
