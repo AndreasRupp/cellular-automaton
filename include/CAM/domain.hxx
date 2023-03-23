@@ -1,4 +1,6 @@
 #pragma once
+#ifndef DOMAIN_HXX
+#define DOMAIN_HXX
 
 #include <chrono>
 #include <cmath>
@@ -10,7 +12,6 @@
 #include <CAM/building_units.hxx>
 namespace CAM
 {
-static const double jump_parameter_composites = 1.0;
 /*!*************************************************************************************************
  * \brief   Maximum unsigned integer.
  **************************************************************************************************/
@@ -64,22 +65,26 @@ static constexpr unsigned int aim(const unsigned int position, const int move)
   return new_pos;
 }
 
-template <auto nx, typename fields_array_t = std::array<unsigned int, n_fields<nx>()>>
+template <auto nx, typename fields_array_t > 
 class Domain
 {
   static const unsigned int dim = nx.size();
-
+  
  public:
+ double jump_parameter_composites = 1.0;
   static constexpr unsigned int n_fields_ = n_fields<nx>();
+
   ~Domain()
   {
     std::for_each(buildingUnits.begin(), buildingUnits.end(),
                   [&](CAM::BuildingUnit* unit) { delete unit; });
     std::for_each(aggregates.begin(), aggregates.end(),
                   [&](CAM::Aggregate* aggregate) { delete aggregate; });
+    
   }
-  Domain()
+  Domain()//double _jump_parameter_composites = 1.0
   {
+
     if constexpr (std::is_same<fields_array_t,
                                std::vector<typename fields_array_t::value_type>>::value)
       domainFields.resize(n_fields_, 0);
@@ -91,8 +96,8 @@ class Domain
         "The fields array has incorrect size");
       domainFields.fill(0);
     }
+    //jump_parameter_composites = _jump_parameter_composites;
   }
-
   bool placeBU(CAM::BuildingUnit* _unit)  //
   {
     bool success = 1;
@@ -203,7 +208,7 @@ class Domain
           newAggregate->buildingUnits.push_back(*it);
           newAggregate->fieldIndices = found_solids;
           newAggregate->jump_parameter =
-            CAM::jump_parameter_composites /
+            jump_parameter_composites /
             std::pow(newAggregate->fieldIndices.size(), 1.0 / (double)dim);
         }
         aggregates.push_back(newAggregate);
@@ -212,6 +217,7 @@ class Domain
     }
   }
 
+  const fields_array_t& fields() const { return domainFields; }
   /*!***********************************************************************************************
    * \brief   Array of particle locations.
    ************************************************************************************************/
@@ -676,3 +682,4 @@ class Domain
   void print_array() { print_n_dim<nx.size()>(domainFields); }
 };
 }  // namespace CAM
+#endif // DOMAIN_HXX

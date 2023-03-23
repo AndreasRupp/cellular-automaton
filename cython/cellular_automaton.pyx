@@ -2,24 +2,28 @@
 
 cdef class PythonClassName :
   cdef CythonClassName *thisptr # hold a C++ instance which we're wrapping
-  def __cinit__(self, porosity, jump_param_singles, jump_param_composites="default"):
-    if jump_param_composites == "default": jump_param_composites = jump_param_singles
-    self.thisptr = new CythonClassName (porosity, jump_param_singles, jump_param_composites)
+  def __cinit__(self):# jump_param_composites="default"
+    #if jump_param_composites == "default": jump_param_composites = 1.0
+    self.thisptr = new CythonClassName ()
   def __dealloc__(self):
     del self.thisptr
-  def move_particles(self):
-    return self.thisptr.move_particles ()
+  def print_array(self):
+    self.thisptr.print_array()
   def fields(self):
-    return self.thisptr.fields ()
-  @staticmethod
-  def print_array(vec):
-    print_array (vec)
-  @staticmethod
-  def bulk_distance(vec_a, vec_b):
-    return bulk_distance (vec_a, vec_b)
-  @staticmethod
-  def average_particle_size(vec):
-    return average_particle_size (vec)
-  @staticmethod
-  def particle_size_distribution(vec) -> list:
-    return particle_size_distribution(vec)
+    return self.thisptr.fields()
+  def placeBURandomly(self,_porosity, _jump_parameter, random_seed):
+    if _porosity == "default": _porosity = 0.5
+    if _jump_parameter == "default": _jump_parameter = 1.0
+    if random_seed == "default": random_seed = 0
+    self.thisptr.placeBURandomly(_porosity,_jump_parameter, random_seed)
+  def doCAM(self):
+    self.thisptr.doCAM()
+
+#cdef class CellularAutomaton :
+  #cdef CellularAutomatonCP *ptr # hold a C++ instance which we're wrapping
+  #def __cinit__(self):
+    #self.ptr = new CellularAutomatonCP ()
+  #def __dealloc__(self):
+    #del self.ptr
+
+    

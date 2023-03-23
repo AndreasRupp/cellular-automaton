@@ -1,4 +1,6 @@
 #pragma once
+#ifndef CELLULAR_AUTOMATON_HXX
+#define CELLULAR_AUTOMATON_HXX
 
 #include <CAM/domain.hxx>
 #include <algorithm>
@@ -13,14 +15,14 @@
 namespace CAM
 {
 
-template <auto nx, typename fields_array_t = std::array<unsigned int, n_fields<nx>()>>
+template <auto nx, typename fields_array_t>// = std::array<unsigned int, n_fields<nx>()>
 class CellularAutomaton
 {
   static const unsigned int dim = nx.size();
 
  public:
-  CellularAutomaton();
-  ~CellularAutomaton();
+  // CellularAutomaton();
+  // ~CellularAutomaton();
   static void moveBU(CAM::BuildingUnit* _unit, fields_array_t& _domainFields)
   {
     std::vector<int> possible_moves = getStencil(_unit->jump_parameter);
@@ -54,7 +56,7 @@ class CellularAutomaton
     }
   }
 
-  static void apply(Domain<nx>& _domain)
+  static void apply(Domain<nx, fields_array_t>& _domain)
   {
     _domain.aggregates.clear();
     _domain.findAggregates();
@@ -149,3 +151,4 @@ class CellularAutomaton
   }
 };
 }  // namespace CAM
+#endif //CELLULAR_AUTOMATON_HXX

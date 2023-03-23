@@ -11,7 +11,7 @@ def files(conf):
   for nx_dim in conf.nx:
     nx_string = nx_string + str(nx_dim) + ","
   nx_string    = nx_string[:-1] + "})"
-  cpp_class    = "CAM::cellular_automaton< " + nx_string + ", std::vector<unsigned int> >"
+  cpp_class    = "CAM::CAMInterface< " + nx_string + ", std::vector<unsigned int> >"
   cython_file  = cpp_class + "_deb" if conf.debug_mode else cpp_class + "_rel"
   cython_file  = re.sub(' ', '', cython_file)
   cython_file  = "mod" + str(hashlib.sha256(cython_file.encode('utf-8')).hexdigest())

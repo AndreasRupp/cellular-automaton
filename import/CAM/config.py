@@ -41,7 +41,7 @@ def consistent(conf):
 ## \brief   Add the files that need to be included for defining the problem to include list.
 def extract_includes(conf, cpp_inc=""):
   assert isinstance(conf, config) and consistent(conf)
-  helper = find_definition(".", "cellular_automaton")
+  helper = find_definition(".", "CAMInterface")
   if helper not in conf.include_files:
     conf.include_files.append(helper)
   include_string = ""
