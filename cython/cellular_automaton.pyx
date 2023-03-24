@@ -16,6 +16,10 @@ cdef class PythonClassName :
     if _jump_parameter == "default": _jump_parameter = 1.0
     if random_seed == "default": random_seed = 0
     self.thisptr.placeBURandomly(_porosity,_jump_parameter, random_seed)
+  def placeSphere(self, _jump_parameter, random_seed):
+    if _jump_parameter == "default": _jump_parameter = 1.0
+    if random_seed == "default": random_seed = 0
+    self.thisptr.placeSphere(_jump_parameter, random_seed)
   def doCAM(self):
     self.thisptr.doCAM()
 

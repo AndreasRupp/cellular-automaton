@@ -10,61 +10,9 @@
 #include <array>
 #include <CAM/aggregate.hxx>
 #include <CAM/building_units.hxx>
+#include <CAM/utils.hxx>
 namespace CAM
 {
-/*!*************************************************************************************************
- * \brief   Maximum unsigned integer.
- **************************************************************************************************/
-static constexpr unsigned int uint_max = std::numeric_limits<unsigned int>::max();
-/*!***********************************************************************************************
- * \brief   Smallest (negative) double.
- ************************************************************************************************/
-static constexpr double double_min = std::numeric_limits<double>::lowest();
-
-/*!*************************************************************************************************
- * \brief   Calculates the size of the domain.
- *
- * \retval n_field        size of the domain
- **************************************************************************************************/
-template <auto nx>
-static constexpr unsigned int n_fields()
-{
-  unsigned int n_field = 1;
-  for (unsigned int i = 0; i < nx.size(); ++i)
-    n_field *= nx[i];
-  return n_field;
-}
-
-template <auto nx>
-static constexpr int direct_neigh(const unsigned int index)
-{
-  static_assert(nx.size() != 0, "Dimension of zero does not make sense.");
-  int direct_neigh = (index % 2 == 0) ? -1 : 1;
-  for (unsigned int i = 0; i < index / 2; ++i)
-    direct_neigh *= nx[i];
-  return direct_neigh;
-}
-/*!*************************************************************************************************
- * \brief   Find field if one moves from position to move.
- *
- * \param   position  Current position of field that may move.
- * \param   move      Index shift induced by possible move.
- * \retval  index     Index of move target.
- **************************************************************************************************/
-template <auto nx>
-static constexpr unsigned int aim(const unsigned int position, const int move)
-{
-  unsigned int coord, new_pos = 0;
-  for (unsigned int i = 0; i < nx.size(); ++i)
-  {
-    coord = (position / direct_neigh<nx>(2 * i + 1) + move / (int)direct_neigh<nx>(2 * i + 1) +
-             n_fields<nx>()) %
-            nx[i];
-    new_pos += coord * direct_neigh<nx>(2 * i + 1);
-  }
-  return new_pos;
-}
-
 template <auto nx, typename fields_array_t > 
 class Domain
 {
@@ -132,6 +80,30 @@ class Domain
     }
     return success;
   }
+  void placeSphere(double _jump_parameter = 1, unsigned int random_seed = 0)
+  {
+    if (random_seed == 0)
+    {
+      rand_seed = std::chrono::system_clock::now().time_since_epoch().count();
+    }
+    else
+      rand_seed = random_seed;
+
+    std::srand(rand_seed);
+
+   // unsigned int n_particles = 1;
+    unsigned int position = std::rand() % (n_fields_);
+    position = 45;
+    buildingUnits.push_back(new HyperSphereBU(1, _jump_parameter, position, 4.1));
+    std::vector<unsigned int> fields = buildingUnits[0]->getFieldIndices();
+    for(unsigned int i = 0; i < fields.size(); i++)
+    {
+      domainFields[fields[i]] = 1;
+    }
+    
+      // particle(position, *this, i + 1));
+    
+  }
   void placeBURandomly(double _porosity = 0.90,
                        double _jump_parameter = 1,
                        unsigned int random_seed = 0)
@@ -165,12 +137,12 @@ class Domain
     unsigned int solids_size, field, neigh_field;
     std::vector<unsigned int> found_solids;
     particles.clear();
-    std::for_each(fields.begin(), fields.end(), [](unsigned int& field) { field = (field == 0); });
+    std::for_each(fields.begin(), fields.end(), [](CAM::fieldNumbers& field) { field = (field == 0); });
 
     for (auto first_solid = std::find(fields.begin(), fields.end(), 0); first_solid != fields.end();
          first_solid = std::find(first_solid, fields.end(), 0))
     {
-      std::vector<unsigned int> aggregateComponents;
+      std::vector<CAM::fieldNumbers> aggregateComponents;
 
       found_solids = std::vector<unsigned int>(1, std::distance(fields.begin(), first_solid));
       fields[found_solids[0]] = uint_max;
@@ -230,12 +202,12 @@ class Domain
 
   struct Particle
   {
-    Particle(std::vector<unsigned int> _fieldIndices, std::vector<unsigned int> _numbers)
+    Particle(std::vector<unsigned int> _fieldIndices, std::vector<CAM::fieldNumbers> _numbers)
     {
       fieldIndices = _fieldIndices;
       numbers = _numbers;
     }
-    std::vector<unsigned int> numbers;
+    std::vector<CAM::fieldNumbers> numbers;
     std::vector<unsigned int> fieldIndices;
   };
   std::vector<Particle> particles;
@@ -413,7 +385,7 @@ class Domain
     fields_array_t domain_fields = domainFields;
     std::vector<unsigned int> visits(1, field);
     domain_fields[field] = uint_max - n_fields_;
-    unsigned int min_val = domain_fields[field], max_val = domain_fields[field];
+    CAM::fieldNumbers min_val = domain_fields[field], max_val = domain_fields[field];
 
     unsigned int neigh_field, visits_size = visits.size();
     for (unsigned int i = 0; i < visits_size; ++i, visits_size = visits.size())
@@ -597,7 +569,7 @@ class Domain
     }
 
     std::for_each(domainFields.begin(), domainFields.end(),
-                  [](unsigned int& field)
+                  [](CAM::fieldNumbers& field)
                   {
                     if (field == uint_max)
                       field = 0;
@@ -679,7 +651,13 @@ class Domain
    * \param   nx             Nx dimension and size
    **************************************************************************************************/
 
-  void print_array() { print_n_dim<nx.size()>(domainFields); }
+  void print_array() { 
+    unsigned int sum = 0;
+    std::for_each(domainFields.begin(), domainFields.end(), [&] (CAM::fieldNumbers t) {sum += t;} );
+    std::cout<<"summe "<<sum<<std::endl;
+    
+    
+    print_n_dim<nx.size()>(domainFields); }
 };
 }  // namespace CAM
 #endif // DOMAIN_HXX

@@ -3,6 +3,7 @@
 #define CELLULAR_AUTOMATON_HXX
 
 #include <CAM/domain.hxx>
+#include <CAM/utils.hxx>
 #include <algorithm>
 #include <array>
 #include <chrono>
@@ -50,23 +51,31 @@ class CellularAutomaton
     std::vector<unsigned int> fields_new = _unit->getFieldIndices();
     for (unsigned int i = 0; i < fields_new.size(); i++)
     {
-      if (_domainFields[fields_old[i]] == _unit->number)
-        _domainFields[fields_old[i]] = 0;
-      _domainFields[fields_new[i]] = _unit->number;
+      //std::cout<<"altnue"<<fields_old[i] <<" "<<fields_new[i]<<std::endl;
+
+      // if (_domainFields[fields_old[i]] == _unit->number)
+      //   _domainFields[fields_old[i]] = 0;
+      // _domainFields[fields_new[i]] = _unit->number;
+      //TODO unsigned int to int 
+      _domainFields[fields_new[i]] += _unit->number;
+      _domainFields[fields_old[i]] -= _unit->number;
+
     }
   }
 
   static void apply(Domain<nx, fields_array_t>& _domain)
   {
     _domain.aggregates.clear();
-    _domain.findAggregates();
-    std::for_each(_domain.aggregates.begin(), _domain.aggregates.end(),
-                  [&](CAM::Aggregate* aggregate)
-                  { moveAggregate(aggregate, _domain.domainFields); });
-    std::shuffle(_domain.buildingUnits.begin(), _domain.buildingUnits.end(),
+        std::shuffle(_domain.buildingUnits.begin(), _domain.buildingUnits.end(),
                  std::default_random_engine(std::rand()));
+    std::cout<<"Number of BU: "<<_domain.buildingUnits.size()<<std::endl;
     std::for_each(_domain.buildingUnits.begin(), _domain.buildingUnits.end(),
                   [&](CAM::BuildingUnit* unit) { moveBU(unit, _domain.domainFields); });
+    _domain.findAggregates();
+    std::cout<<"Number of aggregates: "<<_domain.aggregates.size()<<std::endl;
+    std::for_each(_domain.aggregates.begin(), _domain.aggregates.end(),
+                  [&](CAM::Aggregate* aggregate)
+                  { std::cout<<"sdaf"<<std::endl; moveAggregate(aggregate, _domain.domainFields); });
   }
 
   static void moveAggregate(CAM::Aggregate* _aggregate, fields_array_t& _domainFields)
@@ -74,10 +83,10 @@ class CellularAutomaton
     std::vector<int> possible_moves = getStencil(_aggregate->jump_parameter);  //
     std::vector<int> best_moves(1, 0);
     double attraction = 0.;
-    for (unsigned int i = 0; i < _aggregate->fieldIndices.size(); i++)
-    {
-      _domainFields[_aggregate->fieldIndices[i]] = 0;
-    }
+    // for (unsigned int i = 0; i < _aggregate->fieldIndices.size(); i++)
+    // {
+    //   _domainFields[_aggregate->fieldIndices[i]] = 0;
+    // }
     std::for_each(possible_moves.begin(), possible_moves.end(),
                   [&](int move)
                   {
@@ -92,6 +101,7 @@ class CellularAutomaton
                       best_moves.push_back(move);
                   });
     int best_move = best_moves[std::rand() % best_moves.size()];
+   // std::cout<<"moveAggreagte "<<best_move<<std::endl;
     for (unsigned int i = 0; i < _aggregate->buildingUnits.size(); i++)
     {
       doMoveBU(best_move, _aggregate->buildingUnits[i], _domainFields);
@@ -121,10 +131,12 @@ class CellularAutomaton
                                 fields_array_t& _domainFields)
   {
     double attraction = 0.;
-
-    for (unsigned int i = 0; i < _BU->getFieldIndices().size(); ++i)
+    //TODO evaluate Attraction only by borderpoints of BU
+    std::vector<unsigned int> fieldIndices = _BU->getFieldIndices();
+    for (unsigned int i = 0; i < fieldIndices.size(); ++i)
     {
-      unsigned int aiming = aim<nx>(_BU->getFieldIndices()[i], move);
+      unsigned int aiming = aim<nx>(fieldIndices[i], move);//TODO hier könnten man auch einfach stencil addieren
+      //aim<nx>(refPoint, move + stencil[i])
       if (_domainFields[aiming] != _BU->number && _domainFields[aiming] != 0)
         return double_min;
       for (unsigned int i = 0; i < 2 * dim; ++i)

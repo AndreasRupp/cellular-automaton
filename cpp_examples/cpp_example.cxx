@@ -1,5 +1,5 @@
 
-// #include <CAM/building_units.hxx>
+#include <CAM/building_units.hxx>
 // #include <CAM/cellular_automaton.hxx>
 // #include <CAM/domain.hxx>
 #include <CAM/cam_interface.hxx>
@@ -18,18 +18,19 @@
 int main()
 {
   constexpr std::array<unsigned int, 2> nx = {10, 10};
-  const unsigned int n_moves = 10;
+  const unsigned int n_moves = 2;
   const double porosity = 0.5;
   const double jump_param = 1.;
 
   CAM::CAMInterface<nx> CAM;
-  CAM.placeBURandomly(porosity, jump_param);
+//CAM.placeBURandomly(porosity, jump_param);
+  CAM.placeSphere();
   CAM.print_array();
 
   for (unsigned int i = 0; i < n_moves; ++i)
   {
      
-    //CAM.doCAM();
+    CAM.doCAM();
     std::cout<< CAM.fields()[0]<<std::endl;
     CAM.print_array();
     std::cout << std::endl;
@@ -37,6 +38,6 @@ int main()
  
   std::cout << std::endl << "Characteristics / Measures:" << std::endl;
   const std::array<double, 12> meas = CAM.eval_measures();
-  for (unsigned int k = 0; k < 12; ++k)
-    std::cout << "Meas[" << k << "] = " << meas[k] << std::endl;
+  //for (unsigned int k = 0; k < 12; ++k)
+    //std::cout << "Meas[" << k << "] = " << meas[k] << std::endl;
 }

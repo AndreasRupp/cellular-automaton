@@ -31,7 +31,8 @@ def cam_test(n_steps, debug_mode=False):
 
   PyCAM = CAM.include(const)
   Domain = PyCAM()
-  Domain.placeBURandomly(0.5, 1, 0)
+  #Domain.placeBURandomly(0.75, 1, 0)
+  Domain.placeSphere( 1, 0)
   #Domain.print_array()
   save_data = np.zeros( (n_steps + 1, np.prod(const.nx)) ) 
   save_data[0] = Domain.fields()
@@ -57,7 +58,7 @@ def cam_test(n_steps, debug_mode=False):
 # Function main.
 # --------------------------------------------------------------------------------------------------
 def main(debug_mode):
-  n_steps = 5
+  n_steps =5
   cam_test(n_steps, debug_mode)
 
 
