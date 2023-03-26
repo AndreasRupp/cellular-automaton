@@ -1,16 +1,18 @@
 #pragma once
 
+#include <CAM/utils.hxx>
 #include <algorithm>
+#include <array>
 #include <memory>
 #include <vector>
-#include <array>
-#include <CAM/utils.hxx>
 namespace CAM
 {
+template <auto nx>
 struct BuildingUnit
 {
+ public:
   virtual ~BuildingUnit(){};
-  CAM::fieldNumbers number;
+  CAM::fieldNumbers_t number;
   unsigned int jump_parameter;
   std::vector<unsigned int> referencePoints;
 
@@ -18,59 +20,52 @@ struct BuildingUnit
 
   virtual bool isMember(unsigned int _index) = 0;
 };
-struct ParticleBU : public BuildingUnit
+template <auto nx>
+struct ParticleBU : public BuildingUnit<nx>
 {
   ParticleBU(unsigned int _number,
              unsigned int _jump_parameter,
              std::vector<unsigned int> _fieldIndices)
-  : BuildingUnit()
   {
-    number = _number;
-    referencePoints = _fieldIndices;
-    jump_parameter = _jump_parameter;
+    this->number = _number;
+    this->referencePoints = _fieldIndices;
+    this->jump_parameter = _jump_parameter;
   }
   ~ParticleBU() override {}
 
-  std::vector<unsigned int> getFieldIndices() override { return referencePoints; }
+  std::vector<unsigned int> getFieldIndices() override { return this->referencePoints; }
   bool isMember(unsigned int _index) override
   {
-    return (std::find(referencePoints.begin(), referencePoints.end(), _index) !=
-            referencePoints.end());
+    return (std::find(this->referencePoints.begin(), this->referencePoints.end(), _index) !=
+            this->referencePoints.end());
   }
 };
-struct HyperSphereBU : public BuildingUnit
+template <auto nx>
+struct HyperSphereBU : public BuildingUnit<nx>
 {
   double radius;
   std::vector<int> stencilBU;
-  static constexpr std::array<unsigned int, 2> nx = {10, 10};
 
   HyperSphereBU(unsigned int _number,
-           unsigned int _jump_parameter,
-           unsigned int _centerPoint,
-           double _radius)
-  : BuildingUnit()
+                unsigned int _jump_parameter,
+                unsigned int _centerPoint,
+                double _radius)
   {
-    number = _number;
-    referencePoints = {_centerPoint};
+    this->number = _number;
+    this->referencePoints = {_centerPoint};
     radius = _radius;
-    jump_parameter = _jump_parameter;
-    stencilBU = CAM::getPNormedStencil<nx>(radius, 2);//CAM::getPNormedStencil<nx>(radius, 2);
+    this->jump_parameter = _jump_parameter;
+    stencilBU = CAM::getPNormedStencil<nx>(radius, 2);
   }
   ~HyperSphereBU() override {}
 
   std::vector<unsigned int> getFieldIndices() override
   {
     std::vector<unsigned int> fields;
-   // std::cout<<"ref "<<referencePoints[0]<<std::endl;
-    for(unsigned int i = 0; i < stencilBU.size(); i++)
+    for (unsigned int i = 0; i < stencilBU.size(); i++)
     {
-      
-      fields.push_back(CAM::aim<nx>(referencePoints[0], stencilBU[i]));
-      //std::cout<<fields[i]<< " ";
+      fields.push_back(CAM::aim<nx>(this->referencePoints[0], stencilBU[i]));
     }
-    //std::cout<<std::endl;
-    // std::cout<< "fie_siz "<<fields.size()<<std::endl;
-    // TODO calculate Sphere
     return fields;
   }
   bool isMember(unsigned int _index) override { return _index == 42; }

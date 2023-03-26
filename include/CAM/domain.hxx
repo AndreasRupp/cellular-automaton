@@ -2,37 +2,35 @@
 #ifndef DOMAIN_HXX
 #define DOMAIN_HXX
 
+#include <CAM/aggregate.hxx>
+#include <CAM/building_units.hxx>
+#include <CAM/utils.hxx>
+#include <array>
 #include <chrono>
 #include <cmath>
 #include <iomanip>
 #include <iostream>
 #include <limits>
-#include <array>
-#include <CAM/aggregate.hxx>
-#include <CAM/building_units.hxx>
-#include <CAM/utils.hxx>
 namespace CAM
 {
-template <auto nx, typename fields_array_t > 
+template <auto nx, typename fields_array_t>
 class Domain
 {
   static const unsigned int dim = nx.size();
-  
+
  public:
- double jump_parameter_composites = 1.0;
+  double jump_parameter_composites = 1.0;
   static constexpr unsigned int n_fields_ = n_fields<nx>();
 
   ~Domain()
   {
     std::for_each(buildingUnits.begin(), buildingUnits.end(),
-                  [&](CAM::BuildingUnit* unit) { delete unit; });
+                  [&](CAM::BuildingUnit<nx>* unit) { delete unit; });
     std::for_each(aggregates.begin(), aggregates.end(),
-                  [&](CAM::Aggregate* aggregate) { delete aggregate; });
-    
+                  [&](CAM::Aggregate<nx>* aggregate) { delete aggregate; });
   }
-  Domain()//double _jump_parameter_composites = 1.0
+  Domain()  // double _jump_parameter_composites = 1.0
   {
-
     if constexpr (std::is_same<fields_array_t,
                                std::vector<typename fields_array_t::value_type>>::value)
       domainFields.resize(n_fields_, 0);
@@ -44,9 +42,9 @@ class Domain
         "The fields array has incorrect size");
       domainFields.fill(0);
     }
-    //jump_parameter_composites = _jump_parameter_composites;
+    // jump_parameter_composites = _jump_parameter_composites;
   }
-  bool placeBU(CAM::BuildingUnit* _unit)  //
+  bool placeBU(CAM::BuildingUnit<nx>* _unit)  //
   {
     bool success = 1;
     std::vector<unsigned int> fields = _unit->getFieldIndices();
@@ -90,19 +88,14 @@ class Domain
       rand_seed = random_seed;
 
     std::srand(rand_seed);
-
-   // unsigned int n_particles = 1;
     unsigned int position = std::rand() % (n_fields_);
     position = 45;
-    buildingUnits.push_back(new HyperSphereBU(1, _jump_parameter, position, 4.1));
+    buildingUnits.push_back(new HyperSphereBU<nx>(1, _jump_parameter, position, 4.1));
     std::vector<unsigned int> fields = buildingUnits[0]->getFieldIndices();
-    for(unsigned int i = 0; i < fields.size(); i++)
+    for (unsigned int i = 0; i < fields.size(); i++)
     {
       domainFields[fields[i]] = 1;
     }
-    
-      // particle(position, *this, i + 1));
-    
   }
   void placeBURandomly(double _porosity = 0.90,
                        double _jump_parameter = 1,
@@ -124,7 +117,7 @@ class Domain
       while (domainFields[position] != 0)
         position = std::rand() % (n_fields_);
       std::vector<unsigned int> pos(1, position);
-      buildingUnits.push_back(new ParticleBU(i + 1, _jump_parameter, pos));
+      buildingUnits.push_back(new ParticleBU<nx>(i + 1, _jump_parameter, pos));
       domainFields[position] = i + 1;
       // particle(position, *this, i + 1));
     }
@@ -137,12 +130,13 @@ class Domain
     unsigned int solids_size, field, neigh_field;
     std::vector<unsigned int> found_solids;
     particles.clear();
-    std::for_each(fields.begin(), fields.end(), [](CAM::fieldNumbers& field) { field = (field == 0); });
+    std::for_each(fields.begin(), fields.end(),
+                  [](CAM::fieldNumbers_t& field) { field = (field == 0); });
 
     for (auto first_solid = std::find(fields.begin(), fields.end(), 0); first_solid != fields.end();
          first_solid = std::find(first_solid, fields.end(), 0))
     {
-      std::vector<CAM::fieldNumbers> aggregateComponents;
+      std::vector<CAM::fieldNumbers_t> aggregateComponents;
 
       found_solids = std::vector<unsigned int>(1, std::distance(fields.begin(), first_solid));
       fields[found_solids[0]] = uint_max;
@@ -170,12 +164,12 @@ class Domain
       }
       if (aggregateComponents.size() > 1)
       {
-        CAM::Aggregate* newAggregate = new CAM::Aggregate();
+        CAM::Aggregate<nx>* newAggregate = new CAM::Aggregate<nx>();
         for (unsigned int i = 0; i < aggregateComponents.size(); i++)
         {
-          std::vector<CAM::BuildingUnit*>::iterator it =
+          typename std::vector<CAM::BuildingUnit<nx>*>::iterator it =
             std::find_if(buildingUnits.begin(), buildingUnits.end(),
-                         [&](CAM::BuildingUnit* unit) -> bool
+                         [&](CAM::BuildingUnit<nx>* unit) -> bool
                          { return unit->number == aggregateComponents[i]; });
           newAggregate->buildingUnits.push_back(*it);
           newAggregate->fieldIndices = found_solids;
@@ -197,17 +191,17 @@ class Domain
   /*!***********************************************************************************************
    * \brief   Vector of particles.
    ************************************************************************************************/
-  std::vector<CAM::BuildingUnit*> buildingUnits;
-  std::vector<CAM::Aggregate*> aggregates;
+  std::vector<CAM::BuildingUnit<nx>*> buildingUnits;
+  std::vector<CAM::Aggregate<nx>*> aggregates;
 
   struct Particle
   {
-    Particle(std::vector<unsigned int> _fieldIndices, std::vector<CAM::fieldNumbers> _numbers)
+    Particle(std::vector<unsigned int> _fieldIndices, std::vector<CAM::fieldNumbers_t> _numbers)
     {
       fieldIndices = _fieldIndices;
       numbers = _numbers;
     }
-    std::vector<CAM::fieldNumbers> numbers;
+    std::vector<CAM::fieldNumbers_t> numbers;
     std::vector<unsigned int> fieldIndices;
   };
   std::vector<Particle> particles;
@@ -385,7 +379,7 @@ class Domain
     fields_array_t domain_fields = domainFields;
     std::vector<unsigned int> visits(1, field);
     domain_fields[field] = uint_max - n_fields_;
-    CAM::fieldNumbers min_val = domain_fields[field], max_val = domain_fields[field];
+    CAM::fieldNumbers_t min_val = domain_fields[field], max_val = domain_fields[field];
 
     unsigned int neigh_field, visits_size = visits.size();
     for (unsigned int i = 0; i < visits_size; ++i, visits_size = visits.size())
@@ -569,7 +563,7 @@ class Domain
     }
 
     std::for_each(domainFields.begin(), domainFields.end(),
-                  [](CAM::fieldNumbers& field)
+                  [](CAM::fieldNumbers_t& field)
                   {
                     if (field == uint_max)
                       field = 0;
@@ -651,13 +645,15 @@ class Domain
    * \param   nx             Nx dimension and size
    **************************************************************************************************/
 
-  void print_array() { 
+  void print_array()
+  {
     unsigned int sum = 0;
-    std::for_each(domainFields.begin(), domainFields.end(), [&] (CAM::fieldNumbers t) {sum += t;} );
-    std::cout<<"summe "<<sum<<std::endl;
-    
-    
-    print_n_dim<nx.size()>(domainFields); }
+    std::for_each(domainFields.begin(), domainFields.end(),
+                  [&](CAM::fieldNumbers_t t) { sum += t; });
+    std::cout << "summe " << sum << std::endl;
+
+    print_n_dim<nx.size()>(domainFields);
+  }
 };
 }  // namespace CAM
-#endif // DOMAIN_HXX
+#endif  // DOMAIN_HXX

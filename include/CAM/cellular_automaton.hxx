@@ -16,7 +16,7 @@
 namespace CAM
 {
 
-template <auto nx, typename fields_array_t>// = std::array<unsigned int, n_fields<nx>()>
+template <auto nx, typename fields_array_t>  // = std::array<unsigned int, n_fields<nx>()>
 class CellularAutomaton
 {
   static const unsigned int dim = nx.size();
@@ -24,9 +24,9 @@ class CellularAutomaton
  public:
   // CellularAutomaton();
   // ~CellularAutomaton();
-  static void moveBU(CAM::BuildingUnit* _unit, fields_array_t& _domainFields)
+  static void moveBU(CAM::BuildingUnit<nx>* _unit, fields_array_t& _domainFields)
   {
-    std::vector<int> possible_moves = getStencil(_unit->jump_parameter);
+    std::vector<int> possible_moves = CAM::getStencil<nx>(_unit->jump_parameter);
     std::vector<int> best_moves(1, 0);
     double attraction = 0.;
     std::for_each(possible_moves.begin(), possible_moves.end(),
@@ -43,7 +43,7 @@ class CellularAutomaton
                   });
     doMoveBU(best_moves[std::rand() % best_moves.size()], _unit, _domainFields);
   }
-  static void doMoveBU(const int move, CAM::BuildingUnit* _unit, fields_array_t& _domainFields)
+  static void doMoveBU(const int move, CAM::BuildingUnit<nx>* _unit, fields_array_t& _domainFields)
   {
     std::vector<unsigned int> fields_old = _unit->getFieldIndices();
     std::for_each(_unit->referencePoints.begin(), _unit->referencePoints.end(),
@@ -51,42 +51,31 @@ class CellularAutomaton
     std::vector<unsigned int> fields_new = _unit->getFieldIndices();
     for (unsigned int i = 0; i < fields_new.size(); i++)
     {
-      //std::cout<<"altnue"<<fields_old[i] <<" "<<fields_new[i]<<std::endl;
-
-      // if (_domainFields[fields_old[i]] == _unit->number)
-      //   _domainFields[fields_old[i]] = 0;
-      // _domainFields[fields_new[i]] = _unit->number;
-      //TODO unsigned int to int 
       _domainFields[fields_new[i]] += _unit->number;
       _domainFields[fields_old[i]] -= _unit->number;
-
     }
   }
 
   static void apply(Domain<nx, fields_array_t>& _domain)
   {
     _domain.aggregates.clear();
-        std::shuffle(_domain.buildingUnits.begin(), _domain.buildingUnits.end(),
+    std::shuffle(_domain.buildingUnits.begin(), _domain.buildingUnits.end(),
                  std::default_random_engine(std::rand()));
-    std::cout<<"Number of BU: "<<_domain.buildingUnits.size()<<std::endl;
+    std::cout << "Number of BU: " << _domain.buildingUnits.size() << std::endl;
     std::for_each(_domain.buildingUnits.begin(), _domain.buildingUnits.end(),
-                  [&](CAM::BuildingUnit* unit) { moveBU(unit, _domain.domainFields); });
+                  [&](CAM::BuildingUnit<nx>* unit) { moveBU(unit, _domain.domainFields); });
     _domain.findAggregates();
-    std::cout<<"Number of aggregates: "<<_domain.aggregates.size()<<std::endl;
+    std::cout << "Number of aggregates: " << _domain.aggregates.size() << std::endl;
     std::for_each(_domain.aggregates.begin(), _domain.aggregates.end(),
-                  [&](CAM::Aggregate* aggregate)
-                  { std::cout<<"sdaf"<<std::endl; moveAggregate(aggregate, _domain.domainFields); });
+                  [&](CAM::Aggregate<nx>* aggregate)
+                  { moveAggregate(aggregate, _domain.domainFields); });
   }
 
-  static void moveAggregate(CAM::Aggregate* _aggregate, fields_array_t& _domainFields)
+  static void moveAggregate(CAM::Aggregate<nx>* _aggregate, fields_array_t& _domainFields)
   {
-    std::vector<int> possible_moves = getStencil(_aggregate->jump_parameter);  //
+    std::vector<int> possible_moves = CAM::getStencil<nx>(_aggregate->jump_parameter);  //
     std::vector<int> best_moves(1, 0);
     double attraction = 0.;
-    // for (unsigned int i = 0; i < _aggregate->fieldIndices.size(); i++)
-    // {
-    //   _domainFields[_aggregate->fieldIndices[i]] = 0;
-    // }
     std::for_each(possible_moves.begin(), possible_moves.end(),
                   [&](int move)
                   {
@@ -101,42 +90,23 @@ class CellularAutomaton
                       best_moves.push_back(move);
                   });
     int best_move = best_moves[std::rand() % best_moves.size()];
-   // std::cout<<"moveAggreagte "<<best_move<<std::endl;
     for (unsigned int i = 0; i < _aggregate->buildingUnits.size(); i++)
     {
       doMoveBU(best_move, _aggregate->buildingUnits[i], _domainFields);
     }
   }
-
-  static std::vector<int> getStencil(double _jump_parameter)
-  {
-    unsigned int layers = std::max(1., _jump_parameter);
-    std::vector<int> stencil(1, 0);
-    unsigned int index = 0;
-    unsigned int old_size = stencil.size();
-
-    for (unsigned int lay = 0; lay < layers; ++lay)
-    {
-      for (; index < old_size; ++index)
-        for (unsigned int i = 0; i < 2 * dim; ++i)
-          if (std::find(stencil.begin(), stencil.end(), stencil[index] + direct_neigh<nx>(i)) ==
-              stencil.end())
-            stencil.push_back(stencil[index] + direct_neigh<nx>(i));
-      old_size = stencil.size();
-    }
-    return stencil;
-  }
   static double getAttractionBU(const int move,
-                                CAM::BuildingUnit* _BU,
+                                CAM::BuildingUnit<nx>* _BU,
                                 fields_array_t& _domainFields)
   {
     double attraction = 0.;
-    //TODO evaluate Attraction only by borderpoints of BU
+    // TODO evaluate Attraction only by borderpoints of BU
     std::vector<unsigned int> fieldIndices = _BU->getFieldIndices();
     for (unsigned int i = 0; i < fieldIndices.size(); ++i)
     {
-      unsigned int aiming = aim<nx>(fieldIndices[i], move);//TODO hier könnten man auch einfach stencil addieren
-      //aim<nx>(refPoint, move + stencil[i])
+      unsigned int aiming =
+        aim<nx>(fieldIndices[i], move);  // TODO hier könnten man auch einfach stencil addieren
+      // aim<nx>(refPoint, move + stencil[i])
       if (_domainFields[aiming] != _BU->number && _domainFields[aiming] != 0)
         return double_min;
       for (unsigned int i = 0; i < 2 * dim; ++i)
@@ -147,7 +117,7 @@ class CellularAutomaton
   }
 
   static double getAttractionAggregate(const int move,
-                                       Aggregate* _aggregate,
+                                       Aggregate<nx>* _aggregate,
                                        fields_array_t& _domainFields)
   {
     double attraction = 0.;
@@ -163,4 +133,4 @@ class CellularAutomaton
   }
 };
 }  // namespace CAM
-#endif //CELLULAR_AUTOMATON_HXX
+#endif  // CELLULAR_AUTOMATON_HXX
