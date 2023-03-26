@@ -1,6 +1,5 @@
 #include <CAM/building_units.hxx>
 #include <CAM/cam_interface.hxx>
-#include <CAM/test.hxx>
 #include <iostream>
 /*!*************************************************************************************************
  * \brief   Main function.
@@ -19,10 +18,7 @@ int main()
   const unsigned int n_moves = 2;
   const double porosity = 0.5;
   const double jump_param = 1.;
-
-  Derived<nx> d(2); 
-  std::vector<Base<nx>> a; 
-  a.push_back(d);
+  
   CAM::CAMInterface<nx> CAM;
   CAM.placeBURandomly(porosity, jump_param);
   //CAM.placeSphere();
