@@ -326,6 +326,21 @@ class cellular_automaton
                       do_move_single(field, best_moves[std::rand() % best_moves.size()]);
                     });
     }
+    constexpr unsigned int addMoves(const int move1, const int move2) const
+    {
+      // old Version - BUG
+      return move1 + move2;
+      // Possible Bugfix
+      unsigned int coord, new_move = 0;
+      for (unsigned int i = 0; i < nx.size(); ++i)
+      {
+        coord = ((move1) / direct_neigh<nx>(2 * i + 1) + (move2) / direct_neigh<nx>(2 * i + 1) +
+                 n_fields_) %
+                nx[i];
+        new_move += coord * direct_neigh<nx>(2 * i + 1);
+      }
+      // return new_move;
+    }
     /*!*********************************************************************************************
      * \brief   Checks possible moves for merged particles.
      *
@@ -345,9 +360,9 @@ class cellular_automaton
       {
         for (; index < old_size; ++index)
           for (unsigned int i = 0; i < 2 * dim; ++i)
-            if (std::find(stencil.begin(), stencil.end(), stencil[index] + direct_neigh<nx>(i)) ==
-                stencil.end())
-              stencil.push_back(stencil[index] + direct_neigh<nx>(i));
+            if (std::find(stencil.begin(), stencil.end(),
+                          addMoves(stencil[index], direct_neigh<nx>(i))) == stencil.end())
+              stencil.push_back(addMoves(stencil[index], direct_neigh<nx>(i)));
         old_size = stencil.size();
       }
       return stencil;
@@ -370,9 +385,9 @@ class cellular_automaton
       {
         for (; index < old_size; ++index)
           for (unsigned int i = 0; i < 2 * dim; ++i)
-            if (std::find(stencil.begin(), stencil.end(), stencil[index] + direct_neigh<nx>(i)) ==
-                stencil.end())
-              stencil.push_back(stencil[index] + direct_neigh<nx>(i));
+            if (std::find(stencil.begin(), stencil.end(),
+                          addMoves(stencil[index], direct_neigh<nx>(i))) == stencil.end())
+              stencil.push_back(addMoves(stencil[index], direct_neigh<nx>(i)));
         old_size = stencil.size();
       }
       return stencil;
@@ -609,14 +624,18 @@ class cellular_automaton
     std::srand(rand_seed);
 
     n_particles = (1. - porosity) * n_fields_;
-    unsigned int position = std::rand() % (n_fields_);
-    for (unsigned int i = 0; i < n_particles; ++i)
+    //------------DEBUG purpose--------------------------------------------
+    unsigned int position = 0;  // Pixel top left
+    particle p = particle(position, *this, 1);
+    std::vector<int> possible_moves = p.stencil_moves_single();
+    for (unsigned int i = 0; i < possible_moves.size(); ++i)
     {
-      while (fields_[position] != 0)
-        position = std::rand() % (n_fields_);
-
+      position =
+        aim<nx>(1325, possible_moves[i]);  // Position stencil in the center for Python CAM.py
+      std::cout << possible_moves[i] << std::endl;
       particles_.push_back(particle(position, *this, i + 1));
     }
+    //------------DEBUG purpose--------------------------------------------
   }
   /*!***********************************************************************************************
    * \brief   Moves all particles
