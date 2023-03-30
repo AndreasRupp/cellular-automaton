@@ -19,14 +19,14 @@ def cam_test(n_steps, debug_mode=False):
     import CAM
 
   try:
-    from plot import plot, plot_update
+    from plot import plot, plot_to_file
   except (ImportError, ModuleNotFoundError) as error:
     sys.path.append(os.path.dirname(os.path.abspath(__file__)) + os.sep  + ".." + os.sep + 
       "python_functions")
-    from plot import plot, plot_update
+    from plot import plot, plot_to_file
   
   const                 = CAM.config()
-  const.nx              = [50, 50]
+  const.nx              = [10, 10, 10]
   const.debug_mode      = debug_mode
 
   PyCAM = CAM.include(const)
@@ -44,9 +44,7 @@ def cam_test(n_steps, debug_mode=False):
   end_time = datetime.now()
   print("Program ended at", end_time, "after", end_time-start_time)
   
-  plt = plot_update(const.nx, save_data[-1])
-  plt.savefig('output/cam.png')
-
+  plot_to_file(const.nx, save_data[-1], 'output/cam.png')
   plot(const.nx, save_data, 0)
   
 

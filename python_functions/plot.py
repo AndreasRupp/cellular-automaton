@@ -11,19 +11,33 @@ from matplotlib.backends.backend_tkagg import (
 # Implement the default Matplotlib key bindings.
 from matplotlib.backend_bases import key_press_handler
 
- 
+
+def plot(axes, save_data, time_step):
+  if time_step < 0 or time_step >= len(save_data):
+    print("Time step for plotting does not exist!")
+    return
+
+  if np.size(axes) == 1:  axes.append(1)
+
+  root = Tk()
+  animated_cam(root, axes, save_data, time_step)
+  root.mainloop()
+
+def plot_to_file(axes, save_data, file_name, ax=plt):
+  if np.size(axes) == 1:  axes.append(1)
+  fig, ax = config_plot(axes)
+  plot_update(axes, save_data, ax)
+  fig.savefig(file_name)
+
 def plot_update(axes, data, ax=plt):
   data = np.reshape(data, axes)
-  dim = np.size(axes)
-  if dim == 1:
-    axes[1] = 1
-    dim = 2
+  if np.size(axes) == 1:  axes.append(1)
 
-  if dim == 2:
+  if np.size(axes) == 2:
     data = (data != 0)
     cmap = colors.ListedColormap(['white', 'k'])
     ax.pcolor(data[::-1],cmap=cmap,edgecolors='b', linewidths=0)
-  elif dim == 3:
+  elif np.size(axes) == 3:
     data = (data != 0)
     Colors = np.empty(axes + [4], dtype=np.float32)
     # Control Transparency
@@ -31,18 +45,6 @@ def plot_update(axes, data, ax=plt):
     Colors[data] = [1, 0, 1, alpha]
     ax.voxels(data, facecolors=Colors, edgecolors='black')
   return ax
-
-
-
-def plot(axes, save_data, time_step):
-  if time_step < 0 or time_step >= len(save_data):
-    print("Time step for plotting does not exist!")
-    return
-
-  root = Tk()
-  animated_cam(root, axes, save_data, time_step)
-  root.mainloop()
-
 
 def config_plot(axes):
   dim = np.size(axes)
