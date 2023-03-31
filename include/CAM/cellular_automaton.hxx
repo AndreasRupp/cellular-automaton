@@ -345,9 +345,9 @@ class cellular_automaton
       {
         for (; index < old_size; ++index)
           for (unsigned int i = 0; i < 2 * dim; ++i)
-            if (std::find(stencil.begin(), stencil.end(), stencil[index] + direct_neigh<nx>(i)) ==
-                stencil.end())
-              stencil.push_back(stencil[index] + direct_neigh<nx>(i));
+            if (std::find(stencil.begin(), stencil.end(),
+                          aim<nx>(stencil[index], direct_neigh<nx>(i))) == stencil.end())
+              stencil.push_back(aim<nx>(stencil[index], direct_neigh<nx>(i)));
         old_size = stencil.size();
       }
       return stencil;
@@ -370,9 +370,9 @@ class cellular_automaton
       {
         for (; index < old_size; ++index)
           for (unsigned int i = 0; i < 2 * dim; ++i)
-            if (std::find(stencil.begin(), stencil.end(), stencil[index] + direct_neigh<nx>(i)) ==
-                stencil.end())
-              stencil.push_back(stencil[index] + direct_neigh<nx>(i));
+            if (std::find(stencil.begin(), stencil.end(),
+                          aim<nx>(stencil[index], direct_neigh<nx>(i))) == stencil.end())
+              stencil.push_back(aim<nx>(stencil[index], direct_neigh<nx>(i)));
         old_size = stencil.size();
       }
       return stencil;

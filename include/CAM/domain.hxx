@@ -44,12 +44,12 @@ static constexpr int direct_neigh(const unsigned int index)
  * \retval  index     Index of move target.
  **************************************************************************************************/
 template <auto nx>
-static constexpr unsigned int aim(const unsigned int position, const int move)
+static constexpr unsigned int aim(const int position, const int move)
 {
   unsigned int coord, new_pos = 0;
   for (unsigned int i = 0; i < nx.size(); ++i)
   {
-    coord = (position / direct_neigh<nx>(2 * i + 1) + move / (int)direct_neigh<nx>(2 * i + 1) +
+    coord = (position / (int)direct_neigh<nx>(2 * i + 1) + move / (int)direct_neigh<nx>(2 * i + 1) +
              n_fields<nx>()) %
             nx[i];
     new_pos += coord * direct_neigh<nx>(2 * i + 1);
