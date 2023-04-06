@@ -11,15 +11,17 @@ cdef class PythonClassName :
     self.thisptr.print_array()
   def fields(self):
     return self.thisptr.fields()
-  def placeBURandomly(self,_porosity, _jump_parameter, random_seed):
+  def placeSingleCellBURandomly(self,_porosity, _jump_parameter, random_seed):
     if _porosity == "default": _porosity = 0.5
     if _jump_parameter == "default": _jump_parameter = 1.0
     if random_seed == "default": random_seed = 0
-    self.thisptr.placeBURandomly(_porosity,_jump_parameter, random_seed)
+    self.thisptr.placeSingleCellBURandomly(_porosity,_jump_parameter, random_seed)
   def placeSphere(self, _jump_parameter, random_seed):
     if _jump_parameter == "default": _jump_parameter = 1.0
     if random_seed == "default": random_seed = 0
     self.thisptr.placeSphere(_jump_parameter, random_seed)
+  def placeBU(self):
+    self.thisptr.placeBU()
   def doCAM(self):
     self.thisptr.doCAM()
 

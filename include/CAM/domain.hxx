@@ -46,14 +46,14 @@ class Domain
   }
   bool placeBU(CAM::BuildingUnit<nx>* _unit)  //
   {
-    bool success = 1;
+    bool success = true;
     std::vector<unsigned int> fields = _unit->getFieldIndices();
     std::for_each(fields.begin(), fields.end(),
                   [&](unsigned int field)
                   {
                     if (domainFields[field] == 0)
                     {
-                      success *= 1;
+                      success = success && true;
                       domainFields[field] = _unit->number;
                     }
                     else
@@ -97,7 +97,7 @@ class Domain
       domainFields[fields[i]] = 1;
     }
   }
-  void placeBURandomly(double _porosity = 0.90,
+  void placeSingleCellBURandomly(double _porosity = 0.90,
                        double _jump_parameter = 1,
                        unsigned int random_seed = 0)
   {
@@ -117,7 +117,7 @@ class Domain
       while (domainFields[position] != 0)
         position = std::rand() % (n_fields_);
       std::vector<unsigned int> pos(1, position);
-      buildingUnits.push_back(new ParticleBU<nx>(i + 1, _jump_parameter, pos));
+      buildingUnits.push_back(new CustomBU<nx>(i + 1, _jump_parameter, pos));
       domainFields[position] = i + 1;
       // particle(position, *this, i + 1));
     }
@@ -173,9 +173,9 @@ class Domain
                          { return unit->number == aggregateComponents[i]; });
           newAggregate->buildingUnits.push_back(*it);
           newAggregate->fieldIndices = found_solids;
-          newAggregate->jump_parameter =
-            jump_parameter_composites /
-            std::pow(newAggregate->fieldIndices.size(), 1.0 / (double)dim);
+          newAggregate->jump_parameter = 5;
+            // jump_parameter_composites /
+            // std::pow(newAggregate->fieldIndices.size(), 1.0 / (double)dim);
         }
         aggregates.push_back(newAggregate);
       }

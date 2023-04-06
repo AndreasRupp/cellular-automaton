@@ -20,7 +20,10 @@ int main()
   const double jump_param = 1.;
   
   CAM::CAMInterface<nx> CAM;
-  CAM.placeBURandomly(porosity, jump_param);
+  
+  
+  CAM.placeBU();
+ // CAM.placeSingleCellBURandomly(porosity, jump_param);
   //CAM.placeSphere();
   CAM.print_array();
 

@@ -14,6 +14,10 @@ static constexpr CAM::fieldNumbers_t uint_max = std::numeric_limits<fieldNumbers
  * \brief   Smallest (negative) double.
  ************************************************************************************************/
 static constexpr double double_min = std::numeric_limits<double>::lowest();
+/*!***********************************************************************************************
+ * \brief  Biggest double.
+ ************************************************************************************************/
+static constexpr double double_max = std::numeric_limits<double>::max();
 
 /*!*************************************************************************************************
  * \brief   Calculates the size of the domain.
@@ -46,14 +50,14 @@ static constexpr int direct_neigh(const unsigned int index)
  * \retval  index     Index of move target.
  **************************************************************************************************/
 template <auto nx>
-static constexpr unsigned int aim(const unsigned int position, const int move)
+static constexpr unsigned int aim(const int position, const int move)
 {
   unsigned int coord, new_pos = 0;
   for (unsigned int i = 0; i < nx.size(); ++i)
   {
-    coord = ((position) / direct_neigh<nx>(2 * i + 1) +
+    coord = ((position) / (int)direct_neigh<nx>(2 * i + 1) +
              (move) / (int)direct_neigh<nx>(
-                        2 * i + 1) +  // + negative werden in die falsche richtug aufgerundet
+                        2 * i + 1) + 
              n_fields<nx>()) %
             nx[i];
     new_pos += coord * direct_neigh<nx>(2 * i + 1);
@@ -145,5 +149,16 @@ static std::vector<int> getStencil(double _jump_parameter)
   }
   return stencil;
 }
-
+template<typename T>
+std::vector<int> findItems(std::vector<T> const &v, T target) {
+    std::vector<int> indices;
+ 
+    for (auto it = v.begin(); it != v.end(); it++) {
+        if (*it == target) {
+            indices.push_back(std::distance(v.begin(), it));
+        }
+    }
+ 
+    return indices;
+}
 }  // namespace CAM
