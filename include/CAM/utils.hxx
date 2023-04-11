@@ -1,5 +1,6 @@
 #pragma once
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <iostream>
 #include <vector>
@@ -56,9 +57,7 @@ static constexpr unsigned int aim(const int position, const int move)
   for (unsigned int i = 0; i < nx.size(); ++i)
   {
     coord = ((position) / (int)direct_neigh<nx>(2 * i + 1) +
-             (move) / (int)direct_neigh<nx>(
-                        2 * i + 1) + 
-             n_fields<nx>()) %
+             (move) / (int)direct_neigh<nx>(2 * i + 1) + n_fields<nx>()) %
             nx[i];
     new_pos += coord * direct_neigh<nx>(2 * i + 1);
   }
@@ -78,18 +77,26 @@ static constexpr unsigned int addMoves(int move1, int move2)
   return new_move;
 }
 template <auto nx>
-double pNormDistance(const unsigned int _position, const int _move, unsigned int _p)
+double pNormDistance(const unsigned int _position1, const int _position2, unsigned int _p)
 {
-  unsigned int coord, coord_moved;
+  unsigned int coord1, coord2;
   unsigned int norm = 0;
   for (unsigned int i = 0; i < nx.size(); ++i)
   {
-    coord = (_position / (int)direct_neigh<nx>(2 * i + 1) + n_fields<nx>()) % nx[i];
-    coord_moved = (_position / (int)direct_neigh<nx>(2 * i + 1) +
-                   _move / (int)direct_neigh<nx>(2 * i + 1) + n_fields<nx>()) %
-                  nx[i];
-    unsigned int d = std::abs((int)coord - (int)coord_moved);
-    d = std::min(d, nx[i] - d);
+    coord1 = (_position1 / (int)direct_neigh<nx>(2 * i + 1) + n_fields<nx>()) % nx[i];
+    coord2 = (_position2 / (int)direct_neigh<nx>(2 * i + 1) + n_fields<nx>()) % nx[i];
+    // unsigned int d = std::abs((int)coord1 - (int)coord2);
+    // d = std::min(d, nx[i] - d);
+
+    std::array<int, 3> ds;
+    ds[0] = coord1 - coord2;
+    ds[1] = (coord1 - coord2 + nx[i]) % nx[i];
+    ds[2] = ds[1] - nx[i];
+    ds[0] = std::abs(ds[0]);
+    ds[1] = std::abs(ds[1]);
+    ds[2] = std::abs(ds[2]);
+    auto d = *std::min_element(ds.begin(), ds.end());
+
     norm += std::pow(d, _p);
   }
   return std::pow(norm, 1.0 / (double)_p);
@@ -110,11 +117,12 @@ static std::vector<int> getPNormedStencil(double _radius, unsigned int _p)
     {
       for (unsigned int i = 0; i < 2 * dim; ++i)
       {
-        int newNeigh = addMoves<nx>(stencil[index], direct_neigh<nx>(i));
-        if (std::find(stencil.begin(), stencil.end(), newNeigh) == stencil.end() &&
-            pNormDistance<nx>(0, newNeigh, _p) < radius)
+        int newMove = addMoves<nx>(stencil[index], direct_neigh<nx>(i));
+        int newCell = aim<nx>(0, newMove);
+        if (std::find(stencil.begin(), stencil.end(), newMove) == stencil.end() &&
+            pNormDistance<nx>(0, newCell, _p) < radius)
         {
-          stencil.push_back(newNeigh);
+          stencil.push_back(newMove);
           doNextLayer = true;
         }
       }
@@ -149,16 +157,19 @@ static std::vector<int> getStencil(double _jump_parameter)
   }
   return stencil;
 }
-template<typename T>
-std::vector<int> findItems(std::vector<T> const &v, T target) {
-    std::vector<int> indices;
- 
-    for (auto it = v.begin(); it != v.end(); it++) {
-        if (*it == target) {
-            indices.push_back(std::distance(v.begin(), it));
-        }
+template <typename T>
+std::vector<int> findItems(std::vector<T> const& v, T target)
+{
+  std::vector<int> indices;
+
+  for (auto it = v.begin(); it != v.end(); it++)
+  {
+    if (*it == target)
+    {
+      indices.push_back(std::distance(v.begin(), it));
     }
- 
-    return indices;
+  }
+
+  return indices;
 }
 }  // namespace CAM

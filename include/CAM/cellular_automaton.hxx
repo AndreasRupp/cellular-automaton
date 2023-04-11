@@ -66,6 +66,8 @@ class CellularAutomaton
                   [&](CAM::BuildingUnit<nx>* unit) { moveBU(unit, _domain.domainFields); });
     _domain.findAggregates();
     std::cout << "Number of aggregates: " << _domain.aggregates.size() << std::endl;
+    std::shuffle(_domain.aggregates.begin(), _domain.aggregates.end(),
+                 std::default_random_engine(std::rand()));
     std::for_each(_domain.aggregates.begin(), _domain.aggregates.end(),
                   [&](CAM::Aggregate<nx>* aggregate)
                   { moveAggregate(aggregate, _domain.domainFields); });
@@ -73,7 +75,14 @@ class CellularAutomaton
 
   static void moveAggregate(CAM::Aggregate<nx>* _aggregate, fields_array_t& _domainFields)
   {
-    std::vector<int> possible_moves = CAM::getStencil<nx>(_aggregate->jump_parameter);  //
+    std::vector<unsigned int> indices(_aggregate->fieldIndices.size(), 0);
+    for (unsigned int i = 0; i < _aggregate->fieldIndices.size(); i++)
+    {
+      indices[i] = _domainFields[_aggregate->fieldIndices[i]];
+      _domainFields[_aggregate->fieldIndices[i]] = 0;
+    }
+
+    std::vector<int> possible_moves = CAM::getStencil<nx>(_aggregate->jump_parameter);
     std::vector<int> best_moves(1, 0);
     double attraction = 0.;
     std::for_each(possible_moves.begin(), possible_moves.end(),
@@ -89,6 +98,11 @@ class CellularAutomaton
                     else if (current_attraction == attraction)
                       best_moves.push_back(move);
                   });
+    for (unsigned int i = 0; i < _aggregate->fieldIndices.size(); i++)
+    {
+      _domainFields[_aggregate->fieldIndices[i]] = indices[i];
+    }
+
     int best_move = best_moves[std::rand() % best_moves.size()];
     for (unsigned int i = 0; i < _aggregate->buildingUnits.size(); i++)
     {

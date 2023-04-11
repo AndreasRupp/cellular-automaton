@@ -20,50 +20,55 @@ class CAMInterface
   ~CAMInterface() {}
 
   void placeSingleCellBURandomly(double _porosity = 0.5,
-                       double _jump_parameter = 1,
-                       unsigned int _random_seed = 0)
+                                 double _jump_parameter = 1,
+                                 unsigned int _random_seed = 0)
   {
     domain.placeSingleCellBURandomly(_porosity, _jump_parameter, _random_seed);
   }
-  void placeSphere(double _jump_parameter = 1, unsigned int _random_seed = 0)
+  bool placeSphere(int _position = -1, double _radius = 1, double _jump_parameter = 1)
   {
-    domain.placeSphere(_jump_parameter, _random_seed);
+    return domain.placeSphere(_position, _radius, _jump_parameter);
   }
-  void placeBU()
+  bool placePlane(int _position = -1,
+                  std::vector<unsigned int> _extent = std::vector<unsigned int>(nx.size(), 0),
+                  double _jump_parameter = 1)
+  {
+    return domain.placePlane(_position, _extent, _jump_parameter);
+  }
+  void placeParticles()
   {
     unsigned int rand_seed = std::chrono::system_clock::now().time_since_epoch().count();
     std::srand(rand_seed);
     unsigned int centerpoint = 0;
-    
-    std::vector<int> stencil1 = CAM::ParticleBU<nx>::getStencil(0,10,8);
-    std::vector<int> stencil2 = CAM::ParticleBU<nx>::getStencil(0,6,3);
-   // CAM::ParticleBU<nx>* particle = new CAM::ParticleBU<nx>(1, 1, centerpoint, stencil);
-    for(int a = 0; a<  10; a++)
+
+    std::vector<int> stencil1 = CAM::ParticleBU<nx>::getStencil(0, 10, 8);
+    std::vector<int> stencil2 = CAM::ParticleBU<nx>::getStencil(0, 6, 3);
+    // CAM::ParticleBU<nx>* particle = new CAM::ParticleBU<nx>(1, 1, centerpoint, stencil);
+    for (int a = 0; a < 10; a++)
     {
-    unsigned int randomPoint = 0;
-    for (unsigned int i = 0; i < nx.size(); ++i)
+      unsigned int randomPoint = 0;
+      for (unsigned int i = 0; i < nx.size(); ++i)
+      {
+        centerpoint += nx[i] / 2 * direct_neigh<nx>(2 * i + 1);
+        randomPoint += std::rand() % nx[i] * direct_neigh<nx>(2 * i + 1);
+      }
+      CAM::ParticleBU<nx>* particle = new CAM::ParticleBU<nx>(a + 1, 5, randomPoint, stencil1);
+      bool success = domain.placeBU(particle);
+      // std::cout<<"sucss "<<success<<std::endl;
+    }
+
+    for (int a = 10; a < 20; a++)
     {
-      centerpoint +=  nx[i]/2 * direct_neigh<nx>(2 * i + 1);
-      randomPoint += std::rand() % nx[i] * direct_neigh<nx>(2 * i + 1);
+      unsigned int randomPoint = 0;
+      for (unsigned int i = 0; i < nx.size(); ++i)
+      {
+        centerpoint += nx[i] / 2 * direct_neigh<nx>(2 * i + 1);
+        randomPoint += std::rand() % nx[i] * direct_neigh<nx>(2 * i + 1);
+      }
+      CAM::ParticleBU<nx>* particle = new CAM::ParticleBU<nx>(a + 1, 5, randomPoint, stencil2);
+      bool success = domain.placeBU(particle);
+      // std::cout<<"sucss "<<success<<std::endl;
     }
-      CAM::ParticleBU<nx>* particle = new CAM::ParticleBU<nx>(a+1, 5, randomPoint, stencil1);
-       bool success = domain.placeBU(particle);
-       std::cout<<"sucss "<<success<<std::endl;
-    }
-    
-    for(int a= 10; a<  20; a++)
-    {
-    unsigned int randomPoint = 0;
-    for (unsigned int i = 0; i < nx.size(); ++i)
-    {
-      centerpoint +=  nx[i]/2 * direct_neigh<nx>(2 * i + 1);
-      randomPoint += std::rand() % nx[i] * direct_neigh<nx>(2 * i + 1);
-    }
-      CAM::ParticleBU<nx>* particle = new CAM::ParticleBU<nx>(a+1, 5, randomPoint, stencil2);
-       bool success = domain.placeBU(particle);
-       std::cout<<"sucss "<<success<<std::endl;
-    }
-    //domain.placeBU(particle);
   }
 
   void print_array() { domain.print_array(); }

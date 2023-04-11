@@ -21,6 +21,7 @@ class Domain
  public:
   double jump_parameter_composites = 1.0;
   static constexpr unsigned int n_fields_ = n_fields<nx>();
+  double indexBU;
 
   ~Domain()
   {
@@ -41,12 +42,16 @@ class Domain
                      std::array<typename fields_array_t::value_type, n_fields<nx>()>>::value,
         "The fields array has incorrect size");
       domainFields.fill(0);
+      indexBU = 0;
     }
     // jump_parameter_composites = _jump_parameter_composites;
   }
   bool placeBU(CAM::BuildingUnit<nx>* _unit)  //
   {
     bool success = true;
+    indexBU++;
+    _unit->number = indexBU;
+    // std::cout<<_unit->number<<" ";
     std::vector<unsigned int> fields = _unit->getFieldIndices();
     std::for_each(fields.begin(), fields.end(),
                   [&](unsigned int field)
@@ -71,35 +76,48 @@ class Domain
                       if (domainFields[field] == _unit->number)
                         domainFields[field] = 0;
                     });
+      indexBU--;
     }
     else
     {
       buildingUnits.push_back(_unit);
     }
+    // std::cout<<success<<std::endl;
     return success;
   }
-  void placeSphere(double _jump_parameter = 1, unsigned int random_seed = 0)
+  bool placeSphere(int _position = -1, double _radius = 1, double _jump_parameter = 1)
   {
-    if (random_seed == 0)
+    if (_position = -1)
     {
       rand_seed = std::chrono::system_clock::now().time_since_epoch().count();
+      std::srand(rand_seed);
+      _position = std::rand() % (n_fields_);
     }
-    else
-      rand_seed = random_seed;
-
-    std::srand(rand_seed);
-    unsigned int position = std::rand() % (n_fields_);
-    position = 45;
-    buildingUnits.push_back(new HyperSphereBU<nx>(1, _jump_parameter, position, 4.1));
-    std::vector<unsigned int> fields = buildingUnits[0]->getFieldIndices();
-    for (unsigned int i = 0; i < fields.size(); i++)
+    HyperSphereBU<nx>* sphere = new HyperSphereBU<nx>(1, _jump_parameter, _position, _radius);
+    bool success = placeBU(sphere);
+    if (!success)
+      delete sphere;
+    return success;
+  }
+  bool placePlane(int _position = -1,
+                  std::vector<unsigned int> _extent = std::vector<unsigned int>(nx.size(), 0),
+                  double _jump_parameter = 1)
+  {
+    if (_position = -1)
     {
-      domainFields[fields[i]] = 1;
+      rand_seed = std::chrono::system_clock::now().time_since_epoch().count();
+      std::srand(rand_seed);
+      _position = std::rand() % (n_fields_);
     }
+    HyperPlaneBU<nx>* plane = new HyperPlaneBU<nx>(1, _jump_parameter, _position, _extent);
+    bool success = placeBU(plane);
+    if (!success)
+      delete plane;
+    return success;
   }
   void placeSingleCellBURandomly(double _porosity = 0.90,
-                       double _jump_parameter = 1,
-                       unsigned int random_seed = 0)
+                                 double _jump_parameter = 1,
+                                 unsigned int random_seed = 0)
   {
     if (random_seed == 0)
     {
@@ -174,8 +192,8 @@ class Domain
           newAggregate->buildingUnits.push_back(*it);
           newAggregate->fieldIndices = found_solids;
           newAggregate->jump_parameter = 5;
-            // jump_parameter_composites /
-            // std::pow(newAggregate->fieldIndices.size(), 1.0 / (double)dim);
+          // jump_parameter_composites /
+          // std::pow(newAggregate->fieldIndices.size(), 1.0 / (double)dim);
         }
         aggregates.push_back(newAggregate);
       }
