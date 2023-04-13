@@ -19,7 +19,7 @@ class Domain
   static const unsigned int dim = nx.size();
 
  public:
-  double jump_parameter_composites = 1.0;
+  double jump_parameter_composites;
   static constexpr unsigned int n_fields_ = n_fields<nx>();
   double indexBU;
 
@@ -30,7 +30,8 @@ class Domain
     std::for_each(aggregates.begin(), aggregates.end(),
                   [&](CAM::Aggregate<nx>* aggregate) { delete aggregate; });
   }
-  Domain()  // double _jump_parameter_composites = 1.0
+  Domain(double _jump_parameter_composites = - 1): 
+    jump_parameter_composites((_jump_parameter_composites != -1.) ? _jump_parameter_composites: 5)  // double _jump_parameter_composites = 1.0
   {
     if constexpr (std::is_same<fields_array_t,
                                std::vector<typename fields_array_t::value_type>>::value)
@@ -44,7 +45,6 @@ class Domain
       domainFields.fill(0);
       indexBU = 0;
     }
-    // jump_parameter_composites = _jump_parameter_composites;
   }
   bool placeBU(CAM::BuildingUnit<nx>* _unit)  //
   {
@@ -191,9 +191,7 @@ class Domain
                          { return unit->number == aggregateComponents[i]; });
           newAggregate->buildingUnits.push_back(*it);
           newAggregate->fieldIndices = found_solids;
-          newAggregate->jump_parameter = 5;
-          // jump_parameter_composites /
-          // std::pow(newAggregate->fieldIndices.size(), 1.0 / (double)dim);
+          newAggregate->jump_parameter = jump_parameter_composites;// / std::pow(newAggregate->fieldIndices.size(), 1.0 / (double)dim);
         }
         aggregates.push_back(newAggregate);
       }

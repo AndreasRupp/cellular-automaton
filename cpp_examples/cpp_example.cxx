@@ -31,7 +31,6 @@ int main()
   for (unsigned int i = 0; i < n_moves; ++i)
   {
     CAM.doCAM();
-    std::cout << CAM.fields()[0] << std::endl;
     CAM.print_array();
     std::cout << std::endl;
   }

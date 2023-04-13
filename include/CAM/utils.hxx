@@ -43,6 +43,11 @@ static constexpr int direct_neigh(const unsigned int index)
     direct_neigh *= nx[i];
   return direct_neigh;
 }
+template <auto nx>
+static constexpr unsigned int n_fieldpoints()
+{
+  return std::pow(2, nx.size());
+}
 /*!*************************************************************************************************
  * \brief   Find field if one moves from position to move.
  *
@@ -76,6 +81,62 @@ static constexpr unsigned int addMoves(int move1, int move2)
   }
   return new_move;
 }
+/**
+ * vielleicht datenstructur mit points
+*/
+template <auto nx>
+static std::array<unsigned int, n_fieldpoints<nx>()> getPoints(int _field)
+{
+  std::array<unsigned int, n_fieldpoints<nx>()> points, points1;
+  //std::cout<<"field "<<_field<<std::endl;
+  //
+  for (unsigned int a = 0; a < pow(2, nx.size()); a++)
+  {
+    points[a] = _field;
+    for (unsigned int i = 0; i < nx.size(); ++i)
+    {
+      int leftright = (a & (1 << i)) >> i;
+      points[a] = aim<nx>(points[a], leftright * direct_neigh<nx>(2 * i + 1));
+    }
+  }
+   //alternative
+  // unsigned int i = 0;
+  // points1[0] = _field;
+  // for (unsigned int a = 1; a < pow(2, nx.size()); a++)
+  // {
+  //   i++;
+  //   i = i % nx.size();
+  //   int leftright = (a & (1 << i)) >> i;
+  //   points1[a] = aim<nx>(points1[a-1], leftright * direct_neigh<nx>(2 * i + 1));
+  //   if(points1[a] != points[a])
+  //   std::cout<<"hhhhhhhhhhhhh"<<std::endl;
+  //   //std::cout<<points[a]<<std::endl;
+  // }
+  //noch kürzer ohne aim sondern direkt
+// std::cout<<"-------"<<std::endl;
+
+  return points;
+
+}
+// template <auto nx>
+// static std::array<unsigned int, pow(2, nx.size())> getCoords(unsigned int _field)
+// {
+//   std::array<unsigned int, pow(2, nx.size())> coord;
+//   for (unsigned int a = 0; a < pow(2, nx.size()); a++)
+//   {
+   
+//     for (unsigned int i = 0; i < nx.size(); ++i)
+//     {
+//       int bit = (a & (1 << i)) >> i;
+//       coord[a] = (_field / (int)direct_neigh<nx>(2 * i + 1) + n_fields<nx>()) % nx[i];
+//       coord[a] = coord[a] + bit;
+//     }
+//   }
+
+// }
+/**
+ * Distance in a periodic domain
+*/
 template <auto nx>
 double pNormDistance(const unsigned int _position1, const int _position2, unsigned int _p)
 {
@@ -87,7 +148,6 @@ double pNormDistance(const unsigned int _position1, const int _position2, unsign
     coord2 = (_position2 / (int)direct_neigh<nx>(2 * i + 1) + n_fields<nx>()) % nx[i];
     // unsigned int d = std::abs((int)coord1 - (int)coord2);
     // d = std::min(d, nx[i] - d);
-
     std::array<int, 3> ds;
     ds[0] = coord1 - coord2;
     ds[1] = (coord1 - coord2 + nx[i]) % nx[i];
@@ -101,9 +161,11 @@ double pNormDistance(const unsigned int _position1, const int _position2, unsign
   }
   return std::pow(norm, 1.0 / (double)_p);
 }
+//geht nicht wenn radius größer als nx[i]/2
 template <auto nx>
 static std::vector<int> getPNormedStencil(double _radius, unsigned int _p)
 {
+  //Distance vielleicht mit Punkten machen
   static const unsigned int dim = nx.size();
   double radius = std::max(1., _radius);
   std::vector<int> stencil(1, 0);
@@ -118,9 +180,14 @@ static std::vector<int> getPNormedStencil(double _radius, unsigned int _p)
       for (unsigned int i = 0; i < 2 * dim; ++i)
       {
         int newMove = addMoves<nx>(stencil[index], direct_neigh<nx>(i));
-        int newCell = aim<nx>(0, newMove);
-        if (std::find(stencil.begin(), stencil.end(), newMove) == stencil.end() &&
-            pNormDistance<nx>(0, newCell, _p) < radius)
+        int newCell = newMove;//aim<nx>(0, newMove);
+       // std::cout<<"newCell "<<newCell<<std::endl;
+        std::array<unsigned int, n_fieldpoints<nx>()> points = CAM::getPoints<nx>(newCell);
+        bool isInside = true;
+        for(int i = 0; i < points.size(); i++)
+          isInside = isInside && (pNormDistance<nx>(0,points[i] , _p) < radius);
+
+        if (std::find(stencil.begin(), stencil.end(), newMove) == stencil.end() && isInside)
         {
           stencil.push_back(newMove);
           doNextLayer = true;

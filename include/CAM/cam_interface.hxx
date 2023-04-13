@@ -16,7 +16,7 @@ class CAMInterface
   CAM::Domain<nx, fields_array_t> domain;
 
  public:
-  CAMInterface() {}
+  CAMInterface(double _jump_parameter_composites = 5) {domain.jump_parameter_composites = _jump_parameter_composites;}
   ~CAMInterface() {}
 
   void placeSingleCellBURandomly(double _porosity = 0.5,
@@ -41,9 +41,8 @@ class CAMInterface
     std::srand(rand_seed);
     unsigned int centerpoint = 0;
 
-    std::vector<int> stencil1 = CAM::ParticleBU<nx>::getStencil(0, 10, 8);
-    std::vector<int> stencil2 = CAM::ParticleBU<nx>::getStencil(0, 6, 3);
-    // CAM::ParticleBU<nx>* particle = new CAM::ParticleBU<nx>(1, 1, centerpoint, stencil);
+    std::vector<int> stencil1 = CAM::ParticleBU<nx>::getStencil(0, 30, 20,0);
+    std::vector<int> stencil2 = CAM::ParticleBU<nx>::getStencil(0, 20, 10,0);
     for (int a = 0; a < 10; a++)
     {
       unsigned int randomPoint = 0;
@@ -77,5 +76,14 @@ class CAMInterface
 
   const fields_array_t& fields() const { return domain.domainFields; }
   std::array<double, 12> eval_measures() { return domain.eval_measures(); }
+
+  double average_particle_size(){return domain.average_particle_size();}
+  std::vector<unsigned int> particle_size_distribution(){return domain.particle_size_distribution();}
+  unsigned int bulk_distance(const fields_array_t& domain_a, const fields_array_t& domain_b)
+  {
+    return CAM::Domain<nx, fields_array_t>::bulk_distance(domain_a,domain_b);
+  }
+  
+
 };
 }  // namespace CAM
