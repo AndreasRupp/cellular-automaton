@@ -1,8 +1,8 @@
 /**
  * @file utils.hxx
- * 
+ *
  * @brief Holds static utility functions which can be used in CAM
- * 
+ *
  */
 #pragma once
 #include <algorithm>
@@ -42,8 +42,8 @@ static constexpr unsigned int n_fields()
 /**
  * @brief Finds the movement to a direct neighbor within von Neumann neighborhood
  * each dimension two neighbors (left and right)
- * @param index 0 < index < 2 * nx.size(). index of neighbor 
- * @return move 
+ * @param index 0 < index < 2 * nx.size(). index of neighbor
+ * @return move
  */
 template <auto nx>
 static constexpr int direct_neigh(const unsigned int index)
@@ -56,7 +56,7 @@ static constexpr int direct_neigh(const unsigned int index)
 }
 /**
  * @brief How many corner points of a cell
- * 
+ *
  * @return number of cornerpoints
  */
 template <auto nx>
@@ -77,8 +77,8 @@ static constexpr unsigned int aim(const int position, const int move)
   unsigned int coord, new_pos = 0;
   for (unsigned int i = 0; i < nx.size(); ++i)
   {
-    coord = ((position) / direct_neigh<nx>(2 * i + 1) +
-             (move) / direct_neigh<nx>(2 * i + 1) + n_fields<nx>()) %
+    coord = ((position) / direct_neigh<nx>(2 * i + 1) + (move) / direct_neigh<nx>(2 * i + 1) +
+             n_fields<nx>()) %
             nx[i];
     new_pos += coord * direct_neigh<nx>(2 * i + 1);
   }
@@ -86,16 +86,16 @@ static constexpr unsigned int aim(const int position, const int move)
 }
 /**
  * @brief Get the Points object
- * 
- * @tparam nx 
- * @param _field 
- * @return std::array<unsigned int, n_fieldpoints<nx>()> 
+ *
+ * @tparam nx
+ * @param _field
+ * @return std::array<unsigned int, n_fieldpoints<nx>()>
  */
 template <auto nx>
 static std::array<unsigned int, n_fieldpoints<nx>()> getPoints(unsigned int _field)
 {
   std::array<unsigned int, n_fieldpoints<nx>()> points;
-  //std::cout<<"field "<<_field<<std::endl;
+  // std::cout<<"field "<<_field<<std::endl;
   //
   for (unsigned int a = 0; a < pow(2, nx.size()); a++)
   {
@@ -106,7 +106,7 @@ static std::array<unsigned int, n_fieldpoints<nx>()> getPoints(unsigned int _fie
       points[a] = aim<nx>(points[a], leftright * direct_neigh<nx>(2 * i + 1));
     }
   }
-   //alternative
+  // alternative
   // unsigned int i = 0;
   // points1[0] = _field;
   // for (unsigned int a = 1; a < pow(2, nx.size()); a++)
@@ -119,11 +119,10 @@ static std::array<unsigned int, n_fieldpoints<nx>()> getPoints(unsigned int _fie
   //   std::cout<<"hhhhhhhhhhhhh"<<std::endl;
   //   //std::cout<<points[a]<<std::endl;
   // }
-  //noch kürzer ohne aim sondern direkt
-// std::cout<<"-------"<<std::endl;
+  // noch kürzer ohne aim sondern direkt
+  // std::cout<<"-------"<<std::endl;
 
   return points;
-
 }
 // template <auto nx>
 // static std::array<unsigned int, pow(2, nx.size())> getCoords(unsigned int _field)
@@ -131,7 +130,7 @@ static std::array<unsigned int, n_fieldpoints<nx>()> getPoints(unsigned int _fie
 //   std::array<unsigned int, pow(2, nx.size())> coord;
 //   for (unsigned int a = 0; a < pow(2, nx.size()); a++)
 //   {
-   
+
 //     for (unsigned int i = 0; i < nx.size(); ++i)
 //     {
 //       int bit = (a & (1 << i)) >> i;
@@ -143,7 +142,7 @@ static std::array<unsigned int, n_fieldpoints<nx>()> getPoints(unsigned int _fie
 // }
 /**
  * Distance in a periodic domain
-*/
+ */
 template <auto nx>
 double pNormDistance(const unsigned int _position1, const unsigned int _position2, unsigned int _p)
 {
@@ -168,11 +167,11 @@ double pNormDistance(const unsigned int _position1, const unsigned int _position
   }
   return std::pow(norm, 1.0 / (double)_p);
 }
-//geht nicht wenn radius größer als nx[i]/2
+// geht nicht wenn radius größer als nx[i]/2
 template <auto nx>
 static std::vector<unsigned int> getPNormedStencil(double _radius, unsigned int _p)
 {
-  //Distance vielleicht mit Punkten machen
+  // Distance vielleicht mit Punkten machen
   static const unsigned int dim = nx.size();
   double radius = std::max(1., _radius);
   std::vector<unsigned int> stencil(1, 0);
@@ -187,12 +186,12 @@ static std::vector<unsigned int> getPNormedStencil(double _radius, unsigned int 
       for (unsigned int i = 0; i < 2 * dim; ++i)
       {
         unsigned int newMove = aim<nx>(stencil[index], direct_neigh<nx>(i));
-        unsigned int newCell = newMove;//aim<nx>(0, newMove);
-       // std::cout<<"newCell "<<newCell<<std::endl;
+        unsigned int newCell = newMove;  // aim<nx>(0, newMove);
+        // std::cout<<"newCell "<<newCell<<std::endl;
         std::array<unsigned int, n_fieldpoints<nx>()> points = CAM::getPoints<nx>(newCell);
         bool isInside = true;
-        for(unsigned int i = 0; i < points.size(); i++)
-          isInside = isInside && (pNormDistance<nx>(0,points[i] , _p) < radius);
+        for (unsigned int i = 0; i < points.size(); i++)
+          isInside = isInside && (pNormDistance<nx>(0, points[i], _p) < radius);
 
         if (std::find(stencil.begin(), stencil.end(), newMove) == stencil.end() && isInside)
         {
@@ -206,12 +205,12 @@ static std::vector<unsigned int> getPNormedStencil(double _radius, unsigned int 
   return stencil;
 }
 /*!*********************************************************************************************
-     * \brief   Checks possible moves for a certain jump parameter.
-     * \param   jump_parameter Manhattan Distance
-     * Order of possible moves: down, right, up, left.
-     *
-     * \retval stencil
-     **********************************************************************************************/
+ * \brief   Checks possible moves for a certain jump parameter.
+ * \param   jump_parameter Manhattan Distance
+ * Order of possible moves: down, right, up, left.
+ *
+ * \retval stencil
+ **********************************************************************************************/
 template <auto nx>
 static std::vector<unsigned int> getStencil(double _jump_parameter)
 {

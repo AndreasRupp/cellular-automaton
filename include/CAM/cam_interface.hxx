@@ -16,7 +16,10 @@ class CAMInterface
   CAM::Domain<nx, fields_array_t> domain;
 
  public:
-  CAMInterface(double _jump_parameter_composites = 5) {domain.jump_parameter_composites = _jump_parameter_composites;}
+  CAMInterface(double _jump_parameter_composites = 5)
+  {
+    domain.jump_parameter_composites = _jump_parameter_composites;
+  }
   ~CAMInterface() {}
 
   void placeSingleCellBURandomly(double _porosity = 0.5,
@@ -27,7 +30,7 @@ class CAMInterface
   }
   bool placeSphere(int _position = -1, double _radius = 1, double _jump_parameter = 1)
   {
-    // unsigned int a = 1; 
+    // unsigned int a = 1;
     // unsigned int b = 2;
     // int i = a -b;
     // std::cout<<"tes "<<i <<std::endl;
@@ -45,8 +48,8 @@ class CAMInterface
     std::srand(rand_seed);
     unsigned int centerpoint = 0;
 
-    std::vector<unsigned int> stencil1 = CAM::ParticleBU<nx>::getStencil(0, 30, 20,100);
-    std::vector<unsigned int> stencil2 = CAM::ParticleBU<nx>::getStencil(0, 20, 10,200);
+    std::vector<unsigned int> stencil1 = CAM::ParticleBU<nx>::getStencil(0, 30, 20, 100);
+    std::vector<unsigned int> stencil2 = CAM::ParticleBU<nx>::getStencil(0, 20, 10, 200);
     for (int a = 0; a < 10; a++)
     {
       unsigned int randomPoint = 0;
@@ -68,7 +71,8 @@ class CAMInterface
         randomPoint += std::rand() % nx[i] * direct_neigh<nx>(2 * i + 1);
       }
       CAM::ParticleBU<nx>* particle = new CAM::ParticleBU<nx>(a + 1, 5, randomPoint, stencil2);
-      domain.placeBU(particle);;
+      domain.placeBU(particle);
+      ;
     }
   }
 
@@ -79,13 +83,14 @@ class CAMInterface
   const fields_array_t& fields() const { return domain.domainFields; }
   std::array<double, 12> eval_measures() { return domain.eval_measures(); }
 
-  double average_particle_size(){return domain.average_particle_size();}
-  std::vector<unsigned int> particle_size_distribution(){return domain.particle_size_distribution();}
+  double average_particle_size() { return domain.average_particle_size(); }
+  std::vector<unsigned int> particle_size_distribution()
+  {
+    return domain.particle_size_distribution();
+  }
   unsigned int bulk_distance(const fields_array_t& domain_a, const fields_array_t& domain_b)
   {
-    return CAM::Domain<nx, fields_array_t>::bulk_distance(domain_a,domain_b);
+    return CAM::Domain<nx, fields_array_t>::bulk_distance(domain_a, domain_b);
   }
-  
-
 };
 }  // namespace CAM

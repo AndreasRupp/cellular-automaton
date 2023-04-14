@@ -43,7 +43,7 @@ class Domain
   }
   /**
    * @brief Construct a new Domain object
-   * 
+   *
    * @param _jump_parameter_composites How far composites particles are allowed to jump.
    */
   Domain(double _jump_parameter_composites = -1)
@@ -64,13 +64,13 @@ class Domain
       indexBU = 0;
     }
   }
-/**
- * @brief Place any building unit (BU) into the domain
- * Basis function for placement for all special BUs
- * @param _unit building unit
- * @return true: cells pf BU are marked with individual index, BU is stored in BU vector
- * @return false: BU could not be placed. all its cells are removed
- */
+  /**
+   * @brief Place any building unit (BU) into the domain
+   * Basis function for placement for all special BUs
+   * @param _unit building unit
+   * @return true: cells pf BU are marked with individual index, BU is stored in BU vector
+   * @return false: BU could not be placed. all its cells are removed
+   */
   bool placeBU(CAM::BuildingUnit<nx>* _unit)
   {
     bool success = true;
@@ -133,7 +133,7 @@ class Domain
   }
   /**
    * @brief Place a limited hyper plane (2D: Rectangle, 3D: cuboid) into domain
-   * 
+   *
    * @param _position field index of center point; no position is given (-1) -> random position
    * @param _extent size of plane in each dimension
    * @param _jump_parameter How far hyper plane is allowed to jump.
@@ -188,9 +188,8 @@ class Domain
     }
   }
   /*!*
-   * @brief  Finds composites (particles containing more then one BU) in domain and stores information in
-   * std::vector<CAM::Aggregate<nx>*> aggregates;
-   * std::vector<Particle> particles;
+   * @brief  Finds composites (particles containing more then one BU) in domain and stores
+   * information in std::vector<CAM::Aggregate<nx>*> aggregates; std::vector<Particle> particles;
    */
   void findAggregates()
   {
