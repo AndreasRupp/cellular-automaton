@@ -77,25 +77,12 @@ static constexpr unsigned int aim(const int position, const int move)
   unsigned int coord, new_pos = 0;
   for (unsigned int i = 0; i < nx.size(); ++i)
   {
-    coord = ((position) / (int)direct_neigh<nx>(2 * i + 1) +
-             (move) / (int)direct_neigh<nx>(2 * i + 1) + n_fields<nx>()) %
+    coord = ((position) / direct_neigh<nx>(2 * i + 1) +
+             (move) / direct_neigh<nx>(2 * i + 1) + n_fields<nx>()) %
             nx[i];
     new_pos += coord * direct_neigh<nx>(2 * i + 1);
   }
   return new_pos;
-}
-template <auto nx>
-static constexpr unsigned int addMoves(int move1, int move2)
-{
-  unsigned int coord, new_move = 0;
-  for (unsigned int i = 0; i < nx.size(); ++i)
-  {
-    coord = ((move1) / direct_neigh<nx>(2 * i + 1) + (move2) / direct_neigh<nx>(2 * i + 1) +
-             n_fields<nx>()) %
-            nx[i];
-    new_move += coord * direct_neigh<nx>(2 * i + 1);
-  }
-  return new_move;
 }
 /**
  * @brief Get the Points object
@@ -105,7 +92,7 @@ static constexpr unsigned int addMoves(int move1, int move2)
  * @return std::array<unsigned int, n_fieldpoints<nx>()> 
  */
 template <auto nx>
-static std::array<unsigned int, n_fieldpoints<nx>()> getPoints(int _field)
+static std::array<unsigned int, n_fieldpoints<nx>()> getPoints(unsigned int _field)
 {
   std::array<unsigned int, n_fieldpoints<nx>()> points;
   //std::cout<<"field "<<_field<<std::endl;
@@ -115,7 +102,7 @@ static std::array<unsigned int, n_fieldpoints<nx>()> getPoints(int _field)
     points[a] = _field;
     for (unsigned int i = 0; i < nx.size(); ++i)
     {
-      int leftright = (a & (1 << i)) >> i;
+      unsigned int leftright = (a & (1 << i)) >> i;
       points[a] = aim<nx>(points[a], leftright * direct_neigh<nx>(2 * i + 1));
     }
   }
@@ -158,19 +145,19 @@ static std::array<unsigned int, n_fieldpoints<nx>()> getPoints(int _field)
  * Distance in a periodic domain
 */
 template <auto nx>
-double pNormDistance(const unsigned int _position1, const int _position2, unsigned int _p)
+double pNormDistance(const unsigned int _position1, const unsigned int _position2, unsigned int _p)
 {
   unsigned int coord1, coord2;
   unsigned int norm = 0;
   for (unsigned int i = 0; i < nx.size(); ++i)
   {
-    coord1 = (_position1 / (int)direct_neigh<nx>(2 * i + 1) + n_fields<nx>()) % nx[i];
-    coord2 = (_position2 / (int)direct_neigh<nx>(2 * i + 1) + n_fields<nx>()) % nx[i];
+    coord1 = (_position1 / direct_neigh<nx>(2 * i + 1) + n_fields<nx>()) % nx[i];
+    coord2 = (_position2 / direct_neigh<nx>(2 * i + 1) + n_fields<nx>()) % nx[i];
     // unsigned int d = std::abs((int)coord1 - (int)coord2);
     // d = std::min(d, nx[i] - d);
     std::array<int, 3> ds;
-    ds[0] = coord1 - coord2;
-    ds[1] = (coord1 - coord2 + nx[i]) % nx[i];
+    ds[0] = (int)coord1 - (int)coord2;
+    ds[1] = ((int)coord1 - (int)coord2 + nx[i]) % nx[i];
     ds[2] = ds[1] - nx[i];
     ds[0] = std::abs(ds[0]);
     ds[1] = std::abs(ds[1]);
@@ -183,12 +170,12 @@ double pNormDistance(const unsigned int _position1, const int _position2, unsign
 }
 //geht nicht wenn radius größer als nx[i]/2
 template <auto nx>
-static std::vector<int> getPNormedStencil(double _radius, unsigned int _p)
+static std::vector<unsigned int> getPNormedStencil(double _radius, unsigned int _p)
 {
   //Distance vielleicht mit Punkten machen
   static const unsigned int dim = nx.size();
   double radius = std::max(1., _radius);
-  std::vector<int> stencil(1, 0);
+  std::vector<unsigned int> stencil(1, 0);
   unsigned int index = 0;
   unsigned int old_size = stencil.size();
   bool doNextLayer = true;
@@ -199,8 +186,8 @@ static std::vector<int> getPNormedStencil(double _radius, unsigned int _p)
     {
       for (unsigned int i = 0; i < 2 * dim; ++i)
       {
-        int newMove = addMoves<nx>(stencil[index], direct_neigh<nx>(i));
-        int newCell = newMove;//aim<nx>(0, newMove);
+        unsigned int newMove = aim<nx>(stencil[index], direct_neigh<nx>(i));
+        unsigned int newCell = newMove;//aim<nx>(0, newMove);
        // std::cout<<"newCell "<<newCell<<std::endl;
         std::array<unsigned int, n_fieldpoints<nx>()> points = CAM::getPoints<nx>(newCell);
         bool isInside = true;
@@ -226,11 +213,11 @@ static std::vector<int> getPNormedStencil(double _radius, unsigned int _p)
      * \retval stencil
      **********************************************************************************************/
 template <auto nx>
-static std::vector<int> getStencil(double _jump_parameter)
+static std::vector<unsigned int> getStencil(double _jump_parameter)
 {
   static const unsigned int dim = nx.size();
   unsigned int layers = std::max(1., _jump_parameter);
-  std::vector<int> stencil(1, 0);
+  std::vector<unsigned int> stencil(1, 0);
   unsigned int index = 0;
   unsigned int old_size = stencil.size();
 
@@ -240,7 +227,7 @@ static std::vector<int> getStencil(double _jump_parameter)
     {
       for (unsigned int i = 0; i < 2 * dim; ++i)
       {
-        int newNeigh = addMoves<nx>(stencil[index], direct_neigh<nx>(i));
+        unsigned int newNeigh = aim<nx>(stencil[index], direct_neigh<nx>(i));
         if (std::find(stencil.begin(), stencil.end(), newNeigh) == stencil.end())
         {
           stencil.push_back(newNeigh);

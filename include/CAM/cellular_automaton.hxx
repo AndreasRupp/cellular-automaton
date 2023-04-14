@@ -60,8 +60,8 @@ class CellularAutomaton
  */
   static void moveBU(CAM::BuildingUnit<nx>* _unit, fields_array_t& _domainFields)
   {
-    std::vector<int> possible_moves = CAM::getStencil<nx>(_unit->jump_parameter);
-    std::vector<int> best_moves(1, 0);
+    std::vector<unsigned int> possible_moves = CAM::getStencil<nx>(_unit->jump_parameter);
+    std::vector<unsigned int> best_moves(1, 0);
     double attraction = 0.;
     std::for_each(possible_moves.begin(), possible_moves.end(),
                   [&](int move)
@@ -69,7 +69,7 @@ class CellularAutomaton
                     double current_attraction = getAttractionBU(move, _unit, _domainFields);
                     if (current_attraction > attraction)
                     {
-                      best_moves = std::vector<int>(1, move);
+                      best_moves = std::vector<unsigned int>(1, move);
                       attraction = current_attraction;
                     }
                     else if (current_attraction == attraction)
@@ -111,8 +111,8 @@ class CellularAutomaton
       _domainFields[_aggregate->fieldIndices[i]] = 0;
     }
 
-    std::vector<int> possible_moves = CAM::getStencil<nx>(_aggregate->jump_parameter);
-    std::vector<int> best_moves(1, 0);
+    std::vector<unsigned int> possible_moves = CAM::getStencil<nx>(_aggregate->jump_parameter);
+    std::vector<unsigned int> best_moves(1, 0);
     double attraction = 0.;
     std::for_each(possible_moves.begin(), possible_moves.end(),
                   [&](int move)
@@ -121,7 +121,7 @@ class CellularAutomaton
                       getAttractionAggregate(move, _aggregate, _domainFields);
                     if (current_attraction > attraction)
                     {
-                      best_moves = std::vector<int>(1, move);
+                      best_moves = std::vector<unsigned int>(1, move);
                       attraction = current_attraction;
                     }
                     else if (current_attraction == attraction)
@@ -146,7 +146,7 @@ class CellularAutomaton
      * @param _BU               building unit
      * \retval  attraction      Amount of neighbours.
      **********************************************************************************************/
-  static double getAttractionBU(const int move,
+  static double getAttractionBU(const unsigned int move,
                                 CAM::BuildingUnit<nx>* _BU,
                                 fields_array_t& _domainFields)
   {
@@ -173,7 +173,7 @@ class CellularAutomaton
      * \param   _aggregate      composites  
      * \retval  attraction      Amount of neighbours.
      **********************************************************************************************/
-  static double getAttractionAggregate(const int move,
+  static double getAttractionAggregate(const unsigned int move,
                                        Aggregate<nx>* _aggregate,
                                        fields_array_t& _domainFields)
   {

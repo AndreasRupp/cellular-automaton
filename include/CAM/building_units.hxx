@@ -35,8 +35,8 @@ double feretDiameter_max_fields(std::vector<unsigned int> _fields)
           double distance = 0;
           for (unsigned int i = 0; i < nx.size(); ++i)
           {
-            int bit_a = (c & (1 << i)) >> i;
-            int bit_b = (d & (1 << i)) >> i;
+            unsigned int bit_a = (c & (1 << i)) >> i;
+            unsigned  int bit_b = (d & (1 << i)) >> i;
 
             coord_a = (_fields[a] / (int)direct_neigh<nx>(2 * i + 1) + n_fields<nx>()) % nx[i];
             coord_a = coord_a + bit_a;
@@ -94,7 +94,7 @@ double feretDiameter_max(std::vector<unsigned int> _points)
  * TODO Implement convexHull
  */
 template <auto nx>
-std::array<std::vector<unsigned int>, 2> getBorder(std::vector<int> _set)
+std::array<std::vector<unsigned int>, 2> getBorder(std::vector<unsigned int> _set)
 {
   std::vector<unsigned int> amountNeighbors(_set.size());
   std::fill(amountNeighbors.begin(), amountNeighbors.end(), 0);
@@ -102,11 +102,11 @@ std::array<std::vector<unsigned int>, 2> getBorder(std::vector<int> _set)
   std::vector<unsigned int> borderPoints;
   for (unsigned int a = 0; a < _set.size(); a++)
   {
-    int element = _set[a];
+    unsigned int element = _set[a];
     std::array<unsigned int, n_fieldpoints<nx>()> points = CAM::getPoints<nx>(element);
     for (unsigned int i = 0; i < 2 * nx.size(); ++i)
     {
-      int neigh = aim<nx>(element, direct_neigh<nx>(i));
+      unsigned int neigh = aim<nx>(element, direct_neigh<nx>(i));
       if (std::find(_set.begin(), _set.end(), neigh) != _set.end())
         amountNeighbors[a]++;
       else
@@ -179,7 +179,7 @@ template <auto nx>
 struct HyperSphereBU : public BuildingUnit<nx>
 {
   double radius;
-  std::vector<int> stencilBU;
+  std::vector<unsigned int> stencilBU;
 
   HyperSphereBU(unsigned int _number,
                 unsigned int _jump_parameter,
@@ -212,7 +212,7 @@ template <auto nx>
 struct HyperPlaneBU : public BuildingUnit<nx>
 {
   std::vector<unsigned int> extent;
-  std::vector<int> stencilBU;
+  std::vector<unsigned int> stencilBU;
   HyperPlaneBU(unsigned int _number,
                unsigned int _jump_parameter,
                unsigned int _referencePoint,
@@ -233,7 +233,7 @@ struct HyperPlaneBU : public BuildingUnit<nx>
       {
         for (unsigned int i = 0; i < size; i++)
         {
-          unsigned int newCell = CAM::addMoves<nx>(stencilBU[i], d * direct_neigh<nx>(2 * dim + 1));
+          unsigned int newCell = CAM::aim<nx>(stencilBU[i], d * direct_neigh<nx>(2 * dim + 1));
           stencilBU.push_back(newCell);
         }
       }
@@ -265,11 +265,11 @@ struct HyperPlaneBU : public BuildingUnit<nx>
 template <auto nx>
 struct ParticleBU : public BuildingUnit<nx>
 {
-  std::vector<int> stencilBU;
+  std::vector<unsigned int> stencilBU;
   ParticleBU(unsigned int _number,
              unsigned int _jump_parameter,
              unsigned int _seedPoint,
-             std::vector<int> _stencil)
+             std::vector<unsigned int> _stencil)
   {
     this->number = _number;
     this->referencePoints = {_seedPoint};  // vector
@@ -277,7 +277,7 @@ struct ParticleBU : public BuildingUnit<nx>
     stencilBU = _stencil;
   }
   ~ParticleBU() override {}
-  static const std::vector<int> getStencil(const int _random_seed,
+  static const std::vector<unsigned int> getStencil(const int _random_seed,
                                            const double _feretDiameter_max,
                                            const double _feretDiameter_min,
                                            const unsigned int _extraCells)
@@ -304,7 +304,7 @@ struct ParticleBU : public BuildingUnit<nx>
     {
       centerpoint += nx[i] / 2 * direct_neigh<nx>(2 * i + 1);
     }
-    std::vector<int> stencil = CAM::getPNormedStencil<nx>(_feretDiameter_min / 2.0, 2);
+    std::vector<unsigned int> stencil = CAM::getPNormedStencil<nx>(_feretDiameter_min / 2.0, 2);
     double feretDiameter;
 
     std::array<std::vector<unsigned int>, 2> border_ = CAM::getBorder<nx>(stencil);
@@ -322,7 +322,7 @@ struct ParticleBU : public BuildingUnit<nx>
     feretDiameter = CAM::feretDiameter_max<nx>(fields1);
     std::cout<<"max_feret2 "<<feretDiameter<<std::endl;
 
-    int axis_min_feret = std::rand() % nx.size();
+    unsigned int axis_min_feret = std::rand() % nx.size();
     std::vector<unsigned int> min_feret_coord;
     for (unsigned int i = 0; i < stencil.size(); i++)
     {
@@ -358,7 +358,7 @@ struct ParticleBU : public BuildingUnit<nx>
       feretDiameter = CAM::feretDiameter_max<nx>(points);
       //std::cout<<"max_feret---- "<<feretDiameter<<std::endl;
 
-      std::vector<int> newStencilCells;
+      std::vector<unsigned int> newStencilCells;
       for (unsigned int a = 0; a < borderCells.size(); a++)
       {
         for (unsigned int i = 0; i < 2 * nx.size(); ++i)

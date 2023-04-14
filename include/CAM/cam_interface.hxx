@@ -27,6 +27,10 @@ class CAMInterface
   }
   bool placeSphere(int _position = -1, double _radius = 1, double _jump_parameter = 1)
   {
+    // unsigned int a = 1; 
+    // unsigned int b = 2;
+    // int i = a -b;
+    // std::cout<<"tes "<<i <<std::endl;
     return domain.placeSphere(_position, _radius, _jump_parameter);
   }
   bool placePlane(int _position = -1,
@@ -41,8 +45,8 @@ class CAMInterface
     std::srand(rand_seed);
     unsigned int centerpoint = 0;
 
-    std::vector<int> stencil1 = CAM::ParticleBU<nx>::getStencil(0, 30, 20,0);
-    std::vector<int> stencil2 = CAM::ParticleBU<nx>::getStencil(0, 20, 10,0);
+    std::vector<unsigned int> stencil1 = CAM::ParticleBU<nx>::getStencil(0, 30, 20,100);
+    std::vector<unsigned int> stencil2 = CAM::ParticleBU<nx>::getStencil(0, 20, 10,200);
     for (int a = 0; a < 10; a++)
     {
       unsigned int randomPoint = 0;
