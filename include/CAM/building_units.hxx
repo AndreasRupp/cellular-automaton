@@ -1,7 +1,11 @@
 /**
  * @file building_units.hxx
- * @brief
- *
+ * @brief Implementation of different building units
+ * CustomBU
+ * HyperPlane
+ * HyperSphere
+ * Particle (Custom stencil)
+ * TODO Maybe only Particle BU neccessary with different stencils (createStencil_X())
  *
  */
 #pragma once
@@ -16,12 +20,17 @@
 #include <vector>
 namespace CAM
 {
+/**
+ * @brief Calculate maximal feret Diameter
+ * Attentation: coords must be in R^n -> particle is not allowed to cross periodic domain boundary
+ * Shift particle in the middle of domain
+ * @tparam nx
+ * @param _fields field indices of particle
+ * @return max feret diamater
+ */
 template <auto nx>
 double feretDiameter_max_fields(std::vector<unsigned int> _fields)
 {
-  // man geht durch array, verlgleicht immer akutellstes elemt mit elementen mögicher convex hull
-  //  wenn das element in einer richtung extremer ist, wird mit dem nicht extremen ausgetauscht.
-  // es müssen n-1 gleich sein und 1 unterschiedlich
   unsigned int coord_a, coord_b;
   double distance_max = 0;
   for (unsigned int a = 0; a < _fields.size(); a++)
@@ -55,14 +64,16 @@ double feretDiameter_max_fields(std::vector<unsigned int> _fields)
   return distance_max;
 }
 /**
- * Points in R^n
+ * @brief Calculate maximal feret Diameter
+ * Attentation: coords must be in R^n -> particle is not allowed to cross periodic domain boundary
+ * Shift particle in the middle of domain
+ * @tparam nx
+ * @param _fields indices of points of cells
+ * @return max feret diamater
  */
 template <auto nx>
 double feretDiameter_max(std::vector<unsigned int> _points)
 {
-  // man geht durch array, verlgleicht immer akutellstes elemt mit elementen mögicher convex hull
-  //  wenn das element in einer richtung extremer ist, wird mit dem nicht extremen ausgetauscht.
-  // es müssen n-1 gleich sein und 1 unterschiedlich
   unsigned int coord_a, coord_b;
   double distance, distance_max = 0;
 
@@ -85,12 +96,12 @@ double feretDiameter_max(std::vector<unsigned int> _points)
   return distance_max;
 }
 /**
- * @brief Get the Border object
- *
+ * @brief Get the border cells and points of particle
+ *TODO Implement convexHull
  * @tparam nx
- * @param _set
- * @return std::array<std::vector<unsigned int>, 2>
- * TODO Implement convexHull
+ * @param _set connected cells
+ * @return {borderCells, borderPoints}
+ *
  */
 template <auto nx>
 std::array<std::vector<unsigned int>, 2> getBorder(std::vector<unsigned int> _set)
@@ -112,8 +123,8 @@ std::array<std::vector<unsigned int>, 2> getBorder(std::vector<unsigned int> _se
       {
         unsigned int dim = i / 2;
         unsigned int lr = i % 2;
-        // TODO ie zahlen 1-4 und dann an hcih stelle ein lr dazwischen schieben
-        for (unsigned int j = 0; j < points.size(); j++)  // std::pow(2, nx.size()-1)
+        // TODO Shorter: iterate over pow(2,nx.size()-1) and at dim bit sandwich lr
+        for (unsigned int j = 0; j < points.size(); j++)
         {
           if (((j & (1 << dim)) >> dim) == lr)
             borderPoints.push_back(points[j]);
@@ -122,22 +133,19 @@ std::array<std::vector<unsigned int>, 2> getBorder(std::vector<unsigned int> _se
     }
     if (amountNeighbors[a] < 2 * nx.size())
       borderCells.push_back(element);
-    // wenn nicht durch i teilbar
-
-    // std::for_each(arr.begin(),arr.end(), [] (unsigned int& el) {borderPoints.push_back(el);});
-    // std::array<unsigned int, n_fieldpoints<nx>()> points = CAM::getPoints<nx>(_set[a]);
-    // for(int j = 0; j < points.size(); j++)
-    // {
-    //   borderPoints.push_back(points[j]);
-    // }
   }
   sort(borderPoints.begin(), borderPoints.end());
   borderPoints.erase(unique(borderPoints.begin(), borderPoints.end()), borderPoints.end());
-  // for(int i = 0; i<borderPoints.size(); i++)
-  //   std::cout<<borderPoints[i] <<std::endl;
   return {borderCells, borderPoints};
 }
-// alle nachbarn mit 1er aus border raus, alle nx.size* 2 raus
+/**
+ * @brief Base struct template of building units (BU)
+ * \param number index of cells in domain
+ * \param jump_parameter How far BU is allowed to jump.
+ * \param referencePoints point in domain which is moved by CA and is calculation basis for all
+ * cells in BU
+ * @tparam nx
+ */
 template <auto nx>
 struct BuildingUnit
 {
@@ -151,6 +159,11 @@ struct BuildingUnit
 
   virtual bool isMember(unsigned int _index) = 0;
 };
+/**
+ * @brief Custom BU with defined field indices in domain
+ *
+ * @tparam nx
+ */
 template <auto nx>
 struct CustomBU : public BuildingUnit<nx>
 {
@@ -171,6 +184,14 @@ struct CustomBU : public BuildingUnit<nx>
             this->referencePoints.end());
   }
 };
+/**
+ * @brief Hyper sphere (2D: Circle, 3D: Sphere)
+ *
+ * @tparam nx
+ * @param _position field index of center point; no position is given (-1) -> random position
+ * @param _radius all cells are completely within the radius
+ * @param _jump_parameter How far sphere is allowed to jump.
+ */
 template <auto nx>
 struct HyperSphereBU : public BuildingUnit<nx>
 {
@@ -204,6 +225,14 @@ struct HyperSphereBU : public BuildingUnit<nx>
     return (CAM::pNormDistance<nx>(this->referencePoints[0], (int)_index, 2) < radius);
   }
 };
+/**
+ * @brief Limited hyper plane (2D: Rectangle, 3D: cuboid)
+ * @param _position field index of center point; no position is given (-1) -> random position
+ * @param _extent size of plane in each dimension
+ * @param _jump_parameter How far hyper plane is allowed to jump.
+ *
+ * @tparam nx
+ */
 template <auto nx>
 struct HyperPlaneBU : public BuildingUnit<nx>
 {
@@ -247,17 +276,17 @@ struct HyperPlaneBU : public BuildingUnit<nx>
   }
   bool isMember(unsigned int _index) override
   {
-    // int coord;
-    // int coord_max;
-    // for (unsigned int i = 0; i < nx.size(); ++i)
-    // {
-    //   CAM::pNormDistance<nx>(this->referencePoints[0],_index) (int)direct_neigh<nx>(2 * i + 1)
-    // }
-    return true;
+    // TODO
+    return _index == 42;
   }
 };
-// Vielleicht brauche man diese struct auch nicht, sonder  alles nur CustomBU
-//+ create Stencil
+/**
+ * @brief Particle with custom stencil
+ * custom stencil defined by min and max feretDiameter and amount of extra cells attached to sphere
+ * with radius min_feretDiameter/2
+ *
+ * @tparam nx
+ */
 template <auto nx>
 struct ParticleBU : public BuildingUnit<nx>
 {
@@ -268,7 +297,7 @@ struct ParticleBU : public BuildingUnit<nx>
              std::vector<unsigned int> _stencil)
   {
     this->number = _number;
-    this->referencePoints = {_seedPoint};  // vector
+    this->referencePoints = {_seedPoint};
     this->jump_parameter = _jump_parameter;
     stencilBU = _stencil;
   }
@@ -278,14 +307,6 @@ struct ParticleBU : public BuildingUnit<nx>
                                                     const double _feretDiameter_min,
                                                     const unsigned int _extraCells)
   {
-    // mimum feret durch kreis mit 2 * radius = feret
-    // dann voxel dran machen, sodass max feret diameter erreicht wird.
-    //  dann voxel dran machen (bis area erfüllt, oder verhältnis umfang- area),  mit bedingung
-    //  max_feret nicht überboten wird.
-
-    // schwerpunkt d
-    // punkt finden dass mit max feret diamter passt
-
     unsigned int rand_seed;
     if (_random_seed == 0)
     {
@@ -303,20 +324,20 @@ struct ParticleBU : public BuildingUnit<nx>
     std::vector<unsigned int> stencil = CAM::getPNormedStencil<nx>(_feretDiameter_min / 2.0, 2);
     double feretDiameter;
 
-    std::array<std::vector<unsigned int>, 2> border_ = CAM::getBorder<nx>(stencil);
-    std::vector<unsigned int> border = border_[0];
-    std::vector<unsigned int> fields(border.size());
-    for (unsigned int i = 0; i < fields.size(); i++)
-      fields[i] = aim<nx>(centerpoint, border[i]);
-    feretDiameter = CAM::feretDiameter_max_fields<nx>(fields);
-    std::cout << "max_feret1 " << feretDiameter << std::endl;
+    // std::array<std::vector<unsigned int>, 2> border_ = CAM::getBorder<nx>(stencil);
+    // std::vector<unsigned int> border = border_[0];
+    // std::vector<unsigned int> fields(border.size());
+    // for (unsigned int i = 0; i < fields.size(); i++)
+    //   fields[i] = aim<nx>(centerpoint, border[i]);
+    // feretDiameter = CAM::feretDiameter_max_fields<nx>(fields);
+    // std::cout << "max_feret1 " << feretDiameter << std::endl;
 
-    border = border_[1];
-    std::vector<unsigned int> fields1(border.size());
-    for (unsigned int i = 0; i < fields1.size(); i++)
-      fields1[i] = aim<nx>(centerpoint, border[i]);
-    feretDiameter = CAM::feretDiameter_max<nx>(fields1);
-    std::cout << "max_feret2 " << feretDiameter << std::endl;
+    // border = border_[1];
+    // std::vector<unsigned int> fields1(border.size());
+    // for (unsigned int i = 0; i < fields1.size(); i++)
+    //   fields1[i] = aim<nx>(centerpoint, border[i]);
+    // feretDiameter = CAM::feretDiameter_max<nx>(fields1);
+    // std::cout << "max_feret2 " << feretDiameter << std::endl;
 
     unsigned int axis_min_feret = std::rand() % nx.size();
     std::vector<unsigned int> min_feret_coord;
@@ -329,16 +350,6 @@ struct ParticleBU : public BuildingUnit<nx>
     sort(min_feret_coord.begin(), min_feret_coord.end());
     min_feret_coord.erase(unique(min_feret_coord.begin(), min_feret_coord.end()),
                           min_feret_coord.end());
-    // std::for_each(min_feret_coord.begin(),min_feret_coord.end(),[] (unsigned int& c)
-    // {
-    //   std::cout<<c<<""<<std::endl;
-    // });
-
-    // der abstand muss gleich bleiben
-    // min max rausfinden: _feretDiameter_min/2 * (int)direct_neigh<nx>(2 * axis_min_feret + 1)
-    // coord_a = (_convexHull[a] / (int)direct_neigh<nx>(2 * axis_min_feret + 1) + n_fields<nx>()) %
-    // nx[axis_min_feret];
-    // erst zufällig eins auswählen und dann messen
 
     for (unsigned int c = 0; c < _extraCells; c++)
     {
@@ -350,7 +361,7 @@ struct ParticleBU : public BuildingUnit<nx>
         points[i] = aim<nx>(centerpoint, borderPoints[i]);
 
       feretDiameter = CAM::feretDiameter_max<nx>(points);
-      // std::cout<<"max_feret---- "<<feretDiameter<<std::endl;
+      ;
 
       std::vector<unsigned int> newStencilCells;
       for (unsigned int a = 0; a < borderCells.size(); a++)
@@ -369,7 +380,7 @@ struct ParticleBU : public BuildingUnit<nx>
           }
         }
       }
-      // here mögliche andere Metriken wie smoothness
+      // here possible other metrics as smoothness
       std::shuffle(newStencilCells.begin(), newStencilCells.end(),
                    std::default_random_engine(std::rand()));
       for (unsigned int j = 0; j < newStencilCells.size(); j++)
@@ -379,7 +390,6 @@ struct ParticleBU : public BuildingUnit<nx>
         for (unsigned int p = 0; p < newPoints.size(); p++)
           points.push_back(aim<nx>(centerpoint, (int)newPoints[p]));
         feretDiameter = CAM::feretDiameter_max<nx>(points);
-        // std::cout<<"max_feret "<<feretDiameter<<std::endl;
 
         if (feretDiameter < _feretDiameter_max)
         {
@@ -395,6 +405,7 @@ struct ParticleBU : public BuildingUnit<nx>
     }
     return stencil;
   }
+
   std::vector<unsigned int> getFieldIndices() override
   {
     std::vector<unsigned int> fields;
@@ -404,6 +415,10 @@ struct ParticleBU : public BuildingUnit<nx>
     }
     return fields;
   }
-  bool isMember(unsigned int _index) override { return _index == 42; }
+  bool isMember(unsigned int _index) override
+  {
+    // TODO
+    return _index == 42;
+  }
 };
 }  // namespace CAM

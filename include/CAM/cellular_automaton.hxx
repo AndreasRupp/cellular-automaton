@@ -2,7 +2,7 @@
  * @file cellular_automaton.hxx
  * \brief This class implements the rules of a cellular automaton
  * Can be applied on a domain
- *
+ *TODO calculate attraction only on basis of BU or composites border
  */
 #pragma once
 #ifndef CELLULAR_AUTOMATON_HXX
@@ -37,19 +37,19 @@ class CellularAutomaton
    */
   static void apply(Domain<nx, fields_array_t>& _domain)
   {
-    _domain.aggregates.clear();
+    _domain.composites.clear();
     std::shuffle(_domain.buildingUnits.begin(), _domain.buildingUnits.end(),
                  std::default_random_engine(std::rand()));
-    std::cout << "Number of BU: " << _domain.buildingUnits.size() << std::endl;
+    // std::cout << "Number of BU: " << _domain.buildingUnits.size() << std::endl;
     std::for_each(_domain.buildingUnits.begin(), _domain.buildingUnits.end(),
                   [&](CAM::BuildingUnit<nx>* unit) { moveBU(unit, _domain.domainFields); });
-    _domain.findAggregates();
-    std::cout << "Number of aggregates: " << _domain.aggregates.size() << std::endl;
-    std::shuffle(_domain.aggregates.begin(), _domain.aggregates.end(),
+    _domain.findComposites();
+    // std::cout << "Number of composites: " << _domain.composites.size() << std::endl;
+    std::shuffle(_domain.composites.begin(), _domain.composites.end(),
                  std::default_random_engine(std::rand()));
-    std::for_each(_domain.aggregates.begin(), _domain.aggregates.end(),
-                  [&](CAM::Aggregate<nx>* aggregate)
-                  { moveAggregate(aggregate, _domain.domainFields); });
+    std::for_each(_domain.composites.begin(), _domain.composites.end(),
+                  [&](CAM::Composite<nx>* composite)
+                  { moveComposite(composite, _domain.domainFields); });
   }
 
   /**
@@ -102,23 +102,23 @@ class CellularAutomaton
    * @param _unit composites
    * @param _domainFields cells of domain
    */
-  static void moveAggregate(CAM::Aggregate<nx>* _aggregate, fields_array_t& _domainFields)
+  static void moveComposite(CAM::Composite<nx>* _composite, fields_array_t& _domainFields)
   {
-    std::vector<unsigned int> indices(_aggregate->fieldIndices.size(), 0);
-    for (unsigned int i = 0; i < _aggregate->fieldIndices.size(); i++)
+    std::vector<unsigned int> indices(_composite->fieldIndices.size(), 0);
+    for (unsigned int i = 0; i < _composite->fieldIndices.size(); i++)
     {
-      indices[i] = _domainFields[_aggregate->fieldIndices[i]];
-      _domainFields[_aggregate->fieldIndices[i]] = 0;
+      indices[i] = _domainFields[_composite->fieldIndices[i]];
+      _domainFields[_composite->fieldIndices[i]] = 0;
     }
 
-    std::vector<unsigned int> possible_moves = CAM::getStencil<nx>(_aggregate->jump_parameter);
+    std::vector<unsigned int> possible_moves = CAM::getStencil<nx>(_composite->jump_parameter);
     std::vector<unsigned int> best_moves(1, 0);
     double attraction = 0.;
     std::for_each(possible_moves.begin(), possible_moves.end(),
                   [&](int move)
                   {
                     double current_attraction =
-                      getAttractionAggregate(move, _aggregate, _domainFields);
+                      getAttractionComposite(move, _composite, _domainFields);
                     if (current_attraction > attraction)
                     {
                       best_moves = std::vector<unsigned int>(1, move);
@@ -127,15 +127,15 @@ class CellularAutomaton
                     else if (current_attraction == attraction)
                       best_moves.push_back(move);
                   });
-    for (unsigned int i = 0; i < _aggregate->fieldIndices.size(); i++)
+    for (unsigned int i = 0; i < _composite->fieldIndices.size(); i++)
     {
-      _domainFields[_aggregate->fieldIndices[i]] = indices[i];
+      _domainFields[_composite->fieldIndices[i]] = indices[i];
     }
 
     int best_move = best_moves[std::rand() % best_moves.size()];
-    for (unsigned int i = 0; i < _aggregate->buildingUnits.size(); i++)
+    for (unsigned int i = 0; i < _composite->buildingUnits.size(); i++)
     {
-      doMoveBU(best_move, _aggregate->buildingUnits[i], _domainFields);
+      doMoveBU(best_move, _composite->buildingUnits[i], _domainFields);
     }
   }
   /*!*********************************************************************************************
@@ -170,17 +170,17 @@ class CellularAutomaton
    * \brief   Check attraction of the possible moves for merged BUs.
    *
    * \param   move            Index shift induced by possible move.
-   * \param   _aggregate      composites
+   * \param   _composite      composites
    * \retval  attraction      Amount of neighbours.
    **********************************************************************************************/
-  static double getAttractionAggregate(const unsigned int move,
-                                       Aggregate<nx>* _aggregate,
+  static double getAttractionComposite(const unsigned int move,
+                                       Composite<nx>* _composite,
                                        fields_array_t& _domainFields)
   {
     double attraction = 0.;
-    for (unsigned int i = 0; i < _aggregate->fieldIndices.size(); i++)
+    for (unsigned int i = 0; i < _composite->fieldIndices.size(); i++)
     {
-      unsigned int aiming = aim<nx>(_aggregate->fieldIndices[i], move);
+      unsigned int aiming = aim<nx>(_composite->fieldIndices[i], move);
       if (_domainFields[aiming] != 0 && move != 0)
         return double_min;
       for (unsigned int i = 0; i < 2 * dim; ++i)

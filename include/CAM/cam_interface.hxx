@@ -1,3 +1,9 @@
+/**
+ * @file cam_interface.hxx
+ * @brief Interface for Python
+ *
+ *
+ */
 #pragma once
 #include <CAM/building_units.hxx>
 #include <CAM/cellular_automaton.hxx>
@@ -30,10 +36,6 @@ class CAMInterface
   }
   bool placeSphere(int _position = -1, double _radius = 1, double _jump_parameter = 1)
   {
-    // unsigned int a = 1;
-    // unsigned int b = 2;
-    // int i = a -b;
-    // std::cout<<"tes "<<i <<std::endl;
     return domain.placeSphere(_position, _radius, _jump_parameter);
   }
   bool placePlane(int _position = -1,
@@ -44,6 +46,7 @@ class CAMInterface
   }
   void placeParticles()
   {
+    // TODO parameterize this function
     unsigned int rand_seed = std::chrono::system_clock::now().time_since_epoch().count();
     std::srand(rand_seed);
     unsigned int centerpoint = 0;

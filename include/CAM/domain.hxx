@@ -12,8 +12,8 @@
 #ifndef DOMAIN_HXX
 #define DOMAIN_HXX
 
-#include <CAM/aggregate.hxx>
 #include <CAM/building_units.hxx>
+#include <CAM/composite.hxx>
 #include <CAM/utils.hxx>
 #include <array>
 #include <chrono>
@@ -38,8 +38,8 @@ class Domain
   {
     std::for_each(buildingUnits.begin(), buildingUnits.end(),
                   [&](CAM::BuildingUnit<nx>* unit) { delete unit; });
-    std::for_each(aggregates.begin(), aggregates.end(),
-                  [&](CAM::Aggregate<nx>* aggregate) { delete aggregate; });
+    std::for_each(composites.begin(), composites.end(),
+                  [&](CAM::Composite<nx>* composite) { delete composite; });
   }
   /**
    * @brief Construct a new Domain object
@@ -76,7 +76,6 @@ class Domain
     bool success = true;
     indexBU++;
     _unit->number = indexBU;
-    // std::cout<<_unit->number<<" ";
     std::vector<unsigned int> fields = _unit->getFieldIndices();
     std::for_each(fields.begin(), fields.end(),
                   [&](unsigned int field)
@@ -189,9 +188,9 @@ class Domain
   }
   /*!*
    * @brief  Finds composites (particles containing more then one BU) in domain and stores
-   * information in std::vector<CAM::Aggregate<nx>*> aggregates; std::vector<Particle> particles;
+   * information in std::vector<CAM::Composite<nx>*> composites; std::vector<Particle> particles;
    */
-  void findAggregates()
+  void findComposites()
   {
     fields_array_t fields = domainFields;
     constexpr unsigned int dim = nx.size();
@@ -204,12 +203,12 @@ class Domain
     for (auto first_solid = std::find(fields.begin(), fields.end(), 0); first_solid != fields.end();
          first_solid = std::find(first_solid, fields.end(), 0))
     {
-      std::vector<CAM::fieldNumbers_t> aggregateComponents;
+      std::vector<CAM::fieldNumbers_t> compositeComponents;
 
       found_solids = std::vector<unsigned int>(1, std::distance(fields.begin(), first_solid));
       fields[found_solids[0]] = uint_max;
 
-      aggregateComponents.push_back(domainFields[found_solids[0]]);
+      compositeComponents.push_back(domainFields[found_solids[0]]);
       solids_size = 1;
       for (unsigned int k = 0; k < solids_size; ++k, solids_size = found_solids.size())
       {
@@ -222,31 +221,31 @@ class Domain
             fields[neigh_field] = uint_max;
             found_solids.push_back(neigh_field);
             unsigned int number = domainFields[neigh_field];
-            if (std::find(aggregateComponents.begin(), aggregateComponents.end(), number) ==
-                aggregateComponents.end())
+            if (std::find(compositeComponents.begin(), compositeComponents.end(), number) ==
+                compositeComponents.end())
             {
-              aggregateComponents.push_back(number);
+              compositeComponents.push_back(number);
             }
           }
         }
       }
-      if (aggregateComponents.size() > 1)
+      if (compositeComponents.size() > 1)
       {
-        CAM::Aggregate<nx>* newAggregate = new CAM::Aggregate<nx>();
-        for (unsigned int i = 0; i < aggregateComponents.size(); i++)
+        CAM::Composite<nx>* newComposite = new CAM::Composite<nx>();
+        for (unsigned int i = 0; i < compositeComponents.size(); i++)
         {
           typename std::vector<CAM::BuildingUnit<nx>*>::iterator it =
             std::find_if(buildingUnits.begin(), buildingUnits.end(),
                          [&](CAM::BuildingUnit<nx>* unit) -> bool
-                         { return unit->number == aggregateComponents[i]; });
-          newAggregate->buildingUnits.push_back(*it);
-          newAggregate->fieldIndices = found_solids;
-          newAggregate->jump_parameter =
-            std::pow(newAggregate->fieldIndices.size(), 1.0 / (double)dim);
+                         { return unit->number == compositeComponents[i]; });
+          newComposite->buildingUnits.push_back(*it);
+          newComposite->fieldIndices = found_solids;
+          newComposite->jump_parameter =
+            std::pow(newComposite->fieldIndices.size(), 1.0 / (double)dim);
         }
-        aggregates.push_back(newAggregate);
+        composites.push_back(newComposite);
       }
-      particles.push_back(Particle(found_solids, aggregateComponents));
+      particles.push_back(Particle(found_solids, compositeComponents));
     }
   }
   /*!***********************************************************************************************
@@ -263,7 +262,7 @@ class Domain
    * \brief   Vector of particles.
    ************************************************************************************************/
   std::vector<CAM::BuildingUnit<nx>*> buildingUnits;
-  std::vector<CAM::Aggregate<nx>*> aggregates;
+  std::vector<CAM::Composite<nx>*> composites;
 
   /*!***********************************************************************************************
    * \brief   Describes one connected set of bulk cells/fields.
@@ -337,7 +336,7 @@ class Domain
   std::vector<unsigned int> particle_size_distribution()
   {
     // Alternative
-    //  findAggregates();
+    //  findComposites();
     //  std::vector<unsigned int> distribution;
     //  distribution.resize(particles.size());
     //  for(unsigned int i = 0; i < particles.size();i++)
@@ -572,7 +571,7 @@ class Domain
    ************************************************************************************************/
   std::array<double, 12> eval_measures()
   {
-    findAggregates();
+    findComposites();
     unsigned int n_single_cells =
       std::count_if(particles.begin(), particles.end(),
                     [](Particle particle) -> bool { return particle.fieldIndices.size() == 1; });

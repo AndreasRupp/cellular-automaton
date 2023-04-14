@@ -85,18 +85,16 @@ static constexpr unsigned int aim(const int position, const int move)
   return new_pos;
 }
 /**
- * @brief Get the Points object
+ * @brief Get the all 2^dim points of a cell
  *
  * @tparam nx
- * @param _field
- * @return std::array<unsigned int, n_fieldpoints<nx>()>
+ * @param _field index of cell
+ * @return indices of points
  */
 template <auto nx>
 static std::array<unsigned int, n_fieldpoints<nx>()> getPoints(unsigned int _field)
 {
   std::array<unsigned int, n_fieldpoints<nx>()> points;
-  // std::cout<<"field "<<_field<<std::endl;
-  //
   for (unsigned int a = 0; a < pow(2, nx.size()); a++)
   {
     points[a] = _field;
@@ -106,42 +104,17 @@ static std::array<unsigned int, n_fieldpoints<nx>()> getPoints(unsigned int _fie
       points[a] = aim<nx>(points[a], leftright * direct_neigh<nx>(2 * i + 1));
     }
   }
-  // alternative
-  // unsigned int i = 0;
-  // points1[0] = _field;
-  // for (unsigned int a = 1; a < pow(2, nx.size()); a++)
-  // {
-  //   i++;
-  //   i = i % nx.size();
-  //   int leftright = (a & (1 << i)) >> i;
-  //   points1[a] = aim<nx>(points1[a-1], leftright * direct_neigh<nx>(2 * i + 1));
-  //   if(points1[a] != points[a])
-  //   std::cout<<"hhhhhhhhhhhhh"<<std::endl;
-  //   //std::cout<<points[a]<<std::endl;
-  // }
-  // noch kürzer ohne aim sondern direkt
-  // std::cout<<"-------"<<std::endl;
-
+  // TODO shorter without using aim
   return points;
 }
-// template <auto nx>
-// static std::array<unsigned int, pow(2, nx.size())> getCoords(unsigned int _field)
-// {
-//   std::array<unsigned int, pow(2, nx.size())> coord;
-//   for (unsigned int a = 0; a < pow(2, nx.size()); a++)
-//   {
-
-//     for (unsigned int i = 0; i < nx.size(); ++i)
-//     {
-//       int bit = (a & (1 << i)) >> i;
-//       coord[a] = (_field / (int)direct_neigh<nx>(2 * i + 1) + n_fields<nx>()) % nx[i];
-//       coord[a] = coord[a] + bit;
-//     }
-//   }
-
-// }
 /**
- * Distance in a periodic domain
+ * @brief Distance induced by p-Norm of two points/cells in a periodic domain
+ *
+ * @tparam nx
+ * @param _position1
+ * @param _position2
+ * @param _p type of norm (p = 2 euclidean norm)
+ * @return distance
  */
 template <auto nx>
 double pNormDistance(const unsigned int _position1, const unsigned int _position2, unsigned int _p)
@@ -152,8 +125,6 @@ double pNormDistance(const unsigned int _position1, const unsigned int _position
   {
     coord1 = (_position1 / direct_neigh<nx>(2 * i + 1) + n_fields<nx>()) % nx[i];
     coord2 = (_position2 / direct_neigh<nx>(2 * i + 1) + n_fields<nx>()) % nx[i];
-    // unsigned int d = std::abs((int)coord1 - (int)coord2);
-    // d = std::min(d, nx[i] - d);
     std::array<int, 3> ds;
     ds[0] = (int)coord1 - (int)coord2;
     ds[1] = ((int)coord1 - (int)coord2 + nx[i]) % nx[i];
@@ -167,7 +138,14 @@ double pNormDistance(const unsigned int _position1, const unsigned int _position
   }
   return std::pow(norm, 1.0 / (double)_p);
 }
-// geht nicht wenn radius größer als nx[i]/2
+/**
+ * @brief Stencil with cells inside certain radius
+ *
+ * @tparam nx
+ * @param _radius
+ * @param _p
+ * @return std::vector<unsigned int>
+ */
 template <auto nx>
 static std::vector<unsigned int> getPNormedStencil(double _radius, unsigned int _p)
 {
@@ -187,7 +165,6 @@ static std::vector<unsigned int> getPNormedStencil(double _radius, unsigned int 
       {
         unsigned int newMove = aim<nx>(stencil[index], direct_neigh<nx>(i));
         unsigned int newCell = newMove;  // aim<nx>(0, newMove);
-        // std::cout<<"newCell "<<newCell<<std::endl;
         std::array<unsigned int, n_fieldpoints<nx>()> points = CAM::getPoints<nx>(newCell);
         bool isInside = true;
         for (unsigned int i = 0; i < points.size(); i++)
