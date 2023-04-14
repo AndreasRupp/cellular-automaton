@@ -1,3 +1,13 @@
+/**
+ * @file domain.hxx
+ *
+ * @brief This class implements a domain and holds all its properties
+ * TODO Mayber outsource all evaluation functions to own class
+ *
+ * \tparam  nx              The size of a row for each dimension of the matrix
+ * \tparam  n_fields        Size of the domain
+ *
+ */
 #pragma once
 #ifndef DOMAIN_HXX
 #define DOMAIN_HXX
@@ -21,6 +31,7 @@ class Domain
  public:
   double jump_parameter_composites;
   static constexpr unsigned int n_fields_ = n_fields<nx>();
+  // storing index for new particle
   double indexBU;
 
   ~Domain()
@@ -30,8 +41,15 @@ class Domain
     std::for_each(aggregates.begin(), aggregates.end(),
                   [&](CAM::Aggregate<nx>* aggregate) { delete aggregate; });
   }
-  Domain(double _jump_parameter_composites = - 1): 
-    jump_parameter_composites((_jump_parameter_composites != -1.) ? _jump_parameter_composites: 5)  // double _jump_parameter_composites = 1.0
+  /**
+   * @brief Construct a new Domain object
+   * 
+   * @param _jump_parameter_composites How far composites particles are allowed to jump.
+   */
+  Domain(double _jump_parameter_composites = -1)
+  : jump_parameter_composites((_jump_parameter_composites != -1.)
+                                ? _jump_parameter_composites
+                                : 5)  // double _jump_parameter_composites = 1.0
   {
     if constexpr (std::is_same<fields_array_t,
                                std::vector<typename fields_array_t::value_type>>::value)
@@ -46,7 +64,14 @@ class Domain
       indexBU = 0;
     }
   }
-  bool placeBU(CAM::BuildingUnit<nx>* _unit)  //
+/**
+ * @brief Place any building unit (BU) into the domain
+ * Basis function for placement for all special BUs
+ * @param _unit building unit
+ * @return true: cells pf BU are marked with individual index, BU is stored in BU vector
+ * @return false: BU could not be placed. all its cells are removed
+ */
+  bool placeBU(CAM::BuildingUnit<nx>* _unit)
   {
     bool success = true;
     indexBU++;
@@ -64,7 +89,6 @@ class Domain
                     else
                     {
                       success = 0;
-                      // break;
                     }
                   });
 
@@ -82,12 +106,20 @@ class Domain
     {
       buildingUnits.push_back(_unit);
     }
-    // std::cout<<success<<std::endl;
     return success;
   }
+  /**
+   * @brief Places HyperSphere (2D: Circle, 3D: Sphere) into domain
+   *
+   * @param _position field index of center point; no position is given (-1) -> random position
+   * @param _radius all cells are completely within the radius
+   * @param _jump_parameter How far sphere is allowed to jump.
+   * @return true: sphere is placed
+   * @return false: sphere could not be placed. all its cells are removed
+   */
   bool placeSphere(int _position = -1, double _radius = 1, double _jump_parameter = 1)
   {
-    if (_position = -1)
+    if (_position == -1)
     {
       rand_seed = std::chrono::system_clock::now().time_since_epoch().count();
       std::srand(rand_seed);
@@ -99,11 +131,20 @@ class Domain
       delete sphere;
     return success;
   }
+  /**
+   * @brief Place a limited hyper plane (2D: Rectangle, 3D: cuboid) into domain
+   * 
+   * @param _position field index of center point; no position is given (-1) -> random position
+   * @param _extent size of plane in each dimension
+   * @param _jump_parameter How far hyper plane is allowed to jump.
+   * @return true: plane is placed
+   * @return false: plane could not be placed. all its cells are removed
+   */
   bool placePlane(int _position = -1,
                   std::vector<unsigned int> _extent = std::vector<unsigned int>(nx.size(), 0),
                   double _jump_parameter = 1)
   {
-    if (_position = -1)
+    if (_position == -1)
     {
       rand_seed = std::chrono::system_clock::now().time_since_epoch().count();
       std::srand(rand_seed);
@@ -115,6 +156,13 @@ class Domain
       delete plane;
     return success;
   }
+  /**
+   * @brief Creates domain with building units containing only one cell
+   *
+   * @param _porosity The percentage of void space, not occupied by solid/BU.
+   * @param _jump_parameter How far individual particles are allowed to jump.
+   * @param random_seed If given, sets random seed to given seed.
+   */
   void placeSingleCellBURandomly(double _porosity = 0.90,
                                  double _jump_parameter = 1,
                                  unsigned int random_seed = 0)
@@ -137,10 +185,13 @@ class Domain
       std::vector<unsigned int> pos(1, position);
       buildingUnits.push_back(new CustomBU<nx>(i + 1, _jump_parameter, pos));
       domainFields[position] = i + 1;
-      // particle(position, *this, i + 1));
     }
   }
-
+  /*!*
+   * @brief  Finds composites (particles containing more then one BU) in domain and stores information in
+   * std::vector<CAM::Aggregate<nx>*> aggregates;
+   * std::vector<Particle> particles;
+   */
   void findAggregates()
   {
     fields_array_t fields = domainFields;
@@ -191,14 +242,19 @@ class Domain
                          { return unit->number == aggregateComponents[i]; });
           newAggregate->buildingUnits.push_back(*it);
           newAggregate->fieldIndices = found_solids;
-          newAggregate->jump_parameter = jump_parameter_composites;// / std::pow(newAggregate->fieldIndices.size(), 1.0 / (double)dim);
+          newAggregate->jump_parameter =
+            std::pow(newAggregate->fieldIndices.size(), 1.0 / (double)dim);
         }
         aggregates.push_back(newAggregate);
       }
       particles.push_back(Particle(found_solids, aggregateComponents));
     }
   }
-
+  /*!***********************************************************************************************
+   * \brief   Returns Domain
+   *
+   * \retval  domainFields      Information about  status of each cell in domain
+   ************************************************************************************************/
   const fields_array_t& fields() const { return domainFields; }
   /*!***********************************************************************************************
    * \brief   Array of particle locations.
@@ -210,6 +266,10 @@ class Domain
   std::vector<CAM::BuildingUnit<nx>*> buildingUnits;
   std::vector<CAM::Aggregate<nx>*> aggregates;
 
+  /*!***********************************************************************************************
+   * \brief   Describes one connected set of bulk cells/fields.
+   * Information gathered only by analysing the domain independ of defintion of BU and composites
+   ************************************************************************************************/
   struct Particle
   {
     Particle(std::vector<unsigned int> _fieldIndices, std::vector<CAM::fieldNumbers_t> _numbers)
@@ -217,15 +277,37 @@ class Domain
       fieldIndices = _fieldIndices;
       numbers = _numbers;
     }
+    /*!*********************************************************************************************
+     * \brief   Indices of building units contained in a particle
+     * min_size = 1, max_size = number of building units in domain
+     **********************************************************************************************/
     std::vector<CAM::fieldNumbers_t> numbers;
+    /*!*********************************************************************************************
+     * \brief   Location of the particle.
+     **********************************************************************************************/
     std::vector<unsigned int> fieldIndices;
   };
+  /**
+   * @brief vector of particles (connected components)
+   * contains
+   */
   std::vector<Particle> particles;
   /*!***********************************************************************************************
    * \brief   Random seed.
    ************************************************************************************************/
   unsigned int rand_seed;
 
+  // -------------------------------------------------------------------------------------------------
+  // EVALUATING SECTION STARTS HERE (TODO maybe outsource in different file)
+  // -------------------------------------------------------------------------------------------------
+
+  /**
+   * @brief Compares bulks of domain A and B
+   *
+   * @param domain_a
+   * @param domain_b
+   * @return amount of cells which alternated from or to 0
+   */
   static constexpr unsigned int bulk_distance(const fields_array_t& domain_a,
                                               const fields_array_t& domain_b)
   {
@@ -248,9 +330,22 @@ class Domain
       }
     return distance;
   }
-
+  /**
+   * @brief Gives size of each particle in a sorted way
+   *
+   * @return vector of sizes
+   */
   std::vector<unsigned int> particle_size_distribution()
   {
+    // Alternative
+    //  findAggregates();
+    //  std::vector<unsigned int> distribution;
+    //  distribution.resize(particles.size());
+    //  for(unsigned int i = 0; i < particles.size();i++)
+    //  {
+    //      distribution.at(i) = particles.at(i).fieldIndices.size();
+    //  }
+
     constexpr unsigned int dim = nx.size();
     unsigned int fluids_size, field, neigh_field;
     std::vector<unsigned int> found_solids, distribution;
@@ -283,8 +378,17 @@ class Domain
     std::sort(distribution.begin(), distribution.end());
     return distribution;
   }
-
+  /**************************************************************************************************
+   * @brief Gives the number of particles (connected component) inside the domain
+   *
+   * @return amount of particles
+   ***************************************************************************************************/
   unsigned int n_solid_comp() { return particle_size_distribution().size(); }
+  /*!*********************************************************************************************
+   * \brief   Counts surfaces of all particles.
+   *
+   * \retval  n_surfaces      Surfaces of all particles.
+   **********************************************************************************************/
   unsigned int getNSurfaces(std::vector<unsigned int> _fields)
   {
     unsigned int n_surfaces = 0;
@@ -343,11 +447,11 @@ class Domain
 
     return max_distance;
   }
-  //     /*!*********************************************************************************************
-  //      * \brief   Calculate the ratio of diameters for every dimension.
-  //      *
-  //      * \retval  max_diameter / min_diameter      Max dimension ratio.
-  //      **********************************************************************************************/
+  /*!*********************************************************************************************
+   * \brief   Calculate the ratio of diameters for every dimension.
+   *
+   * \retval  max_diameter / min_diameter      Max dimension ratio.
+   **********************************************************************************************/
   double max_dimension_ratio(Particle _particle)
   {
     std::array<unsigned int, dim> width_dim;
@@ -358,6 +462,12 @@ class Domain
     return (double)max_diameter / (double)min_diameter;
   }
 
+  /*!*********************************************************************************************
+   * \brief   Find the longest shortest path inside particle.
+   *
+   * \param   field            Location of the single particle
+   * \retval  max_distance     Length of the path
+   **********************************************************************************************/
   unsigned int max_min_distance(unsigned int field, Particle _particle)
   {
     unsigned int max_distance = 0;
@@ -428,7 +538,11 @@ class Domain
     max_distance = max_val - min_val + 1;
     return max_distance;
   }
-
+  /**
+   * @brief Gives the avarage particle size
+   *
+   * @return avarage particle size
+   */
   constexpr double average_particle_size()
   {
     unsigned int n_solids = 0;

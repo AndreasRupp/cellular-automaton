@@ -1,3 +1,9 @@
+/**
+ * @file utils.hxx
+ * 
+ * @brief Holds static utility functions which can be used in CAM
+ * 
+ */
 #pragma once
 #include <algorithm>
 #include <array>
@@ -33,7 +39,12 @@ static constexpr unsigned int n_fields()
     n_field *= nx[i];
   return n_field;
 }
-
+/**
+ * @brief Finds the movement to a direct neighbor within von Neumann neighborhood
+ * each dimension two neighbors (left and right)
+ * @param index 0 < index < 2 * nx.size(). index of neighbor 
+ * @return move 
+ */
 template <auto nx>
 static constexpr int direct_neigh(const unsigned int index)
 {
@@ -43,6 +54,11 @@ static constexpr int direct_neigh(const unsigned int index)
     direct_neigh *= nx[i];
   return direct_neigh;
 }
+/**
+ * @brief How many corner points of a cell
+ * 
+ * @return number of cornerpoints
+ */
 template <auto nx>
 static constexpr unsigned int n_fieldpoints()
 {
@@ -82,12 +98,16 @@ static constexpr unsigned int addMoves(int move1, int move2)
   return new_move;
 }
 /**
- * vielleicht datenstructur mit points
-*/
+ * @brief Get the Points object
+ * 
+ * @tparam nx 
+ * @param _field 
+ * @return std::array<unsigned int, n_fieldpoints<nx>()> 
+ */
 template <auto nx>
 static std::array<unsigned int, n_fieldpoints<nx>()> getPoints(int _field)
 {
-  std::array<unsigned int, n_fieldpoints<nx>()> points, points1;
+  std::array<unsigned int, n_fieldpoints<nx>()> points;
   //std::cout<<"field "<<_field<<std::endl;
   //
   for (unsigned int a = 0; a < pow(2, nx.size()); a++)
@@ -184,7 +204,7 @@ static std::vector<int> getPNormedStencil(double _radius, unsigned int _p)
        // std::cout<<"newCell "<<newCell<<std::endl;
         std::array<unsigned int, n_fieldpoints<nx>()> points = CAM::getPoints<nx>(newCell);
         bool isInside = true;
-        for(int i = 0; i < points.size(); i++)
+        for(unsigned int i = 0; i < points.size(); i++)
           isInside = isInside && (pNormDistance<nx>(0,points[i] , _p) < radius);
 
         if (std::find(stencil.begin(), stencil.end(), newMove) == stencil.end() && isInside)
@@ -198,6 +218,13 @@ static std::vector<int> getPNormedStencil(double _radius, unsigned int _p)
   }
   return stencil;
 }
+/*!*********************************************************************************************
+     * \brief   Checks possible moves for a certain jump parameter.
+     * \param   jump_parameter Manhattan Distance
+     * Order of possible moves: down, right, up, left.
+     *
+     * \retval stencil
+     **********************************************************************************************/
 template <auto nx>
 static std::vector<int> getStencil(double _jump_parameter)
 {

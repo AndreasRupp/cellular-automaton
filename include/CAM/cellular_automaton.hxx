@@ -1,3 +1,9 @@
+/**
+ * @file cellular_automaton.hxx
+ * \brief This class implements the rules of a cellular automaton
+ * Can be applied on a domain
+ * 
+ */
 #pragma once
 #ifndef CELLULAR_AUTOMATON_HXX
 #define CELLULAR_AUTOMATON_HXX
@@ -16,14 +22,42 @@
 namespace CAM
 {
 
-template <auto nx, typename fields_array_t>  // = std::array<unsigned int, n_fields<nx>()>
+template <auto nx, typename fields_array_t> 
 class CellularAutomaton
 {
   static const unsigned int dim = nx.size();
 
  public:
-  // CellularAutomaton();
-  // ~CellularAutomaton();
+/**
+ * @brief Applies rules of cellular automaton on domain
+ * Generates next generation of CA
+ * Single building units and composites are moved
+ * 
+ * @param _domain domain object
+ */
+  static void apply(Domain<nx, fields_array_t>& _domain)
+  {
+    _domain.aggregates.clear();
+    std::shuffle(_domain.buildingUnits.begin(), _domain.buildingUnits.end(),
+                 std::default_random_engine(std::rand()));
+    std::cout << "Number of BU: " << _domain.buildingUnits.size() << std::endl;
+    std::for_each(_domain.buildingUnits.begin(), _domain.buildingUnits.end(),
+                  [&](CAM::BuildingUnit<nx>* unit) { moveBU(unit, _domain.domainFields); });
+    _domain.findAggregates();
+    std::cout << "Number of aggregates: " << _domain.aggregates.size() << std::endl;
+    std::shuffle(_domain.aggregates.begin(), _domain.aggregates.end(),
+                 std::default_random_engine(std::rand()));
+    std::for_each(_domain.aggregates.begin(), _domain.aggregates.end(),
+                  [&](CAM::Aggregate<nx>* aggregate)
+                  { moveAggregate(aggregate, _domain.domainFields); });
+  }
+
+/**
+ * @brief Finds a new position for an individual building unit
+ * 
+ * @param _unit building unit
+ * @param _domainFields cells of domain
+ */
   static void moveBU(CAM::BuildingUnit<nx>* _unit, fields_array_t& _domainFields)
   {
     std::vector<int> possible_moves = CAM::getStencil<nx>(_unit->jump_parameter);
@@ -43,6 +77,13 @@ class CellularAutomaton
                   });
     doMoveBU(best_moves[std::rand() % best_moves.size()], _unit, _domainFields);
   }
+/**
+ * @brief  Executes the actual movement for an individual building unit
+ * 
+ * @param move Index shift induced by possible move.
+ * @param _unit building unit
+ * @param _domainFields cells of domain
+ */
   static void doMoveBU(const int move, CAM::BuildingUnit<nx>* _unit, fields_array_t& _domainFields)
   {
     std::vector<unsigned int> fields_old = _unit->getFieldIndices();
@@ -55,24 +96,12 @@ class CellularAutomaton
       _domainFields[fields_old[i]] -= _unit->number;
     }
   }
-
-  static void apply(Domain<nx, fields_array_t>& _domain)
-  {
-    _domain.aggregates.clear();
-    std::shuffle(_domain.buildingUnits.begin(), _domain.buildingUnits.end(),
-                 std::default_random_engine(std::rand()));
-    std::cout << "Number of BU: " << _domain.buildingUnits.size() << std::endl;
-    std::for_each(_domain.buildingUnits.begin(), _domain.buildingUnits.end(),
-                  [&](CAM::BuildingUnit<nx>* unit) { moveBU(unit, _domain.domainFields); });
-    _domain.findAggregates();
-    std::cout << "Number of aggregates: " << _domain.aggregates.size() << std::endl;
-    std::shuffle(_domain.aggregates.begin(), _domain.aggregates.end(),
-                 std::default_random_engine(std::rand()));
-    std::for_each(_domain.aggregates.begin(), _domain.aggregates.end(),
-                  [&](CAM::Aggregate<nx>* aggregate)
-                  { moveAggregate(aggregate, _domain.domainFields); });
-  }
-
+  /**
+ * @brief Finds a new position for merged building units (composites)
+ * 
+ * @param _unit composites
+ * @param _domainFields cells of domain
+ */
   static void moveAggregate(CAM::Aggregate<nx>* _aggregate, fields_array_t& _domainFields)
   {
     std::vector<unsigned int> indices(_aggregate->fieldIndices.size(), 0);
@@ -109,6 +138,14 @@ class CellularAutomaton
       doMoveBU(best_move, _aggregate->buildingUnits[i], _domainFields);
     }
   }
+/*!*********************************************************************************************
+     * \brief   Check attraction of the possible moves for a single BU.
+     *
+     * \param   move            Index shift induced by possible move.
+     * @param _domainFields     cells of domain
+     * @param _BU               building unit
+     * \retval  attraction      Amount of neighbours.
+     **********************************************************************************************/
   static double getAttractionBU(const int move,
                                 CAM::BuildingUnit<nx>* _BU,
                                 fields_array_t& _domainFields)
@@ -129,7 +166,13 @@ class CellularAutomaton
     }
     return attraction;
   }
-
+/*!*********************************************************************************************
+     * \brief   Check attraction of the possible moves for merged BUs.
+     *
+     * \param   move            Index shift induced by possible move.
+     * \param   _aggregate      composites  
+     * \retval  attraction      Amount of neighbours.
+     **********************************************************************************************/
   static double getAttractionAggregate(const int move,
                                        Aggregate<nx>* _aggregate,
                                        fields_array_t& _domainFields)

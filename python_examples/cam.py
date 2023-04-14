@@ -27,23 +27,23 @@ def cam_test(n_steps, debug_mode=False):
 
   
   const                 = CAM.config()
-  const.nx              = [30, 30, 30]
+  const.nx              = [50, 50, 50]
   const.debug_mode      = debug_mode
   jump_parameter_composites  = 10
 
   PyCAM = CAM.include(const)
   Domain = PyCAM(jump_parameter_composites)
-  #Domain.placeSingleCellBURandomly(0.75, 5, 0)
-  # success = 0
-  # while success < 10:
-  #   success = success + Domain.placeSphere( -1, 3, 5)
-  # print(success)
-  # success = 0
-  # while success < 10:
-  #   success = success + Domain.placePlane( -1, [1,1,4], 5)
-  # print(success)
+ # Domain.placeSingleCellBURandomly(0.75, 5, 0)
+  success = 0
+  while success < 10:
+    success = success + Domain.placeSphere( -1, 3, 5)
+  print(success)
+  success = 0
+  while success < 10:
+    success = success + Domain.placePlane( -1, [1,1,4], 5)
+  print(success)
   #Domain.placeSphere( 1, 0)
-  Domain.placeParticles()
+  #Domain.placeParticles()
   #Domain.print_array()
   save_data = np.zeros( (n_steps + 1, np.prod(const.nx)) ) 
   save_data[0] = Domain.fields()

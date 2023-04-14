@@ -52,8 +52,7 @@ class CAMInterface
         randomPoint += std::rand() % nx[i] * direct_neigh<nx>(2 * i + 1);
       }
       CAM::ParticleBU<nx>* particle = new CAM::ParticleBU<nx>(a + 1, 5, randomPoint, stencil1);
-      bool success = domain.placeBU(particle);
-      // std::cout<<"sucss "<<success<<std::endl;
+      domain.placeBU(particle);
     }
 
     for (int a = 10; a < 20; a++)
@@ -65,8 +64,7 @@ class CAMInterface
         randomPoint += std::rand() % nx[i] * direct_neigh<nx>(2 * i + 1);
       }
       CAM::ParticleBU<nx>* particle = new CAM::ParticleBU<nx>(a + 1, 5, randomPoint, stencil2);
-      bool success = domain.placeBU(particle);
-      // std::cout<<"sucss "<<success<<std::endl;
+      domain.placeBU(particle);;
     }
   }
 
