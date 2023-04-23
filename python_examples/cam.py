@@ -23,7 +23,7 @@ def cam_test(n_steps, debug_mode=False):
   except (ImportError, ModuleNotFoundError) as error:
     sys.path.append(os.path.dirname(os.path.abspath(__file__)) + os.sep  + ".." + os.sep + 
       "python_functions")
-    from plot import plot, plot_to_file
+    from plot import plot, plot_to_file, plot_to_vtk
 
   
   const                 = CAM.config()
@@ -48,6 +48,7 @@ def cam_test(n_steps, debug_mode=False):
   #Domain.placeParticles()
   
   save_data = np.zeros( (n_steps + 1, np.prod(const.nx)) ) 
+  print(save_data.shape)
   save_data[0] = Domain.fields()
 
   for step in range(n_steps):
@@ -60,8 +61,15 @@ def cam_test(n_steps, debug_mode=False):
   print("Program ended at", end_time, "after", end_time-start_time)
   
   if not os.path.exists('output'):  os.makedirs('output')
-  plot_to_file(const.nx, save_data[-1], 'output/cam.png')
-  plot(const.nx, save_data, 0)
+  #plot_to_file(const.nx, save_data[-1], 'output/cam.png')
+  filename = "output/cam"
+  plot_to_vtk(filename, save_data, const.nx)
+  
+
+
+
+  #plot(const.nx, save_data, 0)
+  
   
 
 # --------------------------------------------------------------------------------------------------
