@@ -26,7 +26,7 @@ endif()
 find_package(Doxygen)
 find_package (Python3 COMPONENTS Interpreter Development NumPy)
 find_program (CYTHON_EXECUTABLE NAMES cython cython.bat cython3)
-
+execute_process(COMMAND ${Python_EXECUTABLE} -m pip install ${_pip_args} ${pyevtk})
 
 ## Create a target that transports all the necessary information to downstream projects
 add_library(CAM INTERFACE)
