@@ -34,25 +34,24 @@ def cam_test(n_steps, debug_mode=False):
   PyCAM = CAM.include(const)
   Domain = PyCAM(jump_parameter_composites)
 
- # Domain.placeSingleCellBURandomly(0.75, jump_parameter, 0)
+  # Domain.place_singleCellBU_randomly(0.75, jump_parameter, 0)
 
   success = 0
   while success < 100:
-    success = success + Domain.placeSphere( -1, 3, jump_parameter)
+    success = success + Domain.place_sphere( -1, 3, jump_parameter)
   #print("Nr of spheres " + str(success))
   success = 0
   while success < 100:
-    success = success + Domain.placePlane( -1, [1,1,5], jump_parameter)
+    success = success + Domain.place_plane( -1, [1,1,3], jump_parameter)
   #print("Nr of planes " + str(success))
 
-  #Domain.placeParticles()
+  # Domain.place_particles()
   
   save_data = np.zeros( (n_steps + 1, np.prod(const.nx)) ) 
-  print(save_data.shape)
   save_data[0] = Domain.fields()
 
   for step in range(n_steps):
-    Domain.doCAM()
+    Domain.do_CAM()
     save_data[step+1] = Domain.fields()
 
   # print(Domain.average_particle_size())
@@ -62,8 +61,7 @@ def cam_test(n_steps, debug_mode=False):
   
   if not os.path.exists('output'):  os.makedirs('output')
   #plot_to_file(const.nx, save_data[-1], 'output/cam.png')
-  filename = "output/cam"
-  plot_to_vtk(filename, save_data, const.nx)
+  plot_to_vtk("output/cam", save_data, const.nx)
   
 
 

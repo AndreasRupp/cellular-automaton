@@ -30,10 +30,8 @@ def plot_to_file(axes, save_data, file_name, ax=plt):
   fig, ax = config_plot(axes)
   plot_update(axes, save_data, ax)
   fig.savefig(file_name)
-
+# save to vtk file for analysing in paraview 
 def plot_to_vtk(filename, data, shape):
-  print(filename)
-  print(np.shape(data))
   n_steps = np.shape(data)[0]
   g = VtkGroup("./group")
   # Dimensions

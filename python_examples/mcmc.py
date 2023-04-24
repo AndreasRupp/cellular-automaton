@@ -64,8 +64,8 @@ distance_fct = PyCAM.bulk_distance # <--- Needs to be removed
 # --------------------------------------------------------------------------------------------------
 def run_cam(jump_parameter1, jump_parameter2, nx, porosity, n_steps, debug_mode=False):
   CAM_wrapper = PyCAM(jump_parameter2)
-  CAM_wrapper.placeSingleCellBURandomly(porosity, jump_parameter1, 0)
-  for step in range(n_steps):  CAM_wrapper.doCam()
+  CAM_wrapper.place_singleCellBU_randomlyy(porosity, jump_parameter1, 0)
+  for step in range(n_steps):  CAM_wrapper.do_CAM()
   return CAM_wrapper.fields()
 # --------------------------------------------------------------------------------------------------
 

@@ -1,13 +1,13 @@
-/**
- * @file domain.hxx
+/*!*********************************************************************************************
+ * \file domain.hxx
  *
- * @brief This class implements a domain and holds all its properties
+ * \brief This class implements a domain and holds all its properties
  * TODO Mayber outsource all evaluation functions to own class
  *
  * \tparam  nx              The size of a row for each dimension of the matrix
  * \tparam  n_fields        Size of the domain
  *
- */
+ ************************************************************************************************/
 #pragma once
 #ifndef DOMAIN_HXX
 #define DOMAIN_HXX
@@ -41,11 +41,11 @@ class Domain
     std::for_each(composites.begin(), composites.end(),
                   [&](CAM::Composite<nx>* composite) { delete composite; });
   }
-  /**
-   * @brief Construct a new Domain object
+  /*!*********************************************************************************************
+   * \brief Construct a new Domain object
    *
-   * @param _jump_parameter_composites How far composites particles are allowed to jump.
-   */
+   * \param _jump_parameter_composites How far composites particles are allowed to jump.
+   ************************************************************************************************/
   Domain(double _jump_parameter_composites = -1)
   : jump_parameter_composites((_jump_parameter_composites != -1.)
                                 ? _jump_parameter_composites
@@ -64,19 +64,19 @@ class Domain
       indexBU = 0;
     }
   }
-  /**
-   * @brief Place any building unit (BU) into the domain
+  /*!*********************************************************************************************
+   * \brief Place any building unit (BU) into the domain
    * Basis function for placement for all special BUs
-   * @param _unit building unit
-   * @return true: cells pf BU are marked with individual index, BU is stored in BU vector
-   * @return false: BU could not be placed. all its cells are removed
-   */
-  bool placeBU(CAM::BuildingUnit<nx>* _unit)
+   * \param _unit building unit
+   * \return true: cells pf BU are marked with individual index, BU is stored in BU vector
+   * \return false: BU could not be placed. all its cells are removed
+   ************************************************************************************************/
+  bool place_BU(CAM::BuildingUnit<nx>* _unit)
   {
     bool success = true;
     indexBU++;
     _unit->number = indexBU;
-    std::vector<unsigned int> fields = _unit->getFieldIndices();
+    std::vector<unsigned int> fields = _unit->get_field_indices();
     std::for_each(fields.begin(), fields.end(),
                   [&](unsigned int field)
                   {
@@ -107,16 +107,16 @@ class Domain
     }
     return success;
   }
-  /**
-   * @brief Places HyperSphere (2D: Circle, 3D: Sphere) into domain
+  /*!*********************************************************************************************
+   * \brief Places HyperSphere (2D: Circle, 3D: Sphere) into domain
    *
-   * @param _position field index of center point; no position is given (-1) -> random position
-   * @param _radius all cells are completely within the radius
-   * @param _jump_parameter How far sphere is allowed to jump.
-   * @return true: sphere is placed
-   * @return false: sphere could not be placed. all its cells are removed
-   */
-  bool placeSphere(int _position = -1, double _radius = 1, double _jump_parameter = 1)
+   * \param _position field index of center point; no position is given (-1) -> random position
+   * \param _radius all cells are completely within the radius
+   * \param _jump_parameter How far sphere is allowed to jump.
+   * \return true: sphere is placed
+   * \return false: sphere could not be placed. all its cells are removed
+   ************************************************************************************************/
+  bool place_sphere(int _position = -1, double _radius = 1, double _jump_parameter = 1)
   {
     if (_position == -1)
     {
@@ -125,23 +125,23 @@ class Domain
       _position = std::rand() % (n_fields_);
     }
     HyperSphereBU<nx>* sphere = new HyperSphereBU<nx>(1, _jump_parameter, _position, _radius);
-    bool success = placeBU(sphere);
+    bool success = place_BU(sphere);
     if (!success)
       delete sphere;
     return success;
   }
-  /**
-   * @brief Place a limited hyper plane (2D: Rectangle, 3D: cuboid) into domain
+  /*!*********************************************************************************************
+   * \brief Place a limited hyper plane (2D: Rectangle, 3D: cuboid) into domain
    *
-   * @param _position field index of center point; no position is given (-1) -> random position
-   * @param _extent size of plane in each dimension
-   * @param _jump_parameter How far hyper plane is allowed to jump.
-   * @return true: plane is placed
-   * @return false: plane could not be placed. all its cells are removed
-   */
-  bool placePlane(int _position = -1,
-                  std::vector<unsigned int> _extent = std::vector<unsigned int>(nx.size(), 0),
-                  double _jump_parameter = 1)
+   * \param _position field index of center point; no position is given (-1) -> random position
+   * \param _extent size of plane in each dimension
+   * \param _jump_parameter How far hyper plane is allowed to jump.
+   * \return true: plane is placed
+   * \return false: plane could not be placed. all its cells are removed
+   ************************************************************************************************/
+  bool place_plane(int _position = -1,
+                   std::vector<unsigned int> _extent = std::vector<unsigned int>(nx.size(), 0),
+                   double _jump_parameter = 1)
   {
     if (_position == -1)
     {
@@ -150,21 +150,21 @@ class Domain
       _position = std::rand() % (n_fields_);
     }
     HyperPlaneBU<nx>* plane = new HyperPlaneBU<nx>(1, _jump_parameter, _position, _extent);
-    bool success = placeBU(plane);
+    bool success = place_BU(plane);
     if (!success)
       delete plane;
     return success;
   }
-  /**
-   * @brief Creates domain with building units containing only one cell
+  /*!*********************************************************************************************
+   * \brief Creates domain with building units containing only one cell
    *
-   * @param _porosity The percentage of void space, not occupied by solid/BU.
-   * @param _jump_parameter How far individual particles are allowed to jump.
-   * @param random_seed If given, sets random seed to given seed.
-   */
-  void placeSingleCellBURandomly(double _porosity = 0.90,
-                                 double _jump_parameter = 1,
-                                 unsigned int random_seed = 0)
+   * \param _porosity The percentage of void space, not occupied by solid/BU.
+   * \param _jump_parameter How far individual particles are allowed to jump.
+   * \param random_seed If given, sets random seed to given seed.
+   ************************************************************************************************/
+  void place_singleCellBU_randomly(double _porosity = 0.90,
+                                   double _jump_parameter = 1,
+                                   unsigned int random_seed = 0)
   {
     if (random_seed == 0)
     {
@@ -177,24 +177,26 @@ class Domain
 
     unsigned int n_particles = (1. - _porosity) * n_fields_;
     unsigned int position = std::rand() % (n_fields_);
+    std::vector<unsigned int> pos(1, position);
     for (unsigned int i = 0; i < n_particles; ++i)
     {
       while (domainFields[position] != 0)
         position = std::rand() % (n_fields_);
-      std::vector<unsigned int> pos(1, position);
+      pos[0] = position;
       buildingUnits.push_back(new CustomBU<nx>(i + 1, _jump_parameter, pos));
       domainFields[position] = i + 1;
     }
   }
-  /*!*
-   * @brief  Finds composites (particles containing more then one BU) in domain and stores
+  /*!*********************************************************************************************
+   * \brief  Finds composites (particles containing more then one BU) in domain and stores
    * information in std::vector<CAM::Composite<nx>*> composites; std::vector<Particle> particles;
-   */
-  void findComposites()
+   * TODO faster method: use information about BU and their borders
+   ************************************************************************************************/
+  void find_composites()
   {
     fields_array_t fields = domainFields;
     constexpr unsigned int dim = nx.size();
-    unsigned int solids_size, field, neigh_field;
+    unsigned int solids_size, field, neigh_field, number;
     std::vector<unsigned int> found_solids;
     particles.clear();
     std::for_each(fields.begin(), fields.end(),
@@ -220,7 +222,7 @@ class Domain
           {
             fields[neigh_field] = uint_max;
             found_solids.push_back(neigh_field);
-            unsigned int number = domainFields[neigh_field];
+            number = domainFields[neigh_field];
             if (std::find(compositeComponents.begin(), compositeComponents.end(), number) ==
                 compositeComponents.end())
             {
@@ -285,10 +287,10 @@ class Domain
      **********************************************************************************************/
     std::vector<unsigned int> fieldIndices;
   };
-  /**
-   * @brief vector of particles (connected components)
+  /*!*********************************************************************************************
+   * \brief vector of particles (connected components)
    * contains
-   */
+   ************************************************************************************************/
   std::vector<Particle> particles;
   /*!***********************************************************************************************
    * \brief   Random seed.
@@ -299,13 +301,13 @@ class Domain
   // EVALUATING SECTION STARTS HERE (TODO maybe outsource in different file)
   // -------------------------------------------------------------------------------------------------
 
-  /**
-   * @brief Compares bulks of domain A and B
+  /*!*********************************************************************************************
+   * \brief Compares bulks of domain A and B
    *
-   * @param domain_a
-   * @param domain_b
-   * @return amount of cells which alternated from or to 0
-   */
+   * \param domain_a
+   * \param domain_b
+   * \return amount of cells which alternated from or to 0
+   ************************************************************************************************/
   static constexpr unsigned int bulk_distance(const fields_array_t& domain_a,
                                               const fields_array_t& domain_b)
   {
@@ -328,15 +330,15 @@ class Domain
       }
     return distance;
   }
-  /**
-   * @brief Gives size of each particle in a sorted way
+  /*!*********************************************************************************************
+   * \brief Gives size of each particle in a sorted way
    *
-   * @return vector of sizes
-   */
+   * \return vector of sizes
+   ************************************************************************************************/
   std::vector<unsigned int> particle_size_distribution()
   {
     // Alternative
-    //  findComposites();
+    //  find_composites();
     //  std::vector<unsigned int> distribution;
     //  distribution.resize(particles.size());
     //  for(unsigned int i = 0; i < particles.size();i++)
@@ -376,10 +378,10 @@ class Domain
     std::sort(distribution.begin(), distribution.end());
     return distribution;
   }
-  /**************************************************************************************************
-   * @brief Gives the number of particles (connected component) inside the domain
+  /*!*********************************************************************************************
+   * \brief Gives the number of particles (connected component) inside the domain
    *
-   * @return amount of particles
+   * \return amount of particles
    ***************************************************************************************************/
   unsigned int n_solid_comp() { return particle_size_distribution().size(); }
   /*!*********************************************************************************************
@@ -491,12 +493,12 @@ class Domain
     max_distance = uint_max - domain_fields[field];
     return max_distance;
   }
-  //     /*!*********************************************************************************************
-  //      * \brief   Find the longest amount of moves in certain direction inside particle.
-  //      *
-  //      * \param   dir_dim          Certain dimension
-  //      * \retval  max_distance     Amount of moves
-  //      **********************************************************************************************/
+  /*!*********************************************************************************************
+   * \brief   Find the longest amount of moves in certain direction inside particle.
+   *
+   * \param   dir_dim          Certain dimension
+   * \retval  max_distance     Amount of moves
+   **********************************************************************************************/
   unsigned int directed_max_min_distance(unsigned int dir_dim, Particle _particle)
   {
     unsigned int max_distance = 0, field = _particle.fieldIndices[0];
@@ -536,11 +538,11 @@ class Domain
     max_distance = max_val - min_val + 1;
     return max_distance;
   }
-  /**
-   * @brief Gives the avarage particle size
+  /*!*********************************************************************************************
+   * \brief Gives the avarage particle size
    *
-   * @return avarage particle size
-   */
+   * \return avarage particle size
+   ************************************************************************************************/
   constexpr double average_particle_size()
   {
     unsigned int n_solids = 0;
@@ -571,7 +573,7 @@ class Domain
    ************************************************************************************************/
   std::array<double, 12> eval_measures()
   {
-    findComposites();
+    find_composites();
     unsigned int n_single_cells =
       std::count_if(particles.begin(), particles.end(),
                     [](Particle particle) -> bool { return particle.fieldIndices.size() == 1; });
@@ -641,12 +643,12 @@ class Domain
             mean_sphericity,
             max_diameters_ratio};
   }
-  // /*!***********************************************************************************************
-  //  * \brief   Computes connected fluid areas.
-  //  *
-  //  * \retval  n_fluid_comp      1st entry of array is connected fluid areas.
-  //  *                            2nd entry of array is periodic connected fluid areas.
-  //  ************************************************************************************************/
+  /*!***********************************************************************************************
+   * \brief   Computes connected fluid areas.
+   *
+   * \retval  n_fluid_comp      1st entry of array is connected fluid areas.
+   *                            2nd entry of array is periodic connected fluid areas.
+   ************************************************************************************************/
   std::array<unsigned int, 2> n_fluid_comp()
   {
     unsigned int n_connected_fluids = 0;

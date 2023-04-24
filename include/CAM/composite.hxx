@@ -4,11 +4,11 @@
 #include <vector>
 namespace CAM
 {
-/**
- * @brief Stores information about composites
+/*!*********************************************************************************************
+ * \brief Stores information about composites
  *
- * @tparam nx
- */
+ * \tparam nx
+ **********************************************************************************************/
 template <auto nx>
 struct Composite
 {

@@ -21,15 +21,15 @@ int main()
   CAM::CAMInterface<nx> CAM;
 
   // const double porosity = 0.5;
-  // CAM.placeSingleCellBURandomly(porosity, jump_param);
+  // CAM.place_singleCellBU_randomly(porosity, jump_param);
 
   std::vector<unsigned int> extent = {3, 1};
-  std::cout << CAM.placePlane(-1, extent, jump_param) << std::endl;
+  std::cout << CAM.place_plane(-1, extent, jump_param) << std::endl;
   CAM.print_array();
 
   for (unsigned int i = 0; i < n_moves; ++i)
   {
-    CAM.doCAM();
+    CAM.do_CAM();
     CAM.print_array();
     std::cout << std::endl;
   }
