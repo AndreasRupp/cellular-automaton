@@ -130,7 +130,7 @@ double constexpr p_norm_distance(const unsigned int _position1, const unsigned i
     if (dist > nx[i] / 2)
       dist = nx[i] - dist;
     if ((p == 0) && (norm < dist))
-      s norm = dist;
+      norm = dist;
     else if (p != 0)
       norm += std::pow(dist, p);
   }
