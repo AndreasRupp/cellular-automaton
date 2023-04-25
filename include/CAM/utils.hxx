@@ -112,7 +112,7 @@ static constexpr std::array<unsigned int, n_fieldpoints<nx>()> get_points(const 
  * \brief Distance induced by p-Norm of two points/cells in a periodic domain
  *
  * \tparam nx
- * \tparam p type of norm (p = 2 euclidean norm)
+ * \tparam p type of norm (p == 2: euclidean norm, p == 0: maximum norm)
  * \param _position1
  * \param _position2
  * \return distance
@@ -129,16 +129,22 @@ double constexpr p_norm_distance(const unsigned int _position1, const unsigned i
     dist = std::abs((int)coord1 - (int)coord2);
     if (dist > nx[i] / 2)
       dist = nx[i] - dist;
-    norm += std::pow(dist, p);
+    if ((p == 0) && (norm < dist))
+      s norm = dist;
+    else if (p != 0)
+      norm += std::pow(dist, p);
   }
-  return std::pow(norm, 1.0 / (double)p);
+  if (p == 0)
+    return norm;
+  else
+    return std::pow(norm, 1.0 / (double)p);
 }
 /*!*********************************************************************************************
  * \brief Stencil with cells inside certain radius
  *
  * \tparam nx
- * \tparam p
- * \param _radius
+ * \tparam p defines type of norm/distance
+ * \param _radius maximum distance of a cell from the central point
  * \return std::vector<unsigned int>
  **************************************************************************************************/
 template <auto nx, unsigned int p>
