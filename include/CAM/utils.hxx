@@ -12,11 +12,10 @@
 #include <vector>
 namespace CAM
 {
-typedef unsigned int fieldNumbers_t;
 /*!*************************************************************************************************
  * \brief   Maximum unsigned integer.
  **************************************************************************************************/
-static constexpr CAM::fieldNumbers_t uint_max = std::numeric_limits<fieldNumbers_t>::max();
+static constexpr unsigned int uint_max = std::numeric_limits<unsigned int>::max();
 /*!***********************************************************************************************
  * \brief   Smallest (negative) double.
  ************************************************************************************************/

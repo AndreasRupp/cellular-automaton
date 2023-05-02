@@ -19,7 +19,7 @@ def cam_test(n_steps, debug_mode=False):
     import CAM
 
   try:
-    from plot import plot, plot_to_file
+    from plot import plot, plot_to_file, plot_to_vtk
   except (ImportError, ModuleNotFoundError) as error:
     sys.path.append(os.path.dirname(os.path.abspath(__file__)) + os.sep  + ".." + os.sep + 
       "python_functions")
@@ -27,25 +27,26 @@ def cam_test(n_steps, debug_mode=False):
 
   
   const                 = CAM.config()
-  const.nx              = [50, 50, 50]
+  const.nx              = [50, 50]
   const.debug_mode      = debug_mode
   jump_parameter_composites  = 10
   jump_parameter = 5
+  porosity = 0.75
   PyCAM = CAM.include(const)
   Domain = PyCAM(jump_parameter_composites)
 
-  # Domain.place_singleCellBU_randomly(0.75, jump_parameter, 0)
+  Domain.place_singleCellBU_randomly(porosity, jump_parameter, 0)
 
-  success = 0
-  while success < 100:
-    success = success + Domain.place_sphere( -1, 3, jump_parameter)
-  #print("Nr of spheres " + str(success))
-  success = 0
-  while success < 100:
-    success = success + Domain.place_plane( -1, [1,1,3], jump_parameter)
+  # success = 0
+  # while success < 10:
+  #   success = success + Domain.place_sphere( -1, 5, jump_parameter)
+  # #print("Nr of spheres " + str(success))
+  # success = 0
+  # while success < 10:
+  #   success = success + Domain.place_plane( -1, [1,3,1], jump_parameter)
   #print("Nr of planes " + str(success))
 
-  # Domain.place_particles()
+  #Domain.place_particles()
   
   save_data = np.zeros( (n_steps + 1, np.prod(const.nx)) ) 
   save_data[0] = Domain.fields()
@@ -60,16 +61,9 @@ def cam_test(n_steps, debug_mode=False):
   print("Program ended at", end_time, "after", end_time-start_time)
   
   if not os.path.exists('output'):  os.makedirs('output')
-  #plot_to_file(const.nx, save_data[-1], 'output/cam.png')
   plot_to_vtk("output/cam", save_data, const.nx)
-  
-
-
-
-  #plot(const.nx, save_data, 0)
-  
-  
-
+  plot_to_file(const.nx, save_data[-1], 'output/cam.png')
+  plot(const.nx, save_data, 0)
 # --------------------------------------------------------------------------------------------------
 # Function main.
 # --------------------------------------------------------------------------------------------------

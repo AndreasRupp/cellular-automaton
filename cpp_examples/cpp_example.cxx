@@ -15,7 +15,7 @@
 int main()
 {
   constexpr std::array<unsigned int, 2> nx = {10, 10};
-  const unsigned int n_moves = 0;
+  const unsigned int n_moves = 5;
   const double jump_param = 1.;
 
   CAM::CAMInterface<nx> CAM;
@@ -24,7 +24,7 @@ int main()
   // CAM.place_singleCellBU_randomly(porosity, jump_param);
 
   std::vector<unsigned int> extent = {3, 1};
-  std::cout << CAM.place_plane(-1, extent, jump_param) << std::endl;
+  std::cout << "is placed? " << CAM.place_plane(-1, extent, jump_param) << std::endl;
   CAM.print_array();
 
   for (unsigned int i = 0; i < n_moves; ++i)

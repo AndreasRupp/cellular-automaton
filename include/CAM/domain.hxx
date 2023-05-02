@@ -30,9 +30,14 @@ class Domain
 
  public:
   double jump_parameter_composites;
+  constexpr double get_jump_parameter_composites(const unsigned int _comp_size)
+  {
+    return jump_parameter_composites / std::pow(_comp_size, 1.0 / (double)dim);
+  }
+
   static constexpr unsigned int n_fields_ = n_fields<nx>();
   // storing index for new particle
-  double indexBU;
+  double indexBU_max;
 
   ~Domain()
   {
@@ -61,7 +66,7 @@ class Domain
                      std::array<typename fields_array_t::value_type, n_fields<nx>()>>::value,
         "The fields array has incorrect size");
       domainFields.fill(0);
-      indexBU = 0;
+      indexBU_max = 0;
     }
   }
   /*!*********************************************************************************************
@@ -74,8 +79,8 @@ class Domain
   bool place_BU(CAM::BuildingUnit<nx>* _unit)
   {
     bool success = true;
-    indexBU++;
-    _unit->number = indexBU;
+    indexBU_max++;
+    _unit->number = indexBU_max;
     std::vector<unsigned int> fields = _unit->get_field_indices();
     std::for_each(fields.begin(), fields.end(),
                   [&](unsigned int field)
@@ -99,7 +104,7 @@ class Domain
                       if (domainFields[field] == _unit->number)
                         domainFields[field] = 0;
                     });
-      indexBU--;
+      indexBU_max--;
     }
     else
     {
@@ -185,12 +190,12 @@ class Domain
       pos[0] = position;
       buildingUnits.push_back(new CustomBU<nx>(i + 1, _jump_parameter, pos));
       domainFields[position] = i + 1;
+      indexBU_max = i + 1;
     }
   }
   /*!*********************************************************************************************
    * \brief  Finds composites (particles containing more then one BU) in domain and stores
    * information in std::vector<CAM::Composite<nx>*> composites; std::vector<Particle> particles;
-   * TODO faster method: use information about BU and their borders
    ************************************************************************************************/
   void find_composites()
   {
@@ -199,13 +204,13 @@ class Domain
     unsigned int solids_size, field, neigh_field, number;
     std::vector<unsigned int> found_solids;
     particles.clear();
-    std::for_each(fields.begin(), fields.end(),
-                  [](CAM::fieldNumbers_t& field) { field = (field == 0); });
+    composites.clear();
+    std::for_each(fields.begin(), fields.end(), [](unsigned int& field) { field = (field == 0); });
 
     for (auto first_solid = std::find(fields.begin(), fields.end(), 0); first_solid != fields.end();
          first_solid = std::find(first_solid, fields.end(), 0))
     {
-      std::vector<CAM::fieldNumbers_t> compositeComponents;
+      std::vector<unsigned int> compositeComponents;
 
       found_solids = std::vector<unsigned int>(1, std::distance(fields.begin(), first_solid));
       fields[found_solids[0]] = uint_max;
@@ -241,12 +246,85 @@ class Domain
                          [&](CAM::BuildingUnit<nx>* unit) -> bool
                          { return unit->number == compositeComponents[i]; });
           newComposite->buildingUnits.push_back(*it);
-          newComposite->fieldIndices = found_solids;
-          newComposite->jump_parameter =
-            std::pow(newComposite->fieldIndices.size(), 1.0 / (double)dim);
         }
+        newComposite->fieldIndices = found_solids;
+        newComposite->jump_parameter =
+          get_jump_parameter_composites(newComposite->fieldIndices.size());
         composites.push_back(newComposite);
       }
+      particles.push_back(Particle(found_solids, compositeComponents));
+    }
+  }
+  /*!*********************************************************************************************
+   * \brief  Finds composites (particles containing more then one BU) in domain and stores
+   * information in std::vector<CAM::Composite<nx>*> composites; std::vector<Particle> particles;
+   * Faster version using the connected particles and their borders
+   ************************************************************************************************/
+  void find_composites_via_BU_border()
+  {
+    fields_array_t fields = domainFields;
+    constexpr unsigned int dim = nx.size();
+    unsigned int neigh_field, borders_size;
+    unsigned int fieldNumber;
+    std::vector<unsigned int> borders, found_solids, helper;
+    particles.clear();
+    composites.clear();
+    std::vector<bool> isBUvisited(indexBU_max, false);
+
+    for (unsigned int i = 0; i < buildingUnits.size(); i++)
+    {
+      if (isBUvisited[buildingUnits[i]->number] == true)
+        continue;
+      CAM::Composite<nx>* newComposite = new CAM::Composite<nx>();
+      newComposite->buildingUnits.push_back(buildingUnits[i]);
+
+      borders.clear();
+      borders = buildingUnits[i]->get_border_indices();
+
+      found_solids.clear();
+      helper = buildingUnits[i]->get_field_indices();
+      found_solids.insert(found_solids.end(), helper.begin(), helper.end());
+
+      fieldNumber = buildingUnits[i]->number;
+      isBUvisited[fieldNumber] = true;
+      borders_size = borders.size();
+
+      std::vector<unsigned int> compositeComponents;
+      compositeComponents.push_back(fieldNumber);
+
+      for (unsigned int j = 0; j < borders_size; j++, borders_size = borders.size())
+      {
+        for (unsigned int k = 0; k < 2 * dim; ++k)
+        {
+          neigh_field = aim<nx>(borders[j], direct_neigh<nx>(k));
+          fieldNumber = fields[neigh_field];
+          if (fieldNumber != 0 && isBUvisited[fieldNumber] != true)
+          {
+            isBUvisited[fieldNumber] = true;
+
+            typename std::vector<CAM::BuildingUnit<nx>*>::iterator it = std::find_if(
+              buildingUnits.begin(), buildingUnits.end(),
+              [&](CAM::BuildingUnit<nx>* unit) -> bool { return unit->number == fieldNumber; });
+
+            newComposite->buildingUnits.push_back(*it);
+            compositeComponents.push_back(fieldNumber);
+
+            helper = (*it)->get_border_indices();
+            borders.insert(borders.end(), helper.begin(), helper.end());
+            helper = (*it)->get_field_indices();
+            found_solids.insert(found_solids.end(), helper.begin(), helper.end());
+          }
+        }
+      }
+      if (compositeComponents.size() > 1)
+      {
+        newComposite->fieldIndices = found_solids;
+        newComposite->jump_parameter =
+          get_jump_parameter_composites(newComposite->fieldIndices.size());
+        composites.push_back(newComposite);
+      }
+      else
+        delete newComposite;
       particles.push_back(Particle(found_solids, compositeComponents));
     }
   }
@@ -272,7 +350,7 @@ class Domain
    ************************************************************************************************/
   struct Particle
   {
-    Particle(std::vector<unsigned int> _fieldIndices, std::vector<CAM::fieldNumbers_t> _numbers)
+    Particle(std::vector<unsigned int> _fieldIndices, std::vector<unsigned int> _numbers)
     {
       fieldIndices = _fieldIndices;
       numbers = _numbers;
@@ -281,7 +359,7 @@ class Domain
      * \brief   Indices of building units contained in a particle
      * min_size = 1, max_size = number of building units in domain
      **********************************************************************************************/
-    std::vector<CAM::fieldNumbers_t> numbers;
+    std::vector<unsigned int> numbers;
     /*!*********************************************************************************************
      * \brief   Location of the particle.
      **********************************************************************************************/
@@ -505,7 +583,7 @@ class Domain
     fields_array_t domain_fields = domainFields;
     std::vector<unsigned int> visits(1, field);
     domain_fields[field] = uint_max - n_fields_;
-    CAM::fieldNumbers_t min_val = domain_fields[field], max_val = domain_fields[field];
+    unsigned int min_val = domain_fields[field], max_val = domain_fields[field];
 
     unsigned int neigh_field, visits_size = visits.size();
     for (unsigned int i = 0; i < visits_size; ++i, visits_size = visits.size())
@@ -693,7 +771,7 @@ class Domain
     }
 
     std::for_each(domainFields.begin(), domainFields.end(),
-                  [](CAM::fieldNumbers_t& field)
+                  [](unsigned int& field)
                   {
                     if (field == uint_max)
                       field = 0;
@@ -778,10 +856,7 @@ class Domain
   void print_array()
   {
     unsigned int sum = 0;
-    std::for_each(domainFields.begin(), domainFields.end(),
-                  [&](CAM::fieldNumbers_t t) { sum += t; });
-    std::cout << "summe " << sum << std::endl;
-
+    std::for_each(domainFields.begin(), domainFields.end(), [&](unsigned int t) { sum += t; });
     print_n_dim<nx.size()>(domainFields);
   }
 };

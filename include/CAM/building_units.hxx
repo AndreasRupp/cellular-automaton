@@ -6,7 +6,7 @@
  * HyperSphere
  * Particle (Custom stencil)
  * TODO Maybe only Particle BU neccessary with different stencils (createStencil_X())
- *
+ * OR non virtual base class
  **********************************************************************************************/
 #pragma once
 
@@ -32,17 +32,18 @@ struct BuildingUnit
 {
  public:
   virtual ~BuildingUnit(){};
-  CAM::fieldNumbers_t number;
+  unsigned int number;
   unsigned int jump_parameter;
-  std::vector<unsigned int> referenceFields, fields;
+  std::vector<unsigned int> referenceFields, fields, fieldsBorder, stencilBorder, stencilBU;
 
   virtual const std::vector<unsigned int>& get_field_indices() = 0;
-
+  virtual const std::vector<unsigned int>& get_border_indices() = 0;
   virtual bool is_member(unsigned int _index) = 0;
 };
 /*!*********************************************************************************************
  * \brief Custom BU with defined field indices in domain
- *
+ * Used for Single Cell BU
+ * \TODO reference Point = fieldIndices[0] and stencil
  * \tparam nx
  **********************************************************************************************/
 template <auto nx>
@@ -59,6 +60,7 @@ struct CustomBU : public BuildingUnit<nx>
   ~CustomBU() override {}
 
   const std::vector<unsigned int>& get_field_indices() override { return this->referenceFields; }
+  const std::vector<unsigned int>& get_border_indices() override { return this->referenceFields; }
   bool is_member(unsigned int _index) override
   {
     return (std::find(this->referenceFields.begin(), this->referenceFields.end(), _index) !=
@@ -77,7 +79,6 @@ template <auto nx>
 struct HyperSphereBU : public BuildingUnit<nx>
 {
   double radius;
-  std::vector<unsigned int> stencilBU;
 
   HyperSphereBU(unsigned int _number,
                 unsigned int _jump_parameter,
@@ -88,18 +89,28 @@ struct HyperSphereBU : public BuildingUnit<nx>
     this->referenceFields = {_centerPoint};
     radius = _radius;
     this->jump_parameter = _jump_parameter;
-    stencilBU = CAM::get_p_normed_particle<nx, 2>(radius);
+    this->stencilBU = CAM::get_p_normed_particle<nx, 2>(radius);
+    this->stencilBorder = CAM::get_border<nx>(this->stencilBU)[0];
   }
   ~HyperSphereBU() override {}
 
   const std::vector<unsigned int>& get_field_indices() override
   {
     this->fields.clear();
-    for (unsigned int i = 0; i < stencilBU.size(); i++)
+    for (unsigned int i = 0; i < this->stencilBU.size(); i++)
     {
-      this->fields.push_back(CAM::aim<nx>(this->referenceFields[0], stencilBU[i]));
+      this->fields.push_back(CAM::aim<nx>(this->referenceFields[0], this->stencilBU[i]));
     }
     return this->fields;
+  }
+  const std::vector<unsigned int>& get_border_indices() override
+  {
+    this->fieldsBorder.clear();
+    for (unsigned int i = 0; i < this->stencilBorder.size(); i++)
+    {
+      this->fieldsBorder.push_back(CAM::aim<nx>(this->referenceFields[0], this->stencilBorder[i]));
+    }
+    return this->fieldsBorder;
   }
   bool is_member(unsigned int _index) override
   {
@@ -118,7 +129,6 @@ template <auto nx>
 struct HyperPlaneBU : public BuildingUnit<nx>
 {
   std::vector<unsigned int> extent;
-  std::vector<unsigned int> stencilBU;
   HyperPlaneBU(unsigned int _number,
                unsigned int _jump_parameter,
                unsigned int _referencePoint,
@@ -129,38 +139,48 @@ struct HyperPlaneBU : public BuildingUnit<nx>
     this->jump_parameter = _jump_parameter;
     extent = _extent;
 
-    stencilBU.push_back(0);
+    this->stencilBU.push_back(0);
     // static_assert(_extent.size() == nx.size(), "Size");
     unsigned int size, newMove;
     for (unsigned int dim = 0; dim < nx.size(); dim++)
     {
-      size = stencilBU.size();
+      size = this->stencilBU.size();
       for (unsigned int d = 1; d < extent[dim]; d++)
       {
         for (unsigned int i = 0; i < size; i++)
         {
-          newMove = CAM::aim<nx>(stencilBU[i], d * direct_neigh<nx>(2 * dim + 1));
-          stencilBU.push_back(newMove);
+          newMove = CAM::aim<nx>(this->stencilBU[i], d * direct_neigh<nx>(2 * dim + 1));
+          this->stencilBU.push_back(newMove);
         }
       }
     }
+    this->stencilBorder = CAM::get_border<nx>(this->stencilBU)[0];
   }
   ~HyperPlaneBU() override {}
   const std::vector<unsigned int>& get_field_indices() override
   {
     this->fields.clear();
-    for (unsigned int i = 0; i < stencilBU.size(); i++)
+    for (unsigned int i = 0; i < this->stencilBU.size(); i++)
     {
-      this->fields.push_back(CAM::aim<nx>(this->referenceFields[0], stencilBU[i]));
+      this->fields.push_back(CAM::aim<nx>(this->referenceFields[0], this->stencilBU[i]));
     }
     return this->fields;
+  }
+  const std::vector<unsigned int>& get_border_indices() override
+  {
+    this->fieldsBorder.clear();
+    for (unsigned int i = 0; i < this->stencilBorder.size(); i++)
+    {
+      this->fieldsBorder.push_back(CAM::aim<nx>(this->referenceFields[0], this->stencilBorder[i]));
+    }
+    return this->fieldsBorder;
   }
   bool is_member(unsigned int _index) override
   {
     // TODO calculate if its inside by considering extent/refPoints
-    for (unsigned int i = 0; i < stencilBU.size(); i++)
+    for (unsigned int i = 0; i < this->stencilBU.size(); i++)
     {
-      if (CAM::aim<nx>(this->referenceFields[0], stencilBU[i]) == _index)
+      if (CAM::aim<nx>(this->referenceFields[0], this->stencilBU[i]) == _index)
         return true;
     }
     return false;
@@ -176,7 +196,6 @@ struct HyperPlaneBU : public BuildingUnit<nx>
 template <auto nx>
 struct ParticleBU : public BuildingUnit<nx>
 {
-  std::vector<unsigned int> stencilBU;
   ParticleBU(unsigned int _number,
              unsigned int _jump_parameter,
              unsigned int _seedPoint,
@@ -185,7 +204,8 @@ struct ParticleBU : public BuildingUnit<nx>
     this->number = _number;
     this->referenceFields = {_seedPoint};
     this->jump_parameter = _jump_parameter;
-    stencilBU = _stencil;
+    this->stencilBU = _stencil;
+    this->stencilBorder = CAM::get_border<nx>(this->stencilBU)[0];
   }
   ~ParticleBU() override {}
   static const std::vector<unsigned int> get_stencil(const int _random_seed,
@@ -278,17 +298,26 @@ struct ParticleBU : public BuildingUnit<nx>
   const std::vector<unsigned int>& get_field_indices() override
   {
     this->fields.clear();
-    for (unsigned int i = 0; i < stencilBU.size(); i++)
+    for (unsigned int i = 0; i < this->stencilBU.size(); i++)
     {
-      this->fields.push_back(CAM::aim<nx>(this->referenceFields[0], stencilBU[i]));
+      this->fields.push_back(CAM::aim<nx>(this->referenceFields[0], this->stencilBU[i]));
     }
     return this->fields;
   }
+  const std::vector<unsigned int>& get_border_indices() override
+  {
+    this->fieldsBorder.clear();
+    for (unsigned int i = 0; i < this->stencilBorder.size(); i++)
+    {
+      this->fieldsBorder.push_back(CAM::aim<nx>(this->referenceFields[0], this->stencilBorder[i]));
+    }
+    return this->fieldsBorder;
+  }
   bool is_member(unsigned int _index) override
   {
-    for (unsigned int i = 0; i < stencilBU.size(); i++)
+    for (unsigned int i = 0; i < this->stencilBU.size(); i++)
     {
-      if (CAM::aim<nx>(this->referenceFields[0], stencilBU[i]) == _index)
+      if (CAM::aim<nx>(this->referenceFields[0], this->stencilBU[i]) == _index)
         return true;
     }
     return false;

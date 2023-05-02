@@ -37,14 +37,14 @@ class CellularAutomaton
    **********************************************************************************************/
   static void apply(Domain<nx, fields_array_t>& _domain)
   {
-    _domain.composites.clear();
     std::shuffle(_domain.buildingUnits.begin(), _domain.buildingUnits.end(),
                  std::default_random_engine(std::rand()));
     // std::cout << "Number of BU: " << _domain.buildingUnits.size() << std::endl;
     std::for_each(_domain.buildingUnits.begin(), _domain.buildingUnits.end(),
                   [&](CAM::BuildingUnit<nx>* unit) { move_BU(unit, _domain.domainFields); });
-    _domain.find_composites();
+    _domain.find_composites_via_BU_border();
     // std::cout << "Number of composites: " << _domain.composites.size() << std::endl;
+    // _domain.find_composites();
     std::shuffle(_domain.composites.begin(), _domain.composites.end(),
                  std::default_random_engine(std::rand()));
     std::for_each(_domain.composites.begin(), _domain.composites.end(),

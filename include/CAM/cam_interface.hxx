@@ -14,7 +14,7 @@
 #include <limits>
 namespace CAM
 {
-template <auto nx, typename fields_array_t = std::array<CAM::fieldNumbers_t, CAM::n_fields<nx>()>>
+template <auto nx, typename fields_array_t = std::array<unsigned int, CAM::n_fields<nx>()>>
 class CAMInterface
 {
   CAM::Domain<nx, fields_array_t> domain;
@@ -49,8 +49,11 @@ class CAMInterface
     std::srand(rand_seed);
     unsigned int randomPoint, centerpoint = 0;
 
-    std::vector<unsigned int> stencil1 = CAM::ParticleBU<nx>::get_stencil(0, 30, 20, 100);
-    std::vector<unsigned int> stencil2 = CAM::ParticleBU<nx>::get_stencil(0, 20, 10, 200);
+    // std::vector<unsigned int> stencil1 = CAM::ParticleBU<nx>::get_stencil(0, 30, 20, 100);
+    // std::vector<unsigned int> stencil2 = CAM::ParticleBU<nx>::get_stencil(0, 20, 10, 200);
+
+    std::vector<unsigned int> stencil1 = CAM::ParticleBU<nx>::get_stencil(0, 10, 5, 10);
+    std::vector<unsigned int> stencil2 = CAM::ParticleBU<nx>::get_stencil(0, 5, 1, 1);
     for (int a = 0; a < 10; a++)
     {
       randomPoint = 0;

@@ -35,7 +35,10 @@ def plot_to_vtk(filename, data, shape):
   n_steps = np.shape(data)[0]
   g = VtkGroup("./group")
   # Dimensions
-  nx, ny, nz = shape[0], shape[1], shape[2]
+  if len(shape) == 3:
+    nx, ny, nz = shape[0], shape[1], shape[2]
+  if len(shape) == 2:
+    nx, ny, nz = shape[0], shape[1], 1
   lx, ly, lz = 1.0, 1.0, 1.0
   dx, dy, dz = lx / nx, ly / ny, lz / nz
 
@@ -43,6 +46,7 @@ def plot_to_vtk(filename, data, shape):
   X = np.arange(0, lx + 0.1 * dx, dx, dtype="float64")
   Y = np.arange(0, ly + 0.1 * dy, dy, dtype="float64")
   Z = np.arange(0, lz + 0.1 * dz, dz, dtype="float64")
+  
   
   for step in range(n_steps):
     file = filename + str(step)
