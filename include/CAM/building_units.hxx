@@ -232,7 +232,7 @@ struct ParticleBU : public BuildingUnit<nx>
     unsigned int neigh, coord_min, axis_min_feret = std::rand() % nx.size();
     std::vector<unsigned int> min_feret_coord, borderPoints, borderCells, points;
     std::array<std::vector<unsigned int>, 2> border_;
-    std::array<unsigned int, n_fieldpoints<nx>()> newPoints;
+    std::array<unsigned int, n_field_corner_points<nx>()> newPoints;
     for (unsigned int i = 0; i < stencil.size(); i++)
     {
       min_feret_coord.push_back(
@@ -275,7 +275,7 @@ struct ParticleBU : public BuildingUnit<nx>
                    std::default_random_engine(std::rand()));
       for (unsigned int j = 0; j < newStencilCells.size(); j++)
       {
-        newPoints = CAM::get_points<nx>(newStencilCells[j]);
+        newPoints = CAM::get_corner_points<nx>(newStencilCells[j]);
         for (unsigned int p = 0; p < newPoints.size(); p++)
           points.push_back(aim<nx>(centerpoint, (int)newPoints[p]));
         feretDiameter = CAM::feretDiameter_max<nx>(points);

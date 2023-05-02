@@ -54,14 +54,22 @@ static constexpr int direct_neigh(const unsigned int index)
   return direct_neigh;
 }
 /*!*********************************************************************************************
+ * \brief Constexpr power function
+ **************************************************************************************************/
+template <typename T>
+constexpr T ipow(T num, unsigned int pow)
+{
+  return pow == 0 ? 1 : num * ipow(num, pow - 1);
+}
+/*!*********************************************************************************************
  * \brief How many corner points of a cell
  *
  * \return number of cornerpoints
  **************************************************************************************************/
 template <auto nx>
-static constexpr unsigned int n_fieldpoints()
+static constexpr unsigned int n_field_corner_points()
 {
-  return std::pow(2, nx.size());
+  return ipow(2, nx.size());
 }
 /*!*************************************************************************************************
  * \brief   Find field if one moves from position to move.
@@ -91,9 +99,10 @@ static constexpr unsigned int aim(const int position, const int move)
  * \return indices of points
  **************************************************************************************************/
 template <auto nx>
-static constexpr std::array<unsigned int, n_fieldpoints<nx>()> get_points(const unsigned int _field)
+static constexpr std::array<unsigned int, n_field_corner_points<nx>()> get_corner_points(
+  const unsigned int _field)
 {
-  std::array<unsigned int, n_fieldpoints<nx>()> points;
+  std::array<unsigned int, n_field_corner_points<nx>()> points;
   unsigned int leftright;
   for (unsigned int a = 0; a < pow(2, nx.size()); a++)
   {
@@ -152,7 +161,7 @@ static constexpr std::vector<unsigned int> get_p_normed_particle(const double _r
   const unsigned int dim = nx.size();
   double radius = std::max(1., _radius);
   std::vector<unsigned int> stencil(1, 0);
-  std::array<unsigned int, n_fieldpoints<nx>()> points;
+  std::array<unsigned int, n_field_corner_points<nx>()> points;
   unsigned int newMove, index = 0, old_size = stencil.size();
   bool isInside, doNextLayer = true;
   while (doNextLayer)
@@ -163,7 +172,7 @@ static constexpr std::vector<unsigned int> get_p_normed_particle(const double _r
       for (unsigned int i = 0; i < 2 * dim; ++i)
       {
         newMove = aim<nx>(stencil[index], direct_neigh<nx>(i));  // newCell = aim<nx>(0, newMove);
-        points = CAM::get_points<nx>(newMove);
+        points = CAM::get_corner_points<nx>(newMove);
         isInside = true;
         for (unsigned int i = 0; i < points.size(); i++)
           isInside = isInside && (p_norm_distance<nx, p>(0, points[i]) < radius);
@@ -299,12 +308,12 @@ static constexpr std::array<std::vector<unsigned int>, 2> get_border(
 {
   std::vector<unsigned int> borderCells, borderPoints, amountNeighbors(_set.size());
   std::fill(amountNeighbors.begin(), amountNeighbors.end(), 0);
-  std::array<unsigned int, n_fieldpoints<nx>()> points;
+  std::array<unsigned int, n_field_corner_points<nx>()> points;
   unsigned int element, neigh, dim, lr;
   for (unsigned int a = 0; a < _set.size(); a++)
   {
     element = _set[a];
-    points = CAM::get_points<nx>(element);
+    points = CAM::get_corner_points<nx>(element);
     for (unsigned int i = 0; i < 2 * nx.size(); ++i)
     {
       neigh = aim<nx>(element, direct_neigh<nx>(i));
