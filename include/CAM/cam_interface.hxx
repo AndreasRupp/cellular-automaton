@@ -5,6 +5,7 @@
 #pragma once
 #include <CAM/building_units.hxx>
 #include <CAM/cellular_automaton.hxx>
+#include <CAM/composite.hxx>
 #include <CAM/domain.hxx>
 #include <array>
 #include <chrono>
@@ -22,7 +23,7 @@ class CAMInterface
  public:
   CAMInterface(double _jump_parameter_composites = 5)
   {
-    domain.jump_parameter_composites = _jump_parameter_composites;
+    CAM::jump_parameter_composite = _jump_parameter_composites;
   }
   ~CAMInterface() {}
 

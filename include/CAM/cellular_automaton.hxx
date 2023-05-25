@@ -5,8 +5,6 @@
  *TODO calculate attraction only on basis of BU or composites border
  **********************************************************************************************/
 #pragma once
-#ifndef CELLULAR_AUTOMATON_HXX
-#define CELLULAR_AUTOMATON_HXX
 
 #include <CAM/domain.hxx>
 #include <CAM/utils.hxx>
@@ -190,4 +188,3 @@ class CellularAutomaton
   }
 };
 }  // namespace CAM
-#endif  // CELLULAR_AUTOMATON_HXX

@@ -9,8 +9,6 @@
  *
  ************************************************************************************************/
 #pragma once
-#ifndef DOMAIN_HXX
-#define DOMAIN_HXX
 
 #include <CAM/building_units.hxx>
 #include <CAM/composite.hxx>
@@ -29,15 +27,9 @@ class Domain
   static const unsigned int dim = nx.size();
 
  public:
-  double jump_parameter_composites;
-  constexpr double get_jump_parameter_composites(const unsigned int _comp_size)
-  {
-    return jump_parameter_composites / std::pow(_comp_size, 1.0 / (double)dim);
-  }
-
   static constexpr unsigned int n_fields_ = n_fields<nx>();
   // storing index for new particle
-  double indexBU_max;
+  unsigned int indexBU_max;
 
   ~Domain()
   {
@@ -52,10 +44,11 @@ class Domain
    * \param _jump_parameter_composites How far composites particles are allowed to jump.
    ************************************************************************************************/
   Domain(double _jump_parameter_composites = -1)
-  : jump_parameter_composites((_jump_parameter_composites != -1.)
-                                ? _jump_parameter_composites
-                                : 5)  // double _jump_parameter_composites = 1.0
   {
+    if (_jump_parameter_composites != -1.)
+      CAM::jump_parameter_composite = _jump_parameter_composites;
+    else
+      CAM::jump_parameter_composite = 5;  // double _jump_parameter_composites = 1.0
     if constexpr (std::is_same<fields_array_t,
                                std::vector<typename fields_array_t::value_type>>::value)
       domainFields.resize(n_fields_, 0);
@@ -249,7 +242,7 @@ class Domain
         }
         newComposite->fieldIndices = found_solids;
         newComposite->jump_parameter =
-          get_jump_parameter_composites(newComposite->fieldIndices.size());
+          CAM::get_jump_range_composite<nx>(newComposite->fieldIndices.size());
         composites.push_back(newComposite);
       }
       particles.push_back(Particle(found_solids, compositeComponents));
@@ -320,7 +313,7 @@ class Domain
       {
         newComposite->fieldIndices = found_solids;
         newComposite->jump_parameter =
-          get_jump_parameter_composites(newComposite->fieldIndices.size());
+          CAM::get_jump_range_composite<nx>(newComposite->fieldIndices.size());
         composites.push_back(newComposite);
       }
       else
@@ -861,4 +854,3 @@ class Domain
   }
 };
 }  // namespace CAM
-#endif  // DOMAIN_HXX
