@@ -18,9 +18,9 @@ static constexpr double get_jump_range_composite(const unsigned int _comp_size)
 template <auto nx>
 struct Composite
 {
-  std::vector<CAM::BuildingUnit<nx>*> buildingUnits;
-  unsigned int jump_parameter;
-  std::vector<unsigned int> fieldIndices;
+  std::vector<CAM::BuildingUnit<nx>*> building_units;
+  double jump_parameter;
+  std::vector<unsigned int> field_indices;
 };
 
 }  // namespace CAM

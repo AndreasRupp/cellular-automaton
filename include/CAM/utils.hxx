@@ -162,25 +162,25 @@ static constexpr std::vector<unsigned int> get_p_normed_particle(const double _r
   double radius = std::max(1., _radius);
   std::vector<unsigned int> stencil(1, 0);
   std::array<unsigned int, n_field_corner_points<nx>()> points;
-  unsigned int newMove, index = 0, old_size = stencil.size();
-  bool isInside, doNextLayer = true;
-  while (doNextLayer)
+  unsigned int new_move, index = 0, old_size = stencil.size();
+  bool isInside, do_next_layer = true;
+  while (do_next_layer)
   {
-    doNextLayer = false;
+    do_next_layer = false;
     for (; index < old_size; ++index)
     {
       for (unsigned int i = 0; i < 2 * dim; ++i)
       {
-        newMove = aim<nx>(stencil[index], direct_neigh<nx>(i));  // newCell = aim<nx>(0, newMove);
-        points = CAM::get_corner_points<nx>(newMove);
+        new_move = aim<nx>(stencil[index], direct_neigh<nx>(i));  // newCell = aim<nx>(0, new_move);
+        points = CAM::get_corner_points<nx>(new_move);
         isInside = true;
         for (unsigned int i = 0; i < points.size(); i++)
           isInside = isInside && (p_norm_distance<nx, p>(0, points[i]) < radius);
 
-        if (std::find(stencil.begin(), stencil.end(), newMove) == stencil.end() && isInside)
+        if (std::find(stencil.begin(), stencil.end(), new_move) == stencil.end() && isInside)
         {
-          stencil.push_back(newMove);
-          doNextLayer = true;
+          stencil.push_back(new_move);
+          do_next_layer = true;
         }
       }
     }
@@ -196,22 +196,21 @@ static constexpr std::vector<unsigned int> get_p_normed_particle(const double _r
  * \retval stencil
  **********************************************************************************************/
 template <auto nx>
-static std::vector<unsigned int> get_stencil(double _jump_parameter)
+static constexpr std::vector<unsigned int> get_stencil(const double _jump_parameter)
 {
-  static const unsigned int dim = nx.size();
   std::vector<unsigned int> stencil(1, 0);
-  unsigned int newNeigh, layers = std::max(1., _jump_parameter), index = 0,
-                         old_size = stencil.size();
+  unsigned int new_neigh, layers = std::max(1., _jump_parameter), index = 0,
+                          old_size = stencil.size();
   for (unsigned int lay = 0; lay < layers; ++lay)
   {
     for (; index < old_size; ++index)
     {
-      for (unsigned int i = 0; i < 2 * dim; ++i)
+      for (unsigned int i = 0; i < 2 * nx.size(); ++i)
       {
-        newNeigh = aim<nx>(stencil[index], direct_neigh<nx>(i));
-        if (std::find(stencil.begin(), stencil.end(), newNeigh) == stencil.end())
+        new_neigh = aim<nx>(stencil[index], direct_neigh<nx>(i));
+        if (std::find(stencil.begin(), stencil.end(), new_neigh) == stencil.end())
         {
-          stencil.push_back(newNeigh);
+          stencil.push_back(new_neigh);
         }
       }
     }
@@ -228,7 +227,7 @@ static std::vector<unsigned int> get_stencil(double _jump_parameter)
  * \return max feret diamater
  **********************************************************************************************/
 template <auto nx>
-static constexpr double feretDiameter_max_byFields(const std::vector<unsigned int>& _fields)
+static constexpr double feret_diameter_max_by_fields(const std::vector<unsigned int>& _fields)
 {
   unsigned int coord_a, coord_b, bit_a, bit_b;
   double distance_max = 0;
@@ -271,7 +270,7 @@ static constexpr double feretDiameter_max_byFields(const std::vector<unsigned in
  * \return max feret diamater
  **********************************************************************************************/
 template <auto nx>
-static constexpr double feretDiameter_max(const std::vector<unsigned int>& _points)
+static constexpr double feret_diameter_max(const std::vector<unsigned int>& _points)
 {
   unsigned int coord_a, coord_b;
   double distance, distance_max = 0;
@@ -299,15 +298,15 @@ static constexpr double feretDiameter_max(const std::vector<unsigned int>& _poin
  *TODO Implement convexHull
  * \tparam nx
  * \param _set connected cells
- * \return {borderCells, borderPoints}
+ * \return {border_cells, border_points}
  *
  **********************************************************************************************/
 template <auto nx>
 static constexpr std::array<std::vector<unsigned int>, 2> get_border(
   const std::vector<unsigned int>& _set)
 {
-  std::vector<unsigned int> borderCells, borderPoints, amountNeighbors(_set.size());
-  std::fill(amountNeighbors.begin(), amountNeighbors.end(), 0);
+  std::vector<unsigned int> border_cells, border_points, amount_neighbors(_set.size());
+  std::fill(amount_neighbors.begin(), amount_neighbors.end(), 0);
   std::array<unsigned int, n_field_corner_points<nx>()> points;
   unsigned int element, neigh, dim, lr;
   for (unsigned int a = 0; a < _set.size(); a++)
@@ -318,7 +317,7 @@ static constexpr std::array<std::vector<unsigned int>, 2> get_border(
     {
       neigh = aim<nx>(element, direct_neigh<nx>(i));
       if (std::find(_set.begin(), _set.end(), neigh) != _set.end())
-        amountNeighbors[a]++;
+        amount_neighbors[a]++;
       else
       {
         dim = i / 2;
@@ -327,15 +326,15 @@ static constexpr std::array<std::vector<unsigned int>, 2> get_border(
         for (unsigned int j = 0; j < points.size(); j++)
         {
           if (((j & (1 << dim)) >> dim) == lr)
-            borderPoints.push_back(points[j]);
+            border_points.push_back(points[j]);
         }
       }
     }
-    if (amountNeighbors[a] < 2 * nx.size())
-      borderCells.push_back(element);
+    if (amount_neighbors[a] < 2 * nx.size())
+      border_cells.push_back(element);
   }
-  sort(borderPoints.begin(), borderPoints.end());
-  borderPoints.erase(unique(borderPoints.begin(), borderPoints.end()), borderPoints.end());
-  return {borderCells, borderPoints};
+  sort(border_points.begin(), border_points.end());
+  border_points.erase(unique(border_points.begin(), border_points.end()), border_points.end());
+  return {border_cells, border_points};
 }
 }  // namespace CAM

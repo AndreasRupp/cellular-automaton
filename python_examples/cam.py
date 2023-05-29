@@ -30,29 +30,30 @@ def cam_test(n_steps, debug_mode=False):
   const.nx              = [50, 50]
   const.debug_mode      = debug_mode
   jump_parameter_composites  = 10
-  jump_parameter = 7
+  jump_parameter = 5
   porosity = 0.75
   PyCAM = CAM.include(const)
   Domain = PyCAM(jump_parameter_composites)
 
-  Domain.place_singleCellBU_randomly(porosity, jump_parameter, 0)
+  Domain.place_single_cell_bu_randomly(porosity, jump_parameter, 0)
 
   # success = 0
+  
   # while success < 10:
   #   success = success + Domain.place_sphere( -1, 5, jump_parameter)
-  # #print("Nr of spheres " + str(success))
+  # print("Nr of spheres " + str(success))
   # success = 0
   # while success < 10:
-  #   success = success + Domain.place_plane( -1, [1,3,1], jump_parameter)
-  #print("Nr of planes " + str(success))
-
-  #Domain.place_particles()
+  #   success = success + Domain.place_plane( -1, jump_parameter, [1,3])
+  # print("Nr of planes " + str(success))
+  # Domain.print_array()
+  # Domain.place_particles()
   
   save_data = np.zeros( (n_steps + 1, np.prod(const.nx)) ) 
   save_data[0] = Domain.fields()
 
   for step in range(n_steps):
-    Domain.do_CAM()
+    Domain.do_cam()
     save_data[step+1] = Domain.fields()
 
   # print(Domain.average_particle_size())
