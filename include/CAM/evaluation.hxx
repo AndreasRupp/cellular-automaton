@@ -217,7 +217,7 @@ class Evaluation
    * \param   dir_dim          Certain dimension
    * \retval  max_distance     Amount of moves
    **********************************************************************************************/
-  unsigned int directed_max_min_distance(unsigned int dir_dim, const Particle& _particle)
+  unsigned int directed_max_min_distance(const unsigned int dir_dim, const Particle& _particle)
   {
     unsigned int max_distance = 0, field = _particle.field_indices[0];
     fields_array_t domain_fields = domain->domain_fields;

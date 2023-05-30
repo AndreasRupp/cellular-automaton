@@ -41,7 +41,7 @@ struct BuildingUnit
   BuildingUnit(const unsigned int _number,
                const double _jump_parameter,
                const unsigned int _reference_field,
-               std::array<unsigned int, nx.size()> _extent)
+               const std::array<unsigned int, nx.size()> _extent)
   : BuildingUnit<nx>(_number, _jump_parameter, _reference_field)
   {
     create_hyper_plane(_extent);
@@ -49,7 +49,7 @@ struct BuildingUnit
   BuildingUnit(const unsigned int _number,
                const double _jump_parameter,
                const unsigned int _reference_field,
-               std::vector<unsigned int> _stencil)
+               const std::vector<unsigned int>& _stencil)
   : BuildingUnit<nx>(_number, _jump_parameter, _reference_field)
   {
     create_custom_bu(_stencil);
@@ -65,7 +65,7 @@ struct BuildingUnit
    * \tparam nx
    * \param _radius all cells are completely within the radius
    **********************************************************************************************/
-  void constexpr create_hyper_sphere(double _radius);
+  void constexpr create_hyper_sphere(const double _radius);
   /*!*********************************************************************************************
    * \brief Limited hyper plane (2D: Rectangle, 3D: cuboid)
    * \param _extent size of plane in each dimension

@@ -46,7 +46,9 @@ def cam_test(n_steps, debug_mode=False):
   # while success < 10:
   #   success = success + Domain.place_plane( -1, jump_parameter, [1,3])
   # print("Nr of planes " + str(success))
+  
   # Domain.print_array()
+
   # Domain.place_particles()
   
   save_data = np.zeros( (n_steps + 1, np.prod(const.nx)) ) 

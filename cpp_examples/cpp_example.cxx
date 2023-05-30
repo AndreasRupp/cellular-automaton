@@ -23,7 +23,7 @@ int main()
   const double porosity = 0.5;
   CAM.place_single_cell_bu_randomly(porosity, jump_param);
 
-  std::vector<unsigned int> extent = {3, 1};
+  // std::vector<unsigned int> extent = {3, 1};
   // std::cout << "is placed? " << CAM.place_plane(-1, jump_param, extent) << std::endl;
   CAM.print_array();
   std::cout << std::endl << std::endl;
