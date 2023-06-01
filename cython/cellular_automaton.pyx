@@ -16,7 +16,7 @@ cdef class PythonClassName:
     if _jump_parameter == "default": _jump_parameter = 1.0 
     if random_seed == "default" : random_seed = 0 
     self.thisptr.place_single_cell_bu_randomly(_porosity, _jump_parameter, random_seed) 
-  def place_sphere(self, _position, _radius, _jump_parameter): 
+  def place_sphere(self, _position, _jump_parameter, _radius): 
     if _jump_parameter == "default" : _jump_parameter = 1.0 
     if _radius == "default" : _radius = 1.0 
     if _position == "default" : _position = -1 

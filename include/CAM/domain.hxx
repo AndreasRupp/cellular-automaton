@@ -82,122 +82,34 @@ class Domain
    * \brief Place any building unit (bu) into the domain
    * Basis function for placement for all special BUs
    * \param _unit building unit
-   * \return true: cells pf bu are marked with individual index, bu is stored in bu vector
+   * \return true: cells of bu are marked with individual index, bu is stored in bu vector
    * \return false: bu could not be placed. all its cells are removed
    ************************************************************************************************/
-  bool constexpr place_bu(CAM::BuildingUnit<nx> _unit)
+  bool constexpr place_bu(CAM::BuildingUnit<nx> _unit, int _position)
   {
-    bool success = true;
+    if (_position == -1)
+    {
+      unsigned int rand_seed = std::chrono::system_clock::now().time_since_epoch().count();
+      std::srand(rand_seed);
+      _position = std::rand() % (n_fields_);
+    }
+    _unit.reference_field = _position;
 
-    std::vector<unsigned int> fields = _unit.get_field_indices();
+    const std::vector<unsigned int>& fields = _unit.get_field_indices();
+    for (unsigned int i = 0; i < fields.size(); i++)
+    {
+      if (domain_fields[fields[i]] != 0)
+        return false;
+    }
+
+    index_bu_max++;
+    _unit.number = index_bu_max;
     std::for_each(fields.begin(), fields.end(),
-                  [&](unsigned int field)
-                  {
-                    if (domain_fields[field] == 0)
-                    {
-                      success = success && true;
-                      domain_fields[field] = _unit.number;
-                    }
-                    else
-                    {
-                      success = 0;
-                    }
-                  });
+                  [&](unsigned int field) { domain_fields[field] = _unit.number; });
+    building_units.push_back(_unit);
+    return true;
+  }
 
-    if (success == 0)
-    {
-      std::for_each(fields.begin(), fields.end(),
-                    [&](unsigned int field)
-                    {
-                      if (domain_fields[field] == _unit.number)
-                        domain_fields[field] = 0;
-                    });
-    }
-    else
-    {
-      building_units.push_back(_unit);
-      index_bu_max++;
-    }
-    return success;
-  }
-  /*!*********************************************************************************************
-   * \brief Places HyperSphere (2D: Circle, 3D: Sphere) into domain
-   *
-   * \param _position field index of center point; no position is given (-1) -> random position
-   * \param _radius all cells are completely within the radius
-   * \param _jump_parameter How far sphere is allowed to jump.
-   * \return true: sphere is placed
-   * \return false: sphere could not be placed. all its cells are removed
-   ************************************************************************************************/
-  bool constexpr place_sphere(const int _position = -1,
-                              const double _radius = 1,
-                              const double _jump_parameter = 1)
-  {
-    int position = _position;
-    if (_position == -1)
-    {
-      rand_seed = std::chrono::system_clock::now().time_since_epoch().count();
-      std::srand(rand_seed);
-      position = std::rand() % (n_fields_);
-    }
-    bool success = place_bu(BuildingUnit<nx>(index_bu_max + 1, _jump_parameter, position, _radius));
-    return success;
-  }
-  /*!*********************************************************************************************
-   * \brief Place a limited hyper plane (2D: Rectangle, 3D: cuboid) into domain
-   *
-   * \param _position field index of center point; no position is given (-1) -> random position
-   * \param _extent size of plane in each dimension
-   * \param _jump_parameter How far hyper plane is allowed to jump.
-   * \return true: plane is placed
-   * \return false: plane could not be placed. all its cells are removed
-   ************************************************************************************************/
-  bool constexpr place_plane(
-    const int _position = -1,
-    const double _jump_parameter = 1,
-    const std::array<unsigned int, nx.size()>& _extent = std::array<unsigned int, nx.size()>{0})
-  {
-    int position = _position;
-    if (_position == -1)
-    {
-      rand_seed = std::chrono::system_clock::now().time_since_epoch().count();
-      std::srand(rand_seed);
-      position = std::rand() % (n_fields_);
-    }
-    bool success = place_bu(BuildingUnit<nx>(index_bu_max + 1, _jump_parameter, position, _extent));
-    return success;
-  }
-  /*!*********************************************************************************************
-   * \brief Creates domain with building units containing only one cell
-   *
-   * \param _porosity The percentage of void space, not occupied by solid/bu.
-   * \param _jump_parameter How far individual particles are allowed to jump.
-   * \param random_seed If given, sets random seed to given seed.
-   ************************************************************************************************/
-  void constexpr place_single_cell_bu_randomly(const double _porosity = 0.90,
-                                               const double _jump_parameter = 1,
-                                               const unsigned int random_seed = 0)
-  {
-    if (random_seed == 0)
-    {
-      rand_seed = std::chrono::system_clock::now().time_since_epoch().count();
-    }
-    else
-      rand_seed = random_seed;
-
-    std::srand(rand_seed);
-
-    unsigned int n_particles = (1. - _porosity) * n_fields_;
-    unsigned int position = std::rand() % (n_fields_);
-    for (unsigned int i = 0; i < n_particles; ++i)
-    {
-      while (domain_fields[position] != 0)
-        position = std::rand() % (n_fields_);
-      building_units.push_back(BuildingUnit<nx>(i + 1, _jump_parameter, position));
-      domain_fields[position] = i + 1;
-      index_bu_max = i + 1;
-    }
-  }
   /*!*********************************************************************************************
    * \brief  Finds composites (particles containing more then one bu) in domain and stores
    * information in std::vector<CAM::Composite<nx>*> composites; std::vector<Particle> particles;
@@ -353,10 +265,6 @@ class Domain
    * contains
    ************************************************************************************************/
   std::vector<Particle> particles;
-  /*!***********************************************************************************************
-   * \brief   Random seed.
-   ************************************************************************************************/
-  unsigned int rand_seed;
 
   // -------------------------------------------------------------------------------------------------
   // PRINTING SECTION STARTS HERE

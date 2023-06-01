@@ -49,6 +49,13 @@ target_compile_features(
 ## Add the examples subdirectory
 add_subdirectory(cpp_examples)
 
+# Add tests if requested through the BUILD_TESTING option (default: ON)
+include(CTest)
+if(ON)
+  enable_testing()
+  add_subdirectory(tests_c++)
+endif()
+
 ## Add a namespaced alias target for the export
 add_library(CAM::CAM ALIAS CAM)
 

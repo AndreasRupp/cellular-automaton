@@ -56,7 +56,7 @@ class CellularAutomaton
    **********************************************************************************************/
   static void move_bu(CAM::BuildingUnit<nx>& _unit, fields_array_t& _domain_fields)
   {
-    std::vector<unsigned int> possible_moves = CAM::get_stencil<nx>(_unit.jump_parameter);
+    const std::vector<unsigned int> possible_moves = CAM::get_stencil<nx>(_unit.jump_parameter);
     std::vector<unsigned int> best_moves(1, 0);
     double current_attraction, attraction = 0.;
     std::for_each(possible_moves.begin(), possible_moves.end(),
@@ -84,9 +84,9 @@ class CellularAutomaton
                          CAM::BuildingUnit<nx>& _unit,
                          fields_array_t& _domain_fields)
   {
-    std::vector<unsigned int> fields_old = _unit.get_field_indices();
+    const std::vector<unsigned int> fields_old = _unit.get_field_indices();
     _unit.reference_field = aim<nx>(_unit.reference_field, move);
-    std::vector<unsigned int> fields_new = _unit.get_field_indices();
+    const std::vector<unsigned int> fields_new = _unit.get_field_indices();
     for (unsigned int i = 0; i < fields_new.size(); i++)
     {
       _domain_fields[fields_new[i]] += _unit.number;
@@ -108,7 +108,8 @@ class CellularAutomaton
       _domain_fields[_composite.field_indices[i]] = 0;
     }
 
-    std::vector<unsigned int> possible_moves = CAM::get_stencil<nx>(_composite.jump_parameter);
+    const std::vector<unsigned int> possible_moves =
+      CAM::get_stencil<nx>(_composite.jump_parameter);
     std::vector<unsigned int> best_moves(1, 0);
     double current_attraction, attraction = 0.;
     std::for_each(possible_moves.begin(), possible_moves.end(),
@@ -148,7 +149,7 @@ class CellularAutomaton
   {
     double attraction = 0.;
     unsigned int aiming;
-    std::vector<unsigned int> field_indices = _unit.get_field_indices();
+    const std::vector<unsigned int>& field_indices = _unit.get_field_indices();
     for (unsigned int i = 0; i < field_indices.size(); ++i)
     {
       aiming = aim<nx>(field_indices[i], move);

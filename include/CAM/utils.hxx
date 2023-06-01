@@ -92,7 +92,7 @@ static constexpr unsigned int aim(const int position, const int move)
   return new_pos;
 }
 /*!*********************************************************************************************
- * \brief Get the all 2^dim points of a cell
+ * \brief Get the all 2^dim corner points of a cell
  *
  * \tparam nx
  * \param _field index of cell
@@ -266,7 +266,7 @@ static constexpr double feret_diameter_max_by_fields(const std::vector<unsigned 
  * Attentation: coords must be in R^n -> particle is not allowed to cross periodic domain boundary
  * Shift particle in the middle of domain
  * \tparam nx
- * \param _fields indices of points of cells
+ * \param _fields indices of corner points of cells
  * \return max feret diamater
  **********************************************************************************************/
 template <auto nx>

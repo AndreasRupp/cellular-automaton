@@ -21,10 +21,12 @@ int main()
   CAM::CAMInterface<nx> CAM;
 
   const double porosity = 0.5;
-  CAM.place_single_cell_bu_randomly(porosity, jump_param);
+  const double random_seed = 0;
+  CAM.place_single_cell_bu_randomly(porosity, jump_param, random_seed);
 
   // std::vector<unsigned int> extent = {3, 1};
   // std::cout << "is placed? " << CAM.place_plane(-1, jump_param, extent) << std::endl;
+  // std::cout << "is placed? " << CAM.place_sphere(-1, jump_param, 4) << std::endl;
   CAM.print_array();
   std::cout << std::endl << std::endl;
   for (unsigned int i = 0; i < n_moves; ++i)

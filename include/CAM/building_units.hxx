@@ -23,41 +23,25 @@ namespace CAM
  * \param jump_parameter How far bu is allowed to jump.
  * \param reference_field cells in domain which is moved by CA and is calculation basis for all (for
  *sphere center_point) cells in bu \tparam nx
+ * \param stencil_bu stencil of all cells of bu
+ * \param stencil_bu stencil of all cells at the border of bu
+ * \param fields all cells indices in domain covered by bu
+ * \param fields_border all cells in domain covered by border of bu
  **********************************************************************************************/
 template <auto nx>
 struct BuildingUnit
 {
  public:
-  BuildingUnit();
-  BuildingUnit(const unsigned int _number, double const, const unsigned int _reference_field);
-  BuildingUnit(const unsigned int _number,
-               const double _jump_parameter,
-               const unsigned int _centerPoint,
-               double _radius)
-  : BuildingUnit<nx>(_number, _jump_parameter, _centerPoint)
-  {
-    create_hyper_sphere(_radius);
-  }
-  BuildingUnit(const unsigned int _number,
-               const double _jump_parameter,
-               const unsigned int _reference_field,
-               const std::array<unsigned int, nx.size()> _extent)
-  : BuildingUnit<nx>(_number, _jump_parameter, _reference_field)
-  {
-    create_hyper_plane(_extent);
-  }
-  BuildingUnit(const unsigned int _number,
-               const double _jump_parameter,
-               const unsigned int _reference_field,
-               const std::vector<unsigned int>& _stencil)
-  : BuildingUnit<nx>(_number, _jump_parameter, _reference_field)
-  {
-    create_custom_bu(_stencil);
-  }
-
-  unsigned int number, reference_field;
+  unsigned int number;
   double jump_parameter;
+  unsigned int reference_field;
   std::vector<unsigned int> stencil_bu, stencil_border, fields, fields_border;
+  BuildingUnit();
+  BuildingUnit(double _jump_parameter) : jump_parameter(_jump_parameter)
+  {
+    stencil_bu.push_back(0);
+    stencil_border = CAM::get_border<nx>(stencil_bu)[0];
+  }
 
   /*!*********************************************************************************************
    * \brief Hyper sphere (2D: Circle, 3D: Sphere)
@@ -65,20 +49,32 @@ struct BuildingUnit
    * \tparam nx
    * \param _radius all cells are completely within the radius
    **********************************************************************************************/
-  void constexpr create_hyper_sphere(const double _radius);
+  static constexpr BuildingUnit<nx> create_hyper_sphere(double const jump_parameter,
+                                                        const double _radius);
   /*!*********************************************************************************************
    * \brief Limited hyper plane (2D: Rectangle, 3D: cuboid)
    * \param _extent size of plane in each dimension
    *
    * \tparam nx
    **********************************************************************************************/
-  void constexpr create_hyper_plane(const std::array<unsigned int, nx.size()>& _extent);
+  static constexpr BuildingUnit<nx> create_hyper_plane(
+    double const jump_parameter,
+    const std::array<unsigned int, nx.size()>& _extent);
   /*!*********************************************************************************************
    * \brief Custom bu defined by custom stencil
-   * Used for single cell bu
+   * \param stencil custom stencil
    * \tparam nx
    **********************************************************************************************/
-  void constexpr create_custom_bu(const std::vector<unsigned int>& _stencil);
+  static constexpr BuildingUnit<nx> create_custom_bu(double const jump_parameter,
+                                                     const std::vector<unsigned int>& _stencil);
+  /*!*********************************************************************************************
+   * \brief bu containing only one cell
+   * \tparam nx
+   **********************************************************************************************/
+  static constexpr BuildingUnit<nx> create_single_cell_bu(double const jump_parameter)
+  {
+    return BuildingUnit<nx>(jump_parameter);
+  }
   /*!*********************************************************************************************
    * \brief
    * custom stencil defined by min and max feret_diameter and amount of extra cells attached to
@@ -86,25 +82,15 @@ struct BuildingUnit
    *
    * \tparam nx
    **********************************************************************************************/
-  static constexpr std::vector<unsigned int> get_stencil(const int _random_seed,
-                                                         const double _feret_diameter_max,
-                                                         const double _feret_diameter_min,
-                                                         const unsigned int _extra_cells);
+  static constexpr std::vector<unsigned int> get_custom_particle_stencil(
+    const int _random_seed,
+    const double _feret_diameter_max,
+    const double _feret_diameter_min,
+    const unsigned int _extra_cells);
   const std::vector<unsigned int>& get_field_indices();
   const std::vector<unsigned int>& get_border_indices();
   bool is_member(unsigned int _index);
 };
-template <auto nx>
-BuildingUnit<nx>::BuildingUnit(const unsigned int _number,
-                               const double _jump_parameter,
-                               const unsigned int _reference_field)
-{
-  number = _number;
-  jump_parameter = _jump_parameter;
-  reference_field = _reference_field;
-  stencil_bu.push_back(0);
-  stencil_border = CAM::get_border<nx>(stencil_bu)[0];
-}
 
 template <auto nx>
 const std::vector<unsigned int>& BuildingUnit<nx>::get_field_indices()
@@ -137,46 +123,57 @@ bool BuildingUnit<nx>::is_member(const unsigned int _index)
   return false;
 }
 template <auto nx>
-void constexpr BuildingUnit<nx>::create_hyper_sphere(const double _radius)
+constexpr BuildingUnit<nx> BuildingUnit<nx>::create_hyper_sphere(double const jump_parameter,
+                                                                 const double _radius)
 {
-  stencil_border.clear();
-  stencil_bu.clear();
-  stencil_bu = CAM::get_p_normed_particle<nx, 2>(_radius);
-  stencil_border = CAM::get_border<nx>(stencil_bu)[0];
+  BuildingUnit<nx> bu = BuildingUnit<nx>(jump_parameter);
+  bu.stencil_border.clear();
+  bu.stencil_bu.clear();
+  bu.stencil_bu = CAM::get_p_normed_particle<nx, 2>(_radius);
+  bu.stencil_border = CAM::get_border<nx>(bu.stencil_bu)[0];
+  return bu;
 }
 template <auto nx>
-void constexpr BuildingUnit<nx>::create_hyper_plane(
+constexpr BuildingUnit<nx> BuildingUnit<nx>::create_hyper_plane(
+  double const jump_parameter,
   const std::array<unsigned int, nx.size()>& _extent)
 {
-  stencil_border.clear();
-  stencil_bu.clear();
-  stencil_bu.push_back(0);
+  BuildingUnit<nx> bu = BuildingUnit<nx>(jump_parameter);
+  bu.stencil_border.clear();
+  bu.stencil_bu.clear();
+  bu.stencil_bu.push_back(0);
   unsigned int size, new_move;
   for (unsigned int dim = 0; dim < nx.size(); dim++)
   {
-    size = stencil_bu.size();
+    size = bu.stencil_bu.size();
     for (unsigned int d = 1; d < _extent[dim]; d++)
     {
       for (unsigned int i = 0; i < size; i++)
       {
-        new_move = CAM::aim<nx>(stencil_bu[i], d * direct_neigh<nx>(2 * dim + 1));
-        stencil_bu.push_back(new_move);
+        new_move = CAM::aim<nx>(bu.stencil_bu[i], d * direct_neigh<nx>(2 * dim + 1));
+        bu.stencil_bu.push_back(new_move);
       }
     }
   }
-  stencil_border = CAM::get_border<nx>(stencil_bu)[0];
+  bu.stencil_border = CAM::get_border<nx>(bu.stencil_bu)[0];
+  return bu;
 }
 template <auto nx>
-void constexpr BuildingUnit<nx>::create_custom_bu(const std::vector<unsigned int>& _stencil)
+constexpr BuildingUnit<nx> BuildingUnit<nx>::create_custom_bu(
+  double const jump_parameter,
+  const std::vector<unsigned int>& _stencil)
 {
-  stencil_bu = _stencil;
-  stencil_border = CAM::get_border<nx>(stencil_bu)[0];
+  BuildingUnit<nx> bu = BuildingUnit<nx>(jump_parameter);
+  bu.stencil_bu = _stencil;
+  bu.stencil_border = CAM::get_border<nx>(bu.stencil_bu)[0];
+  return bu;
 }
 template <auto nx>
-constexpr std::vector<unsigned int> BuildingUnit<nx>::get_stencil(const int _random_seed,
-                                                                  const double _feret_diameter_max,
-                                                                  const double _feret_diameter_min,
-                                                                  const unsigned int _extra_cells)
+constexpr std::vector<unsigned int> BuildingUnit<nx>::get_custom_particle_stencil(
+  const int _random_seed,
+  const double _feret_diameter_max,
+  const double _feret_diameter_min,
+  const unsigned int _extra_cells)
 {
   unsigned int rand_seed;
   if (_random_seed == 0)
