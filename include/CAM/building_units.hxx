@@ -17,6 +17,16 @@
 #include <vector>
 namespace CAM
 {
+
+template<auto nx>
+static BuildingUnit<nx> create_hyper_sphere(const double jump_parameter, const double _radius, const int number=-1, const int center=-1)
+{
+  std::vector<unsigned int> shape = ...
+  if (center == -1)
+    center = // random number in [0,prod(nx)]
+  return BuildingUnit<nx>(number, jump_parameter, center, shape);
+}
+
 /*!*********************************************************************************************
  * \brief Base struct template of building units (bu)
  * \param number index of cells in domain
@@ -29,14 +39,22 @@ namespace CAM
  * \param fields_border all cells in domain covered by border of bu
  **********************************************************************************************/
 template <auto nx>
-struct BuildingUnit
+class BuildingUnit
 {
- public:
-  unsigned int number;
+ private:
+  unsigned int number, reference_field;
   double jump_parameter;
-  unsigned int reference_field;
-  std::vector<unsigned int> stencil_bu, stencil_border, fields, fields_border;
-  BuildingUnit();
+  // std::vector<unsigned int> stencil_bu, stencil_border, fields, fields_border;
+  std::vector<unsigned int> shape, boundary;
+public:
+  BuildingUnit(const unsigned int number, const unsigned int center, const double jump_parameter, const std::vector<unsigned int>& shape)
+
+  void set_center(const unsigned int _center)
+  {
+    center = _center;
+  }
+
+  // BuildingUnit();
   BuildingUnit(double _jump_parameter) : jump_parameter(_jump_parameter)
   {
     stencil_bu.push_back(0);
