@@ -50,8 +50,6 @@ class Domain
 
  public:
   static constexpr unsigned int n_fields_ = n_fields<nx>();
-  // storing index for new particle
-  unsigned int index_bu_max;
 
   ~Domain() {}
   /*!*********************************************************************************************
@@ -76,7 +74,6 @@ class Domain
         "The fields array has incorrect size");
       domain_fields.fill(0);
     }
-    index_bu_max = 0;
   }
   /*!*********************************************************************************************
    * \brief Place any building unit (bu) into the domain
@@ -85,27 +82,28 @@ class Domain
    * \return true: cells of bu are marked with individual index, bu is stored in bu vector
    * \return false: bu could not be placed. all its cells are removed
    ************************************************************************************************/
-  bool constexpr place_bu(CAM::BuildingUnit<nx> _unit, int _position)
+  bool constexpr place_bu(const CAM::BuildingUnit<nx>& _unit)
   {
-    if (_position == -1)
-    {
-      unsigned int rand_seed = std::chrono::system_clock::now().time_since_epoch().count();
-      std::srand(rand_seed);
-      _position = std::rand() % (n_fields_);
-    }
-    _unit.reference_field = _position;
+    //check if number there
+    auto iter = std::find_if(building_units.begin(), building_units.end(), 
+               [&](const CAM::BuildingUnit<nx>& bu){return bu.get_number() == _unit.get_number();});
+    if(_unit.get_number() == 0 || iter != building_units.end())
+      return false;
+  
+      
 
-    const std::vector<unsigned int>& fields = _unit.get_field_indices();
-    for (unsigned int i = 0; i < fields.size(); i++)
+    unsigned int field;
+    for (unsigned int i = 0; i < _unit.get_shape().size(); i++)
     {
-      if (domain_fields[fields[i]] != 0)
+      field = CAM::aim<nx>(_unit.get_reference_field(), _unit.get_shape()[i]);
+      if (domain_fields[field] != 0)
         return false;
     }
-
-    index_bu_max++;
-    _unit.number = index_bu_max;
-    std::for_each(fields.begin(), fields.end(),
-                  [&](unsigned int field) { domain_fields[field] = _unit.number; });
+    for (unsigned int i = 0; i < _unit.get_shape().size(); i++)
+    {
+      field = CAM::aim<nx>(_unit.get_reference_field(), _unit.get_shape()[i]);
+      domain_fields[field] = _unit.get_number();
+    }
     building_units.push_back(_unit);
     return true;
   }
@@ -162,7 +160,7 @@ class Domain
           typename std::vector<CAM::BuildingUnit<nx>>::iterator it =
             std::find_if(building_units.begin(), building_units.end(),
                          [&](CAM::BuildingUnit<nx> unit) -> bool
-                         { return unit.number == composite_components[i]; });
+                         { return unit.get_number() == composite_components[i]; });
           new_composite.building_units.push_back(&(*it));
         }
         new_composite.field_indices = found_solids;
@@ -176,45 +174,49 @@ class Domain
   /*!*********************************************************************************************
    * \brief  Finds composites (particles containing more then one bu) in domain and stores
    * information in std::vector<CAM::Composite<nx>*> composites; std::vector<Particle> particles;
-   * Faster version using the connected particles and their borders
+   * Faster version using the connected particles and their boundaries
    ************************************************************************************************/
-  void find_composites_via_bu_border()
+  void find_composites_via_bu_boundary()
   {
     fields_array_t fields = domain_fields;
     constexpr unsigned int dim = nx.size();
-    unsigned int neigh_field, borders_size;
+    unsigned int neigh_field, boundaries_size;
     unsigned int field_number;
-    std::vector<unsigned int> borders, found_solids, helper;
+    std::vector<unsigned int> boundaries, found_solids, helper;
     particles.clear();
     composites.clear();
-    std::vector<bool> is_bu_visited(index_bu_max, false);
+    std::vector<bool> is_bu_visited(building_units.size(), false);
 
     for (unsigned int i = 0; i < building_units.size(); i++)
     {
-      if (is_bu_visited[building_units[i].number] == true)
+      if (is_bu_visited[building_units[i].get_number()] == true)
         continue;
       CAM::Composite<nx> new_composite;
       new_composite.building_units.push_back(&building_units[i]);
 
-      borders.clear();
-      borders = building_units[i].get_border_indices();
+      boundaries.clear();
+      for(unsigned int boundary_field: building_units[i].get_boundary())
+        boundaries.push_back(CAM::aim<nx>(building_units[i].get_reference_field(), boundary_field));
+      
 
       found_solids.clear();
-      helper = building_units[i].get_field_indices();
-      found_solids.insert(found_solids.end(), helper.begin(), helper.end());
+      for(unsigned int shape_field : building_units[i].get_shape()) 
+        found_solids.push_back(CAM::aim<nx>(building_units[i].get_reference_field(), shape_field));
+      
 
-      field_number = building_units[i].number;
+
+      field_number = building_units[i].get_number();
       is_bu_visited[field_number] = true;
-      borders_size = borders.size();
+      boundaries_size = boundaries.size();
 
       std::vector<unsigned int> composite_components;
       composite_components.push_back(field_number);
 
-      for (unsigned int j = 0; j < borders_size; j++, borders_size = borders.size())
+      for (unsigned int j = 0; j < boundaries_size; j++, boundaries_size = boundaries.size())
       {
         for (unsigned int k = 0; k < 2 * dim; ++k)
         {
-          neigh_field = aim<nx>(borders[j], direct_neigh<nx>(k));
+          neigh_field = aim<nx>(boundaries[j], direct_neigh<nx>(k));
           field_number = fields[neigh_field];
           if (field_number != 0 && is_bu_visited[field_number] != true)
           {
@@ -222,15 +224,20 @@ class Domain
 
             typename std::vector<CAM::BuildingUnit<nx>>::iterator it = std::find_if(
               building_units.begin(), building_units.end(),
-              [&](CAM::BuildingUnit<nx> unit) -> bool { return unit.number == field_number; });
+              [&](CAM::BuildingUnit<nx> unit) -> bool { return unit.get_number() == field_number; });
 
             new_composite.building_units.push_back(&(*it));
             composite_components.push_back(field_number);
 
-            helper = (*it).get_border_indices();
-            borders.insert(borders.end(), helper.begin(), helper.end());
-            helper = (*it).get_field_indices();
-            found_solids.insert(found_solids.end(), helper.begin(), helper.end());
+            for(unsigned int boundary_field: (*it).get_boundary())
+              boundaries.push_back(CAM::aim<nx>((*it).get_reference_field(), boundary_field));
+            
+
+
+
+        for(unsigned int shape_field: (*it).get_shape())
+          found_solids.push_back(CAM::aim<nx>((*it).get_reference_field(), shape_field));
+        
           }
         }
       }

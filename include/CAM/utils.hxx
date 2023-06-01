@@ -7,8 +7,10 @@
 #pragma once
 #include <algorithm>
 #include <array>
+#include <chrono>
 #include <cmath>
 #include <iostream>
+#include <random>
 #include <vector>
 namespace CAM
 {
@@ -37,6 +39,13 @@ static constexpr unsigned int n_fields()
   for (unsigned int i = 0; i < nx.size(); ++i)
     n_field *= nx[i];
   return n_field;
+}
+template <auto nx>
+static constexpr unsigned int get_random_field_index()
+{
+  unsigned int rand_seed = std::chrono::system_clock::now().time_since_epoch().count();
+  std::srand(rand_seed);
+  return std::rand() % (n_fields<nx>());
 }
 /*!*********************************************************************************************
  * \brief Finds the movement to a direct neighbor within von Neumann neighborhood
@@ -293,30 +302,31 @@ static constexpr double feret_diameter_max(const std::vector<unsigned int>& _poi
   }
   return distance_max;
 }
+
 /*!*********************************************************************************************
- * \brief Get the border cells and points of particle
+ * \brief Get the boundary cells and points of particle
  *TODO Implement convexHull
  * \tparam nx
- * \param _set connected cells
- * \return {border_cells, border_points}
+ * \param _fields connected cells
+ * \return {boundary_cells, boundary_corner_points}
  *
  **********************************************************************************************/
 template <auto nx>
-static constexpr std::array<std::vector<unsigned int>, 2> get_border(
-  const std::vector<unsigned int>& _set)
+static constexpr std::array<std::vector<unsigned int>, 2> get_boundary(
+  const std::vector<unsigned int>& _fields)
 {
-  std::vector<unsigned int> border_cells, border_points, amount_neighbors(_set.size());
+  std::vector<unsigned int> border_cells, border_points, amount_neighbors(_fields.size());
   std::fill(amount_neighbors.begin(), amount_neighbors.end(), 0);
   std::array<unsigned int, n_field_corner_points<nx>()> points;
   unsigned int element, neigh, dim, lr;
-  for (unsigned int a = 0; a < _set.size(); a++)
+  for (unsigned int a = 0; a < _fields.size(); a++)
   {
-    element = _set[a];
+    element = _fields[a];
     points = CAM::get_corner_points<nx>(element);
     for (unsigned int i = 0; i < 2 * nx.size(); ++i)
     {
       neigh = aim<nx>(element, direct_neigh<nx>(i));
-      if (std::find(_set.begin(), _set.end(), neigh) != _set.end())
+      if (std::find(_fields.begin(), _fields.end(), neigh) != _fields.end())
         amount_neighbors[a]++;
       else
       {
@@ -336,5 +346,17 @@ static constexpr std::array<std::vector<unsigned int>, 2> get_border(
   sort(border_points.begin(), border_points.end());
   border_points.erase(unique(border_points.begin(), border_points.end()), border_points.end());
   return {border_cells, border_points};
+}
+template <auto nx>
+static constexpr std::vector<unsigned int> get_boundary_fields(
+  const std::vector<unsigned int>& _fields)
+{
+  return get_boundary<nx>(_fields)[0];
+}
+template <auto nx>
+static constexpr std::vector<unsigned int> get_boundary_corner_points(
+  const std::vector<unsigned int>& _fields)
+{
+  return get_boundary<nx>(_fields)[1];
 }
 }  // namespace CAM

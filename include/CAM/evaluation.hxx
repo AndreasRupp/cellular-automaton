@@ -80,7 +80,7 @@ class Evaluation
     // }
     // std::sort(distribution.begin(), distribution.end());
 
-    domain->find_composites_via_bu_border();
+    domain->find_composites_via_bu_boundary();
     std::vector<unsigned int> distribution;
     distribution.resize(domain->particles.size());
     for (unsigned int i = 0; i < domain->particles.size(); i++)
@@ -297,7 +297,7 @@ class Evaluation
    ************************************************************************************************/
   static std::array<double, 12> eval_measures(CAM::Domain<nx, fields_array_t>* domain)
   {
-    domain->find_composites_via_bu_border();
+    domain->find_composites_via_bu_boundary();
     unsigned int n_single_cells =
       std::count_if(domain->particles.begin(), domain->particles.end(),
                     [](Particle particle) -> bool { return particle.field_indices.size() == 1; });

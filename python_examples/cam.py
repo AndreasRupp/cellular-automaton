@@ -35,15 +35,15 @@ def cam_test(n_steps, debug_mode=False):
   PyCAM = CAM.include(const)
   Domain = PyCAM(jump_parameter_composites)
 
-  # Domain.place_single_cell_bu_randomly(porosity, jump_parameter, 0)
+  # Domain.place_single_cell_bu_randomly(jump_parameter, porosity , 0)
 
   success = 0
   while success < 10:
-    success = success + Domain.place_sphere( -1, jump_parameter, 5)
+    success = success + Domain.place_sphere(jump_parameter, 5, -1)
   print("Nr of spheres " + str(success))
   success = 0
   while success < 10:
-    success = success + Domain.place_plane( -1, jump_parameter, [1,3])
+    success = success + Domain.place_plane(jump_parameter, [1,3], -1)
   print("Nr of planes " + str(success))
   
   # Domain.print_array()

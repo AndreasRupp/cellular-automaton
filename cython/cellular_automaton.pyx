@@ -11,21 +11,21 @@ cdef class PythonClassName:
     self.thisptr.print_array() 
   def fields(self): 
     return self.thisptr.fields() 
-  def place_single_cell_bu_randomly(self, _porosity, _jump_parameter, random_seed): 
-    if _porosity == "default" : _porosity = 0.5 
+  def place_single_cell_bu_randomly(self, _jump_parameter, _porosity, random_seed): 
     if _jump_parameter == "default": _jump_parameter = 1.0 
+    if _porosity == "default" : _porosity = 0.5 
     if random_seed == "default" : random_seed = 0 
-    self.thisptr.place_single_cell_bu_randomly(_porosity, _jump_parameter, random_seed) 
-  def place_sphere(self, _position, _jump_parameter, _radius): 
+    self.thisptr.place_single_cell_bu_randomly(_jump_parameter,_porosity,  random_seed) 
+  def place_sphere(self, _jump_parameter, _radius, _position): 
     if _jump_parameter == "default" : _jump_parameter = 1.0 
     if _radius == "default" : _radius = 1.0 
     if _position == "default" : _position = -1 
-    return self.thisptr.place_sphere(_position, _radius, _jump_parameter) 
-  def place_plane(self, _position, _jump_parameter, _extent): 
+    return self.thisptr.place_sphere(_jump_parameter, _radius, _position) 
+  def place_plane(self, _jump_parameter, _extent, _position): 
     if _jump_parameter == "default" : _jump_parameter = 1.0 
     if _extent == "default" : _extent = [ 0 ]* 3 
     if _position == "default": _position = -1 
-    return self.thisptr.place_plane(_position, _jump_parameter, _extent) 
+    return self.thisptr.place_plane(_jump_parameter, _extent, _position) 
   def place_particles(self): 
     self.thisptr.place_particles() 
   def do_cam(self) : 

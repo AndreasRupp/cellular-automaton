@@ -34,8 +34,8 @@ class CAMInterface
    * \param _jump_parameter How far individual particles are allowed to jump.
    * \param random_seed If given, sets random seed to given seed.
    ************************************************************************************************/
-  void place_single_cell_bu_randomly(double _porosity = 0.5,
-                                     double _jump_parameter = 1,
+  void place_single_cell_bu_randomly(double _jump_parameter = 1,
+                                     double _porosity = 0.5,
                                      unsigned int _random_seed = 0)
   {
     if (_random_seed == 0)
@@ -53,7 +53,8 @@ class CAMInterface
     {
       while (domain.domain_fields[position] != 0)
         position = std::rand() % (domain.n_fields_);
-      domain.place_bu(CAM::BuildingUnit<nx>::create_single_cell_bu(_jump_parameter), position);
+      domain.place_bu(CAM::create_single_cell_bu<nx>(_jump_parameter, position,
+                                                     domain.building_units.size() + 1));
     }
   }
   /*!*********************************************************************************************
@@ -65,11 +66,11 @@ class CAMInterface
    * \return true: sphere is placed
    * \return false: sphere could not be placed. all its cells are removed
    ************************************************************************************************/
-  bool place_sphere(int _position = -1, double _jump_parameter = 1, double _radius = 1)
+  bool place_sphere(double _jump_parameter = 1, double _radius = 1, int _position = -1)
   {
-    const CAM::BuildingUnit<nx> bu =
-      CAM::BuildingUnit<nx>::create_hyper_sphere(_jump_parameter, _radius);
-    return domain.place_bu(bu, _position);
+    const CAM::BuildingUnit<nx> bu = CAM::create_hyper_sphere<nx>(
+      _jump_parameter, _radius, _position, domain.building_units.size() + 1);
+    return domain.place_bu(bu);
   }
   /*!*********************************************************************************************
    * \brief Place a limited hyper plane (2D: Rectangle, 3D: cuboid) into domain
@@ -80,16 +81,17 @@ class CAMInterface
    * \return true: plane is placed
    * \return false: plane could not be placed. all its cells are removed
    ************************************************************************************************/
-  bool place_plane(int _position = -1,
-                   double _jump_parameter = 1,
-                   std::vector<unsigned int> _extent_v = std::vector<unsigned int>(nx.size(), 0))
+  bool place_plane(double _jump_parameter = 1,
+                   std::vector<unsigned int> _extent_v = std::vector<unsigned int>(nx.size(), 0),
+                   int _position = -1)
   {
     std::array<unsigned int, nx.size()> extent_a;
     for (unsigned int i = 0; i < _extent_v.size(); i++)
       extent_a[i] = _extent_v[i];
 
-    const BuildingUnit<nx> bu = BuildingUnit<nx>::create_hyper_plane(_jump_parameter, extent_a);
-    return domain.place_bu(bu, _position);
+    const BuildingUnit<nx> bu = CAM::create_hyper_plane<nx>(_jump_parameter, extent_a, _position,
+                                                            domain.building_units.size() + 1);
+    return domain.place_bu(bu);
   }
   // TODO parameterize this function
   void place_particles()
@@ -98,14 +100,12 @@ class CAMInterface
     std::srand(rand_seed);
     unsigned int random_point;
 
-    // std::vector<unsigned int> stencil1 = CAM::ParticleBU<nx>::get_custom_particle_stencil(0, 30,
-    // 20, 100); std::vector<unsigned int> stencil2 =
-    // CAM::ParticleBU<nx>::get_custom_particle_stencil(0, 20, 10, 200);
+    // std::vector<unsigned int> shape1 = CAMget_shape_by_feret<nx>(0, 30,
+    // 20, 100); std::vector<unsigned int> shape2 =
+    // CAM::get_shape_by_feret<nx>(0, 20, 10, 200);
 
-    std::vector<unsigned int> stencil1 =
-      CAM::BuildingUnit<nx>::get_custom_particle_stencil(0, 10, 5, 10);
-    std::vector<unsigned int> stencil2 =
-      CAM::BuildingUnit<nx>::get_custom_particle_stencil(0, 5, 1, 1);
+    std::vector<unsigned int> shape1 = CAM::get_shape_by_feret<nx>(0, 10, 5, 10);
+    std::vector<unsigned int> shape2 = CAM::get_shape_by_feret<nx>(0, 5, 1, 1);
     unsigned int index = 0;
     while (index < 10)
     {
@@ -114,8 +114,8 @@ class CAMInterface
       {
         random_point += std::rand() % nx[i] * direct_neigh<nx>(2 * i + 1);
       }
-      index = index + (unsigned int)domain.place_bu(
-                        CAM::BuildingUnit<nx>::create_custom_bu(5, stencil1), random_point);
+      index = index + (unsigned int)domain.place_bu(CAM::create_custom_bu<nx>(
+                        5, shape1, random_point, domain.building_units.size() + 1));
     }
     while (index < 20)
     {
@@ -124,8 +124,8 @@ class CAMInterface
       {
         random_point += std::rand() % nx[i] * direct_neigh<nx>(2 * i + 1);
       }
-      index = index + (unsigned int)domain.place_bu(
-                        CAM::BuildingUnit<nx>::create_custom_bu(5, stencil2), random_point);
+      index = index + (unsigned int)domain.place_bu(CAM::create_custom_bu<nx>(
+                        5, shape2, random_point, domain.building_units.size() + 1));
     }
   }
 
