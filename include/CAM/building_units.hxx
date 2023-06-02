@@ -18,13 +18,12 @@
 namespace CAM
 {
 /*!*********************************************************************************************
- * \brief Base struct template of building units (bu)
+ * \brief Class of building units (bu)
  * \param number index of cells in domain
  * \param jump_parameter How far bu is allowed to jump.
- * \param reference_field cells in domain which is moved by CA and is calculation basis for all (for
- *sphere center_point) cells in bu \tparam nx
- * \param shape stencil of all cells of bu
- * \param boundary stencil of all cells at the boundary of bu
+ * \param reference_field cells in domain which is moved by CA and is calculation basis for all
+ *cells in bu  (for sphere center_point) \param shape shape of bu \param boundary shape boundary of
+ *bu \tparam nx
  **********************************************************************************************/
 template <auto nx>
 class BuildingUnit
@@ -35,6 +34,9 @@ class BuildingUnit
   unsigned int reference_field, number;
 
  public:
+  /*!*********************************************************************************************
+   * \brief Construct a new Building Unit object
+   ************************************************************************************************/
   BuildingUnit(const double _jump_parameter,
                const std::vector<unsigned int>& _shape,
                const unsigned int _reference_field,
@@ -54,8 +56,8 @@ class BuildingUnit
   unsigned int get_reference_field() const { return reference_field; }
   unsigned int get_number() const { return number; }
   unsigned int get_jump_parameter() const { return jump_parameter; }
-  std::vector<unsigned int> get_shape() const { return shape; }
-  std::vector<unsigned int> get_boundary() const { return boundary; }
+  const std::vector<unsigned int>& get_shape() const { return shape; }
+  const std::vector<unsigned int>& get_boundary() const { return boundary; }
 
   bool constexpr is_member(const unsigned int _index)
   {
@@ -69,9 +71,8 @@ class BuildingUnit
 };
 /*!*********************************************************************************************
  * \brief Hyper sphere (2D: Circle, 3D: Sphere)
- *
  * \tparam nx
- * \param _radius all cells are completely within the radius
+ * \param _radius all cells of bu are completely within the radius
  **********************************************************************************************/
 template <auto nx>
 static CAM::BuildingUnit<nx> create_hyper_sphere(const double _jump_parameter,
@@ -79,13 +80,14 @@ static CAM::BuildingUnit<nx> create_hyper_sphere(const double _jump_parameter,
                                                  const int _reference_field = -1,
                                                  const int _number = -1)
 {
-  std::vector<unsigned int> shape = CAM::get_p_normed_particle<nx, 2>(_radius);
+  std::vector<unsigned int> shape = CAM::get_p_normed_shape<nx, 2>(_radius);
 
   unsigned int reference_field, number;
   if (_reference_field < 0)
     reference_field = CAM::get_random_field_index<nx>();
   else
     reference_field = _reference_field;
+  // or what should be done with non valid numbers?
   if (_number <= 0)
     number = CAM::get_random_field_index<nx>();
   else
@@ -96,7 +98,6 @@ static CAM::BuildingUnit<nx> create_hyper_sphere(const double _jump_parameter,
 /*!*********************************************************************************************
  * \brief Limited hyper plane (2D: Rectangle, 3D: cuboid)
  * \param _extent size of plane in each dimension
- *
  * \tparam nx
  **********************************************************************************************/
 template <auto nx>
@@ -106,7 +107,7 @@ static CAM::BuildingUnit<nx> create_hyper_plane(const double _jump_parameter,
                                                 const int _number = -1)
 {
   unsigned int size, new_move;
-  std::vector<unsigned int> shape;
+  std::vector<unsigned int> shape = {0};
   for (unsigned int dim = 0; dim < nx.size(); dim++)
   {
     size = shape.size();
@@ -134,8 +135,8 @@ static CAM::BuildingUnit<nx> create_hyper_plane(const double _jump_parameter,
 }
 
 /*!*********************************************************************************************
- * \brief Custom bu defined by custom stencil
- * \param stencil custom stencil
+ * \brief Bu defined by custom shape
+ * \param shape custom shape
  * \tparam nx
  **********************************************************************************************/
 template <auto nx>
@@ -153,6 +154,7 @@ static CAM::BuildingUnit<nx> create_custom_bu(const double _jump_parameter,
     number = CAM::get_random_field_index<nx>();
   else
     number = _number;
+
   return CAM::BuildingUnit<nx>(_jump_parameter, _shape, reference_field, number);
 }
 /*!*********************************************************************************************
@@ -180,7 +182,7 @@ static constexpr CAM::BuildingUnit<nx> create_single_cell_bu(const double _jump_
 
 /*!*********************************************************************************************
  * \brief
- * custom stencil defined by min and max feret_diameter and amount of extra cells attached to
+ * custom shape defined by min and max feret_diameter and amount of extra cells attached to
  *sphere with radius min_feret_diameter/2
  *
  * \tparam nx
@@ -205,16 +207,16 @@ static constexpr std::vector<unsigned int> get_shape_by_feret(const int _random_
   {
     center_point += nx[i] / 2 * direct_neigh<nx>(2 * i + 1);
   }
-  std::vector<unsigned int> stencil = CAM::get_p_normed_particle<nx, 2>(_feret_diameter_min / 2.0);
+  std::vector<unsigned int> shape = CAM::get_p_normed_shape<nx, 2>(_feret_diameter_min / 2.0);
   double feret_diameter;
   unsigned int neigh, coord_min, axis_min_feret = std::rand() % nx.size();
   std::vector<unsigned int> min_feret_coord, boundary_points, boundary_cells, points;
   std::array<std::vector<unsigned int>, 2> boundary_;
   std::array<unsigned int, n_field_corner_points<nx>()> new_points;
-  for (unsigned int i = 0; i < stencil.size(); i++)
+  for (unsigned int i = 0; i < shape.size(); i++)
   {
     min_feret_coord.push_back(
-      (stencil[i] / (int)direct_neigh<nx>(2 * axis_min_feret + 1) + n_fields<nx>()) %
+      (shape[i] / (int)direct_neigh<nx>(2 * axis_min_feret + 1) + n_fields<nx>()) %
       nx[axis_min_feret]);
   }
   sort(min_feret_coord.begin(), min_feret_coord.end());
@@ -223,7 +225,7 @@ static constexpr std::vector<unsigned int> get_shape_by_feret(const int _random_
 
   for (unsigned int c = 0; c < _extra_cells; c++)
   {
-    boundary_ = CAM::get_boundary<nx>(stencil);
+    boundary_ = CAM::get_boundary<nx>(shape);
     boundary_points = boundary_[1];
     boundary_cells = boundary_[0];
     points.reserve(boundary_points.size());
@@ -232,7 +234,7 @@ static constexpr std::vector<unsigned int> get_shape_by_feret(const int _random_
 
     feret_diameter = CAM::feret_diameter_max<nx>(points);
 
-    std::vector<unsigned int> new_stencil_cells;
+    std::vector<unsigned int> new_shape_cells;
     for (unsigned int a = 0; a < boundary_cells.size(); a++)
     {
       for (unsigned int i = 0; i < 2 * nx.size(); ++i)
@@ -240,27 +242,27 @@ static constexpr std::vector<unsigned int> get_shape_by_feret(const int _random_
         neigh = aim<nx>(boundary_cells[a], direct_neigh<nx>(i));
         coord_min = (neigh / (int)direct_neigh<nx>(2 * axis_min_feret + 1) + n_fields<nx>()) %
                     nx[axis_min_feret];
-        if (std::find(stencil.begin(), stencil.end(), neigh) == stencil.end() &&
+        if (std::find(shape.begin(), shape.end(), neigh) == shape.end() &&
             find(min_feret_coord.begin(), min_feret_coord.end(), coord_min) !=
               min_feret_coord.end())
         {
-          new_stencil_cells.push_back(neigh);
+          new_shape_cells.push_back(neigh);
         }
       }
     }
     // here possible other metrics as smoothness
-    std::shuffle(new_stencil_cells.begin(), new_stencil_cells.end(),
+    std::shuffle(new_shape_cells.begin(), new_shape_cells.end(),
                  std::default_random_engine(std::rand()));
-    for (unsigned int j = 0; j < new_stencil_cells.size(); j++)
+    for (unsigned int j = 0; j < new_shape_cells.size(); j++)
     {
-      new_points = CAM::get_corner_points<nx>(new_stencil_cells[j]);
+      new_points = CAM::get_corner_points<nx>(new_shape_cells[j]);
       for (unsigned int p = 0; p < new_points.size(); p++)
         points.push_back(aim<nx>(center_point, (int)new_points[p]));
       feret_diameter = CAM::feret_diameter_max<nx>(points);
 
       if (feret_diameter < _feret_diameter_max)
       {
-        stencil.push_back(new_stencil_cells[j]);
+        shape.push_back(new_shape_cells[j]);
         break;
       }
       else
@@ -270,7 +272,7 @@ static constexpr std::vector<unsigned int> get_shape_by_feret(const int _random_
       }
     }
   }
-  return stencil;
+  return shape;
 }
 
 }  // namespace CAM

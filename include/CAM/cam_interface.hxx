@@ -19,6 +19,7 @@ namespace CAM
 template <auto nx, typename fields_array_t = std::array<unsigned int, CAM::n_fields<nx>()>>
 class CAMInterface
 {
+ private:
   CAM::Domain<nx, fields_array_t> domain;
   unsigned int rand_seed;
 
@@ -47,12 +48,12 @@ class CAMInterface
     else
       std::srand(_random_seed);
 
-    unsigned int n_particles = (1. - _porosity) * domain.n_fields_;
-    unsigned int position = std::rand() % (domain.n_fields_);
+    unsigned int n_particles = (1. - _porosity) * n_fields<nx>();
+    unsigned int position = std::rand() % (n_fields<nx>());
     for (unsigned int i = 0; i < n_particles; ++i)
     {
       while (domain.domain_fields[position] != 0)
-        position = std::rand() % (domain.n_fields_);
+        position = std::rand() % (n_fields<nx>());
       domain.place_bu(CAM::create_single_cell_bu<nx>(_jump_parameter, position,
                                                      domain.building_units.size() + 1));
     }

@@ -46,12 +46,7 @@ struct Particle
 template <auto nx, typename fields_array_t>
 class Domain
 {
-  static const unsigned int dim = nx.size();
-
  public:
-  static constexpr unsigned int n_fields_ = n_fields<nx>();
-
-  ~Domain() {}
   /*!*********************************************************************************************
    * \brief Construct a new Domain object
    *
@@ -65,7 +60,7 @@ class Domain
       CAM::jump_parameter_composite = 5;  // double _jump_parameter_composites = 1.0
     if constexpr (std::is_same<fields_array_t,
                                std::vector<typename fields_array_t::value_type>>::value)
-      domain_fields.resize(n_fields_, 0);
+      domain_fields.resize(n_fields<nx>(), 0);
     else
     {
       static_assert(
@@ -84,13 +79,12 @@ class Domain
    ************************************************************************************************/
   bool constexpr place_bu(const CAM::BuildingUnit<nx>& _unit)
   {
-    //check if number there
-    auto iter = std::find_if(building_units.begin(), building_units.end(), 
-               [&](const CAM::BuildingUnit<nx>& bu){return bu.get_number() == _unit.get_number();});
-    if(_unit.get_number() == 0 || iter != building_units.end())
+    // check if the number is already in the domain
+    auto iter = std::find_if(building_units.begin(), building_units.end(),
+                             [&](const CAM::BuildingUnit<nx>& bu)
+                             { return bu.get_number() == _unit.get_number(); });
+    if (_unit.get_number() == 0 || iter != building_units.end())
       return false;
-  
-      
 
     unsigned int field;
     for (unsigned int i = 0; i < _unit.get_shape().size(); i++)
@@ -99,6 +93,7 @@ class Domain
       if (domain_fields[field] != 0)
         return false;
     }
+
     for (unsigned int i = 0; i < _unit.get_shape().size(); i++)
     {
       field = CAM::aim<nx>(_unit.get_reference_field(), _unit.get_shape()[i]);
@@ -195,15 +190,12 @@ class Domain
       new_composite.building_units.push_back(&building_units[i]);
 
       boundaries.clear();
-      for(unsigned int boundary_field: building_units[i].get_boundary())
+      for (unsigned int boundary_field : building_units[i].get_boundary())
         boundaries.push_back(CAM::aim<nx>(building_units[i].get_reference_field(), boundary_field));
-      
 
       found_solids.clear();
-      for(unsigned int shape_field : building_units[i].get_shape()) 
+      for (unsigned int shape_field : building_units[i].get_shape())
         found_solids.push_back(CAM::aim<nx>(building_units[i].get_reference_field(), shape_field));
-      
-
 
       field_number = building_units[i].get_number();
       is_bu_visited[field_number] = true;
@@ -222,22 +214,19 @@ class Domain
           {
             is_bu_visited[field_number] = true;
 
-            typename std::vector<CAM::BuildingUnit<nx>>::iterator it = std::find_if(
-              building_units.begin(), building_units.end(),
-              [&](CAM::BuildingUnit<nx> unit) -> bool { return unit.get_number() == field_number; });
+            typename std::vector<CAM::BuildingUnit<nx>>::iterator it =
+              std::find_if(building_units.begin(), building_units.end(),
+                           [&](CAM::BuildingUnit<nx> unit) -> bool
+                           { return unit.get_number() == field_number; });
 
             new_composite.building_units.push_back(&(*it));
             composite_components.push_back(field_number);
 
-            for(unsigned int boundary_field: (*it).get_boundary())
+            for (unsigned int boundary_field : (*it).get_boundary())
               boundaries.push_back(CAM::aim<nx>((*it).get_reference_field(), boundary_field));
-            
 
-
-
-        for(unsigned int shape_field: (*it).get_shape())
-          found_solids.push_back(CAM::aim<nx>((*it).get_reference_field(), shape_field));
-        
+            for (unsigned int shape_field : (*it).get_shape())
+              found_solids.push_back(CAM::aim<nx>((*it).get_reference_field(), shape_field));
           }
         }
       }

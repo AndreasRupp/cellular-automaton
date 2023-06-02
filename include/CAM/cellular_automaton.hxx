@@ -35,19 +35,19 @@ class CellularAutomaton
   {
     std::shuffle(_domain.building_units.begin(), _domain.building_units.end(),
                  std::default_random_engine(std::rand()));
-    //std::cout << "Number of bu: " << _domain.building_units.size() << std::endl;
+    // std::cout << "Number of bu: " << _domain.building_units.size() << std::endl;
     std::for_each(_domain.building_units.begin(), _domain.building_units.end(),
                   [&](CAM::BuildingUnit<nx>& unit) { move_bu(unit, _domain.domain_fields); });
     _domain.find_composites_via_bu_boundary();
-    //std::cout << "Number of composites: " << _domain.composites.size() << std::endl;
+    // std::cout << "Number of composites: " << _domain.composites.size() << std::endl;
     std::shuffle(_domain.composites.begin(), _domain.composites.end(),
                  std::default_random_engine(std::rand()));
     std::for_each(_domain.composites.begin(), _domain.composites.end(),
                   [&](CAM::Composite<nx> composite)
                   { move_composites(composite, _domain.domain_fields); });
   }
-  private:
-  static const unsigned int dim = nx.size();
+
+ private:
   /*!*********************************************************************************************
    * \brief Finds a new position for an individual building unit
    *
@@ -148,7 +148,7 @@ class CellularAutomaton
    * \retval  attraction      Amount of neighbours.
    **********************************************************************************************/
   static double get_attraction_bu(const unsigned int move,
-                                  CAM::BuildingUnit<nx>& _unit,
+                                  const CAM::BuildingUnit<nx>& _unit,
                                   const fields_array_t& _domain_fields)
   {
     double attraction = 0.;
@@ -159,7 +159,7 @@ class CellularAutomaton
       aiming = aim<nx>(field_index, move);
       if (_domain_fields[aiming] != _unit.get_number() && _domain_fields[aiming] != 0)
         return double_min;
-      for (unsigned int i = 0; i < 2 * dim; ++i)
+      for (unsigned int i = 0; i < 2 * nx.size(); ++i)
         attraction += _domain_fields[aim<nx>(aiming, direct_neigh<nx>(i))] != _unit.get_number() &&
                       _domain_fields[aim<nx>(aiming, direct_neigh<nx>(i))] != 0;
     }
@@ -183,7 +183,7 @@ class CellularAutomaton
       aiming = aim<nx>(_composite.field_indices[i], move);
       if (_domain_fields[aiming] != 0 && move != 0)
         return double_min;
-      for (unsigned int i = 0; i < 2 * dim; ++i)
+      for (unsigned int i = 0; i < 2 * nx.size(); ++i)
         attraction += _domain_fields[aim<nx>(aiming, direct_neigh<nx>(i))] != 0;
     }
     return attraction;

@@ -12,7 +12,9 @@ static constexpr double get_jump_range_composite(const unsigned int _comp_size)
 }
 /*!*********************************************************************************************
  * \brief Stores information about composites
- *
+ * \param building_units what bus is the composite made of
+ * \param jump_parameter How far composite is allowed to jump.
+ * \param field_indices what field indices is the composite made of (information also stored in bus)
  * \tparam nx
  **********************************************************************************************/
 template <auto nx>

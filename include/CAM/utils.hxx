@@ -157,7 +157,7 @@ double constexpr p_norm_distance(const unsigned int _position1, const unsigned i
     return std::pow(norm, 1.0 / (double)p);
 }
 /*!*********************************************************************************************
- * \brief Stencil with cells inside certain radius
+ * \brief shape with cells inside certain radius
  *
  * \tparam nx
  * \tparam p defines type of norm/distance
@@ -165,37 +165,36 @@ double constexpr p_norm_distance(const unsigned int _position1, const unsigned i
  * \return std::vector<unsigned int>
  **************************************************************************************************/
 template <auto nx, unsigned int p>
-static constexpr std::vector<unsigned int> get_p_normed_particle(const double _radius)
+static constexpr std::vector<unsigned int> get_p_normed_shape(const double _radius)
 {
-  const unsigned int dim = nx.size();
   double radius = std::max(1., _radius);
-  std::vector<unsigned int> stencil(1, 0);
+  std::vector<unsigned int> shape(1, 0);
   std::array<unsigned int, n_field_corner_points<nx>()> points;
-  unsigned int new_move, index = 0, old_size = stencil.size();
+  unsigned int new_move, index = 0, old_size = shape.size();
   bool isInside, do_next_layer = true;
   while (do_next_layer)
   {
     do_next_layer = false;
     for (; index < old_size; ++index)
     {
-      for (unsigned int i = 0; i < 2 * dim; ++i)
+      for (unsigned int i = 0; i < 2 * nx.size(); ++i)
       {
-        new_move = aim<nx>(stencil[index], direct_neigh<nx>(i));  // newCell = aim<nx>(0, new_move);
+        new_move = aim<nx>(shape[index], direct_neigh<nx>(i));  // newCell = aim<nx>(0, new_move);
         points = CAM::get_corner_points<nx>(new_move);
         isInside = true;
         for (unsigned int i = 0; i < points.size(); i++)
           isInside = isInside && (p_norm_distance<nx, p>(0, points[i]) < radius);
 
-        if (std::find(stencil.begin(), stencil.end(), new_move) == stencil.end() && isInside)
+        if (std::find(shape.begin(), shape.end(), new_move) == shape.end() && isInside)
         {
-          stencil.push_back(new_move);
+          shape.push_back(new_move);
           do_next_layer = true;
         }
       }
     }
-    old_size = stencil.size();
+    old_size = shape.size();
   }
-  return stencil;
+  return shape;
 }
 /*!*********************************************************************************************
  * \brief   Checks possible moves for a certain jump parameter.
@@ -315,7 +314,7 @@ template <auto nx>
 static constexpr std::array<std::vector<unsigned int>, 2> get_boundary(
   const std::vector<unsigned int>& _fields)
 {
-  std::vector<unsigned int> border_cells, border_points, amount_neighbors(_fields.size());
+  std::vector<unsigned int> boundary_fields, boundary_points, amount_neighbors(_fields.size());
   std::fill(amount_neighbors.begin(), amount_neighbors.end(), 0);
   std::array<unsigned int, n_field_corner_points<nx>()> points;
   unsigned int element, neigh, dim, lr;
@@ -335,17 +334,19 @@ static constexpr std::array<std::vector<unsigned int>, 2> get_boundary(
         // TODO Shorter: iterate over pow(2,nx.size()-1) and at dim bit sandwich lr
         for (unsigned int j = 0; j < points.size(); j++)
         {
+          // bit value represent dimension and 0 or 1 defines which face side of hyper cube
           if (((j & (1 << dim)) >> dim) == lr)
-            border_points.push_back(points[j]);
+            boundary_points.push_back(points[j]);
         }
       }
     }
     if (amount_neighbors[a] < 2 * nx.size())
-      border_cells.push_back(element);
+      boundary_fields.push_back(element);
   }
-  sort(border_points.begin(), border_points.end());
-  border_points.erase(unique(border_points.begin(), border_points.end()), border_points.end());
-  return {border_cells, border_points};
+  sort(boundary_points.begin(), boundary_points.end());
+  boundary_points.erase(unique(boundary_points.begin(), boundary_points.end()),
+                        boundary_points.end());
+  return {boundary_fields, boundary_points};
 }
 template <auto nx>
 static constexpr std::vector<unsigned int> get_boundary_fields(
