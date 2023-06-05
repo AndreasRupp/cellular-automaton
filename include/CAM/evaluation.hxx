@@ -47,13 +47,13 @@ class Evaluation
    * \return vector of sizes
    ************************************************************************************************/
   static std::vector<unsigned int> particle_size_distribution(
-    CAM::Domain<nx, fields_array_t>* domain)
+    CAM::Domain<nx, fields_array_t>&domain)
   {
     // \deprecated
 
     // unsigned int fluids_size, field, neigh_field;
     // std::vector<unsigned int> found_solids, distribution1;
-    // fields_array_t domain_fields =domain->domain_fields;
+    // fields_array_t domain_fields =domain.domain_fields;
     // std::for_each(domain_fields.begin(), domain_fields.end(),
     //               [](unsigned int& field) { field = (field == 0); });
 
@@ -80,12 +80,12 @@ class Evaluation
     // }
     // std::sort(distribution.begin(), distribution.end());
 
-    domain->find_composites_via_bu_boundary();
+    domain.find_composites_via_bu_boundary();
     std::vector<unsigned int> distribution;
-    distribution.resize(domain->particles.size());
-    for (unsigned int i = 0; i < domain->particles.size(); i++)
+    distribution.resize(domain.particles.size());
+    for (unsigned int i = 0; i < domain.particles.size(); i++)
     {
-      distribution.at(i) = domain->particles.at(i).field_indices.size();
+      distribution.at(i) = domain.particles.at(i).field_indices.size();
     }
     std::sort(distribution.begin(), distribution.end());
 
@@ -96,7 +96,7 @@ class Evaluation
    *
    * \return amount of particles
    ***************************************************************************************************/
-  static unsigned int n_solid_comp(CAM::Domain<nx, fields_array_t>* domain)
+  static unsigned int n_solid_comp(CAM::Domain<nx, fields_array_t>&domain)
   {
     return particle_size_distribution(domain).size();
   }
@@ -105,7 +105,7 @@ class Evaluation
    * \param _fields fields of particle
    * \retval  n_surfaces      Surfaces of particle.
    **********************************************************************************************/
-  static unsigned int getNSurfaces(const CAM::Domain<nx, fields_array_t>* domain,
+  static unsigned int getNSurfaces(const CAM::Domain<nx, fields_array_t>&domain,
                                    const std::vector<unsigned int>& _fields)
   {
     unsigned int n_surfaces = 0;
@@ -113,17 +113,17 @@ class Evaluation
                   [&](const unsigned int field)
                   {
                     for (unsigned int i = 0; i < 2 * nx.size(); ++i)
-                      if (domain->domain_fields[aim<nx>(field, direct_neigh<nx>(i))] == 0)
+                      if (domain.domain_fields[aim<nx>(field, direct_neigh<nx>(i))] == 0)
                         ++n_surfaces;
                   });
     return n_surfaces;
   }
   /*!*********************************************************************************************
-   * \brief   Find the longest shortest path of particle inside domain->
+   * \brief   Find the longest shortest path of particle inside domain.
    *
    * \retval  max_distance     Length of the path.
    **********************************************************************************************/
-  static unsigned int max_min_distance(const CAM::Domain<nx, fields_array_t>* domain,
+  static unsigned int max_min_distance(const CAM::Domain<nx, fields_array_t>&domain,
                                        const Particle& _particle)
   {
     std::vector<unsigned int> starts(1, _particle.field_indices[0]);
@@ -144,7 +144,7 @@ class Evaluation
         {
           neigh_field = aim<nx>(starts[i], direct_neigh<nx>(j));
           if (std::find(_particle.numbers.begin(), _particle.numbers.end(),
-                        domain->domain_fields[neigh_field]) != _particle.numbers.end() &&
+                        domain.domain_fields[neigh_field]) != _particle.numbers.end() &&
               std::find(starts.begin(), starts.end(), neigh_field) == starts.end())
             starts.push_back(neigh_field);
         }
@@ -170,7 +170,7 @@ class Evaluation
    *
    * \retval  max_diameter / min_diameter      Max dimension ratio.
    **********************************************************************************************/
-  static double max_dimension_ratio(const CAM::Domain<nx, fields_array_t>* domain,
+  static double max_dimension_ratio(const CAM::Domain<nx, fields_array_t>&domain,
                                     const Particle& _particle)
   {
     std::array<unsigned int, nx.size()> width_dim;
@@ -188,12 +188,12 @@ class Evaluation
    * \param   particle         Particle
    * \retval  max_distance     Length of the path
    **********************************************************************************************/
-  static unsigned int max_min_distance(const CAM::Domain<nx, fields_array_t>* domain,
+  static unsigned int max_min_distance(const CAM::Domain<nx, fields_array_t>&domain,
                                        unsigned int field,
                                        const Particle& _particle)
   {
     unsigned int max_distance = 0;
-    fields_array_t domain_fields = domain->domain_fields;
+    fields_array_t domain_fields = domain.domain_fields;
     std::vector<unsigned int> visits(1, field);
     domain_fields[field] = uint_max;
 
@@ -221,12 +221,12 @@ class Evaluation
    * \param   dir_dim          Certain dimension
    * \retval  max_distance     Amount of moves
    **********************************************************************************************/
-  static unsigned int directed_max_min_distance(const CAM::Domain<nx, fields_array_t>* domain,
+  static unsigned int directed_max_min_distance(const CAM::Domain<nx, fields_array_t>&domain,
                                                 const unsigned int dir_dim,
                                                 const Particle& _particle)
   {
     unsigned int max_distance = 0, field = _particle.field_indices[0];
-    fields_array_t domain_fields = domain->domain_fields;
+    fields_array_t domain_fields = domain.domain_fields;
     std::vector<unsigned int> visits(1, field);
     domain_fields[field] = uint_max - n_fields<nx>();
     unsigned int min_val = domain_fields[field], max_val = domain_fields[field];
@@ -267,11 +267,11 @@ class Evaluation
    *
    * \return avarage particle size
    ************************************************************************************************/
-  static constexpr double average_particle_size(CAM::Domain<nx, fields_array_t>* domain)
+  static constexpr double average_particle_size(CAM::Domain<nx, fields_array_t>&domain)
   {
     unsigned int n_solids = 0;
-    for (unsigned int i = 0; i < domain->domain_fields.size(); ++i)
-      n_solids += (domain->domain_fields[i] != 0);
+    for (unsigned int i = 0; i < domain.domain_fields.size(); ++i)
+      n_solids += (domain.domain_fields[i] != 0);
     return (double)n_solids / (double)n_solid_comp(domain);
   }
   /*!***********************************************************************************************
@@ -295,14 +295,14 @@ class Evaluation
    *
    * \retval  array                 Array of measure parameters.
    ************************************************************************************************/
-  static std::array<double, 12> eval_measures(CAM::Domain<nx, fields_array_t>* domain)
+  static std::array<double, 12> eval_measures(CAM::Domain<nx, fields_array_t>&domain)
   {
-    domain->find_composites_via_bu_boundary();
+    domain.find_composites_via_bu_boundary();
     unsigned int n_single_cells =
-      std::count_if(domain->particles.begin(), domain->particles.end(),
+      std::count_if(domain.particles.begin(), domain.particles.end(),
                     [](Particle particle) -> bool { return particle.field_indices.size() == 1; });
 
-    unsigned int n_particles = domain->particles.size();
+    unsigned int n_particles = domain.particles.size();
 
     unsigned int n_solids = 0;
     unsigned int n_surfaces = 0;
@@ -316,7 +316,7 @@ class Evaluation
     double max_diameters_ratio = 0;
     double local_diameters_ratio = 0;
 
-    std::for_each(domain->particles.begin(), domain->particles.end(),
+    std::for_each(domain.particles.begin(), domain.particles.end(),
                   [&](Particle particle)
                   {
                     n_solids_part = particle.field_indices.size();
@@ -348,7 +348,7 @@ class Evaluation
     for (unsigned int i = 0; i < n_particles; ++i)
     {
       variance_particle_sizes +=
-        std::pow(domain->particles[i].field_indices.size() - mean_particle_size, 2);
+        std::pow(domain.particles[i].field_indices.size() - mean_particle_size, 2);
     }
     variance_particle_sizes /= (double)n_particles;
 
@@ -375,13 +375,13 @@ class Evaluation
    * \retval  n_fluid_comp      1st entry of array is connected fluid areas.
    *                            2nd entry of array is periodic connected fluid areas.
    ************************************************************************************************/
-  static std::array<unsigned int, 2> n_fluid_comp(const CAM::Domain<nx, fields_array_t>* domain)
+  static std::array<unsigned int, 2> n_fluid_comp(const CAM::Domain<nx, fields_array_t>&domain)
   {
     unsigned int n_connected_fluids = 0;
     unsigned int n_periodic_fluids = 0;
     unsigned int fluids_size, field, neigh_field;
     std::vector<unsigned int> found_fluids;
-    fields_array_t domain_fields = domain->domain_fields;
+    fields_array_t domain_fields = domain.domain_fields;
     bool periodic;
     std::vector<std::array<int, nx.size()>> ref_dist(n_fields<nx>());
     std::for_each(ref_dist.begin(), ref_dist.end(),

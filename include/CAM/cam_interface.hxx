@@ -138,16 +138,16 @@ class CAMInterface
 
   std::array<double, 12> eval_measures()
   {
-    return CAM::Evaluation<nx, fields_array_t>::eval_measures(&domain);
+    return CAM::Evaluation<nx, fields_array_t>::eval_measures(domain);
   }
 
   double average_particle_size()
   {
-    return CAM::Evaluation<nx, fields_array_t>::average_particle_size(&domain);
+    return CAM::Evaluation<nx, fields_array_t>::average_particle_size(domain);
   }
   std::vector<unsigned int> particle_size_distribution()
   {
-    return CAM::Evaluation<nx, fields_array_t>::particle_size_distribution(&domain);
+    return CAM::Evaluation<nx, fields_array_t>::particle_size_distribution(domain);
   }
   unsigned int bulk_distance(const fields_array_t& domain_a, const fields_array_t& domain_b)
   {
