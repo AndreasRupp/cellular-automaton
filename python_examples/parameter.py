@@ -41,14 +41,24 @@ if __name__ == "__main__":
     distance_fct = [ "bulk_distance", "average_distance" ],
     ecdf_type    = [ "standard",      "standard",        ],
     n_bins       = [ 8,               4                  ],
+    n_steps      = [ 5,               5                  ],
     n_runs       = 100,
     file_name    = 'multiple_2'
+    ) )
+
+  fun_args.append( base_test(
+    distance_fct = [ "bulk_distance", "bulk_distance"    ],
+    ecdf_type    = [ "standard",      "standard",        ],
+    n_bins       = [ 20,               4                 ],
+    n_steps      = [ 5,                10                ],
+    file_name    = 'multiple_times'
     ) )
 
   fun_args.append( base_test(
     distance_fct = [ "bulk_distance", "average_distance", "particle_sizes" ],
     ecdf_type    = [ "standard",      "standard",         "standard"       ],
     n_bins       = [ 5,               3,                   5               ],
+    n_steps      = [ 5,               5,                   5               ],
     n_runs       = 100,
     file_name    = 'multiple_3'
     ) )

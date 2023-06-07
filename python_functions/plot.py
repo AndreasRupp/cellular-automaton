@@ -14,6 +14,7 @@ from pyevtk.hl import gridToVTK
 from pyevtk.vtk import VtkGroup
 import numpy as np
 
+
 def plot(axes, save_data, time_step):
   if time_step < 0 or time_step >= len(save_data):
     print("Time step for plotting does not exist!")
@@ -60,7 +61,7 @@ def plot_to_vtk(filename, data, shape):
     )
   g.save()
 
-  
+
 def plot_update(axes, data, ax=plt):
   data = np.reshape(data, axes)
   if np.size(axes) == 1:  axes.append(1)

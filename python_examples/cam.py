@@ -27,7 +27,7 @@ def cam_test(n_steps, debug_mode=False):
 
   
   const                 = CAM.config()
-  const.nx              = [50, 50]
+  const.nx              = [10, 10, 10]
   const.debug_mode      = debug_mode
   jump_parameter_composites  = 10
   jump_parameter = 5
