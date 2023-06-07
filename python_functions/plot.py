@@ -10,6 +10,9 @@ from matplotlib.backends.backend_tkagg import (
     FigureCanvasTkAgg, NavigationToolbar2Tk)
 # Implement the default Matplotlib key bindings.
 from matplotlib.backend_bases import key_press_handler
+from pyevtk.hl import gridToVTK
+from pyevtk.vtk import VtkGroup
+import numpy as np
 
 
 def plot(axes, save_data, time_step):
@@ -28,6 +31,36 @@ def plot_to_file(axes, save_data, file_name, ax=plt):
   fig, ax = config_plot(axes)
   plot_update(axes, save_data, ax)
   fig.savefig(file_name)
+# save to vtk file for analysing in paraview 
+def plot_to_vtk(filename, data, shape):
+  n_steps = np.shape(data)[0]
+  g = VtkGroup("./group")
+  # Dimensions
+  if len(shape) == 3:
+    nx, ny, nz = shape[0], shape[1], shape[2]
+  if len(shape) == 2:
+    nx, ny, nz = shape[0], shape[1], 1
+  lx, ly, lz = 1.0, 1.0, 1.0
+  dx, dy, dz = lx / nx, ly / ny, lz / nz
+
+  # Coordinates
+  X = np.arange(0, lx + 0.1 * dx, dx, dtype="float64")
+  Y = np.arange(0, ly + 0.1 * dy, dy, dtype="float64")
+  Z = np.arange(0, lz + 0.1 * dz, dz, dtype="float64")
+  
+  
+  for step in range(n_steps):
+    file = filename + str(step)
+    g.addFile(filepath=file, sim_time=step)
+    gridToVTK(
+    file,
+    X,
+    Y,
+    Z,
+    cellData={"cells": data[step]},
+    )
+  g.save()
+
 
 def plot_update(axes, data, ax=plt):
   data = np.reshape(data, axes)
