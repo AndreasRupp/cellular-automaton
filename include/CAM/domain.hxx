@@ -86,10 +86,8 @@ class Domain
     //                          { return bu.get_number() == _unit.get_number(); });
     // if (_unit.get_number() == 0 || iter != building_units.end())
     //   return false;
-    if(_unit.get_number() > max_field_number)
-       max_field_number = _unit.get_number();
-     
-
+    if (_unit.get_number() > max_field_number)
+      max_field_number = _unit.get_number();
 
     unsigned int field;
     for (unsigned int i = 0; i < _unit.get_shape().size(); i++)
@@ -225,10 +223,12 @@ class Domain
             composite_components.push_back(field_number);
 
             for (unsigned int boundary_field : (building_units[index]).get_boundary())
-              boundaries.push_back(CAM::aim<nx>((building_units[index]).get_reference_field(), boundary_field));
+              boundaries.push_back(
+                CAM::aim<nx>((building_units[index]).get_reference_field(), boundary_field));
 
             for (unsigned int shape_field : (building_units[index]).get_shape())
-              found_solids.push_back(CAM::aim<nx>((building_units[index]).get_reference_field(), shape_field));
+              found_solids.push_back(
+                CAM::aim<nx>((building_units[index]).get_reference_field(), shape_field));
           }
         }
       }

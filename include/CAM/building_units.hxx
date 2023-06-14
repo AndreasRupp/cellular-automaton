@@ -29,7 +29,7 @@ template <auto nx>
 class BuildingUnit
 {
  private:
-  double jump_parameter;
+  const double jump_parameter;
   std::vector<unsigned int> shape, boundary;
   unsigned int reference_field, number;
 

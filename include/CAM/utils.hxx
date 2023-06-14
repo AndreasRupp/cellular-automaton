@@ -11,6 +11,7 @@
 #include <cmath>
 #include <iostream>
 #include <random>
+#include <type_traits>
 #include <vector>
 namespace CAM
 {
@@ -206,6 +207,14 @@ static constexpr std::vector<unsigned int> get_p_normed_shape(const double _radi
 template <auto nx>
 static constexpr std::vector<unsigned int> get_stencil(const double _jump_parameter)
 {
+  // if(std::is_constant_evaluated())
+  // {
+  //   std::cout<<"compile time"<<std::endl;
+  // }
+  // else
+  // {
+  //   std::cout<<"runtime"<<std::endl;
+  // }
   std::vector<unsigned int> stencil(1, 0);
   unsigned int new_neigh, layers = std::max(1., _jump_parameter), index = 0,
                           old_size = stencil.size();
@@ -225,6 +234,20 @@ static constexpr std::vector<unsigned int> get_stencil(const double _jump_parame
     old_size = stencil.size();
   }
   return stencil;
+}
+constexpr int foo(const std::size_t n, const int v)
+{
+  //   if(std::is_constant_evaluated())
+  // {
+  //   std::cout<<"compile time"<<std::endl;
+  // }
+  // else
+  // {
+  //   std::cout<<"runtime"<<std::endl;
+  // }
+  // std::cout<<"runtime"<<std::endl;
+  std::vector<int> vec(n, v);
+  return std::accumulate(vec.begin(), vec.end(), 0LL);
 }
 /*!*********************************************************************************************
  * \brief Calculate maximal feret Diameter
