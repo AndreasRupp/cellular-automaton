@@ -35,11 +35,18 @@ class CellularAutomaton
   {
     std::shuffle(_domain.building_units.begin(), _domain.building_units.end(),
                  std::default_random_engine(std::rand()));
-    // std::cout << "Number of bu: " << _domain.building_units.size() << std::endl;
+
+    _domain.field_number_2_index.resize(_domain.max_field_number + 1, _domain.max_field_number + 1);
+    for(unsigned int i = 0; i < _domain.building_units.size(); i++)
+    {
+         _domain.field_number_2_index[_domain.building_units[i].get_number()] = i;
+    }    
+
+    std::cout << "Number of bu: " << _domain.building_units.size() << std::endl;
     std::for_each(_domain.building_units.begin(), _domain.building_units.end(),
                   [&](CAM::BuildingUnit<nx>& unit) { move_bu(unit, _domain.domain_fields); });
     _domain.find_composites_via_bu_boundary();
-    // std::cout << "Number of composites: " << _domain.composites.size() << std::endl;
+    std::cout << "Number of composites: " << _domain.composites.size() << std::endl;
     std::shuffle(_domain.composites.begin(), _domain.composites.end(),
                  std::default_random_engine(std::rand()));
     std::for_each(_domain.composites.begin(), _domain.composites.end(),
