@@ -16,7 +16,7 @@ porosity       = 0.7
 n_steps        = 5
 jump_parameter = 5
 
-subset_sizes    = [100] * 40
+subset_sizes    = [100] * 4
 min_value_shift = 0.1
 max_value_shift = -0.1
 n_choose_bins   = 20
@@ -58,14 +58,14 @@ const.nx         = nx
 const.debug_mode = debug_mode
 PyCAM            = CAM.include(const)
 
-
-distance_fct = PyCAM.bulk_distance # <--- Needs to be removed
+CAM_wrapper = PyCAM()
+distance_fct = CAM_wrapper.bulk_distance # <--- Needs to be removed
 
 # --------------------------------------------------------------------------------------------------
 def run_cam(jump_parameter1, jump_parameter2, nx, porosity, n_steps, debug_mode=False):
   CAM_wrapper = PyCAM(jump_parameter2)
-  CAM_wrapper.place_singleCellBU_randomlyy(porosity, jump_parameter1, 0)
-  for step in range(n_steps):  CAM_wrapper.do_CAM()
+  CAM_wrapper.place_single_cell_bu_randomly(jump_parameter1,porosity, 0)
+  for step in range(n_steps):  CAM_wrapper.do_cam()
   return CAM_wrapper.fields()
 # --------------------------------------------------------------------------------------------------
 
@@ -75,7 +75,7 @@ data = [[0] * n_fields] * n_iter
 
 
 for iter in range(n_iter):
-  data[iter] = run_cam(jump_parameter, nx, porosity, n_steps, debug_mode)
+  data[iter] = run_cam(jump_parameter, jump_parameter, nx, porosity, n_steps, debug_mode)
 
 end_time = datetime.now()
 print("CAM data acquired at", end_time, "after", end_time-start_time)
@@ -116,7 +116,7 @@ print("Objective function setup at", end_time, "after", end_time-start_time)
 def evaluate_objective_function(theta, data=None):
   data   = [[0] * n_fields] * subset_sizes[0]
   for iter in range(subset_sizes[0]):
-    data[iter] = run_cam(theta, nx, porosity, n_steps, debug_mode)
+    data[iter] = run_cam(theta, theta , nx, porosity, n_steps, debug_mode)
   return func.evaluate( data )
 
   # theta_vec = np.array(theta)

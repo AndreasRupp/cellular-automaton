@@ -18,10 +18,10 @@ try:
   import ecdf_estimator as ecdf
 except (ImportError, ModuleNotFoundError) as error:
   print("No installed ecdf_estimator package found! Using local ecdf_estimator.")
-  sys.path.append(os.path.dirname(os.path.abspath(__file__)) + os.sep + ".." + os.sep + ".." +
-    os.sep + "cil_estimator.git")
-  # sys.path.append(os.path.dirname(os.path.abspath(__file__)) + os.sep + ".." + os.sep +
-  #   "submodules" + os.sep + "ecdf_estimator.git")
+  # sys.path.append(os.path.dirname(os.path.abspath(__file__)) + os.sep + ".." + os.sep + ".." +
+  #   os.sep + "cil_estimator.git")
+  sys.path.append(os.path.dirname(os.path.abspath(__file__)) + os.sep + ".." + os.sep +
+    "submodules" + os.sep + "ecdf_estimator.git")
   import ecdf_estimator as ecdf
 
 try:
@@ -36,7 +36,7 @@ porosity       = 0.7
 n_steps        = 5
 jump_parameter = 5
 
-subset_sizes    = [100] * 40
+subset_sizes    = [100] * 2
 min_value_shift = 0.1
 max_value_shift = -0.1
 n_choose_bins   = 20
@@ -54,14 +54,15 @@ const.nx         = nx
 const.debug_mode = debug_mode
 PyCAM            = CAM.include(const)
 
-
-distance_fct = PyCAM.bulk_distance # <--- Needs to be removed
+CAM_wrapper = PyCAM()
+distance_fct = CAM_wrapper.bulk_distance # <--- Needs to be removed
 
 # --------------------------------------------------------------------------------------------------
 def run_cam(jump_parameter1, jump_parameter2, nx, porosity, n_steps, debug_mode=False):
   CAM_wrapper = PyCAM(jump_parameter2)
-  CAM_wrapper.place_singleCellBU_randomly(porosity, jump_parameter1, 0)
-  for step in range(n_steps):  CAM_wrapper.do_CAM()
+  CAM_wrapper.place_single_cell_bu_randomly(jump_parameter1, porosity,  0)
+  for step in range(n_steps): 
+    CAM_wrapper.do_cam()
   return CAM_wrapper.fields()
 # --------------------------------------------------------------------------------------------------
 

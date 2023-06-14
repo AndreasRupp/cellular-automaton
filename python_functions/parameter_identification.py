@@ -29,16 +29,17 @@ def ecdf_identify(nx, porosity, n_steps, jump_parameter, ecdf_type, subset_sizes
   min_value_shift, max_value_shift, jump_params, distance_fct, debug_mode, file_name, is_plot):
 
   def run_cam(jump_parameter, nx, porosity, n_steps, debug_mode=False):
-    CAM_wrapper = PyCAM(porosity, jump_parameter)
+    CAM_wrapper = PyCAM(jump_parameter)
+    CAM_wrapper.place_single_cell_bu_randomly(jump_parameter, porosity , 0)
     if isinstance(n_steps, list):
-      for _ in range(n_steps[0]):  CAM_wrapper.move_particles()
+      for _ in range(n_steps[0]):  CAM_wrapper.do_cam()
       data = [ CAM_wrapper.fields() ]
       for i in range(len(n_steps) - 1):
-        for _ in range(n_steps[i], n_steps[i+1]): CAM_wrapper.move_particles()
+        for _ in range(n_steps[i], n_steps[i+1]): CAM_wrapper.do_cam()
         data.append( CAM_wrapper.fields() )
       return data
     else:
-      for _ in range(n_steps):  CAM_wrapper.move_particles()
+      for _ in range(n_steps):  CAM_wrapper.do_cam()
       return CAM_wrapper.fields()
 
   def generate_ecdf(data, subset_sizes, distance_fct, n_bins, ecdf_type, ax=None):
