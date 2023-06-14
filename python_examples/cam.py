@@ -27,7 +27,7 @@ def cam_test(n_steps, debug_mode=False):
 
   
   const                 = CAM.config()
-  const.nx              = [10, 10, 10]
+  const.nx              = [50,50]
   const.debug_mode      = debug_mode
   jump_parameter_composites  = 10
   jump_parameter = 5
@@ -63,7 +63,7 @@ def cam_test(n_steps, debug_mode=False):
   print("Program ended at", end_time, "after", end_time-start_time)
   
   if not os.path.exists('output'):  os.makedirs('output')
-  plot_to_vtk("output/cam", save_data, const.nx)
+  # plot_to_vtk("output/cam", save_data, const.nx)
   plot_to_file(const.nx, save_data[-1], 'output/cam.png')
   plot(const.nx, save_data, 0)
 # --------------------------------------------------------------------------------------------------

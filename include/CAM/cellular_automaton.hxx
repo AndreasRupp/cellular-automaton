@@ -33,9 +33,9 @@ class CellularAutomaton
    **********************************************************************************************/
   static void apply(Domain<nx, fields_array_t>& _domain)
   {
-    // std::shuffle(_domain.building_units.begin(), _domain.building_units.end(),
-    //              std::default_random_engine(std::rand()));
-
+    std::shuffle(_domain.building_units.begin(), _domain.building_units.end(),
+                 std::default_random_engine(std::rand()));
+                 
     _domain.field_number_2_index.resize(_domain.max_field_number + 1, _domain.max_field_number + 1);
     for (unsigned int i = 0; i < _domain.building_units.size(); i++)
     {
@@ -63,7 +63,6 @@ class CellularAutomaton
    **********************************************************************************************/
   static void move_bu(CAM::BuildingUnit<nx>& _unit, fields_array_t& _domain_fields)
   {
-    static_assert(CAM::foo(5, 3));
     const std::vector<unsigned int> possible_moves =
       CAM::get_stencil<nx>(_unit.get_jump_parameter());
     std::vector<unsigned int> best_moves(1, 0);

@@ -235,20 +235,6 @@ static constexpr std::vector<unsigned int> get_stencil(const double _jump_parame
   }
   return stencil;
 }
-constexpr int foo(const std::size_t n, const int v)
-{
-  //   if(std::is_constant_evaluated())
-  // {
-  //   std::cout<<"compile time"<<std::endl;
-  // }
-  // else
-  // {
-  //   std::cout<<"runtime"<<std::endl;
-  // }
-  // std::cout<<"runtime"<<std::endl;
-  std::vector<int> vec(n, v);
-  return std::accumulate(vec.begin(), vec.end(), 0LL);
-}
 /*!*********************************************************************************************
  * \brief Calculate maximal feret Diameter
  * Attentation: coords must be in R^n -> particle is not allowed to cross periodic domain boundary
