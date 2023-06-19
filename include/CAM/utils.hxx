@@ -235,6 +235,76 @@ static constexpr std::vector<unsigned int> get_stencil(const double _jump_parame
   }
   return stencil;
 }
+template <auto nx, unsigned int jump_parameter>
+static constexpr unsigned int get_stencil_size()
+{
+  // if(std::is_constant_evaluated())
+  // {
+  //   std::cout<<"compile time"<<std::endl;
+  // }
+  // else
+  // {
+  //   std::cout<<"runtime"<<std::endl;
+  // }
+  std::array<unsigned int, ipow((2 * jump_parameter +1),nx.size())> stencil;
+  std::fill(stencil.begin(), stencil.end(), n_fields<nx>() + 1);
+  stencil[0] = 0;
+  unsigned int new_neigh, layers = jump_parameter, index = 0, nr_of_cells = 1;
+  unsigned int old_size = 1;
+  for (unsigned int lay = 0; lay < layers; ++lay)
+  {
+    for (; index < old_size; ++index)
+    {
+      for (unsigned int i = 0; i < 2 * nx.size(); ++i)
+      {
+        new_neigh = aim<nx>(stencil[index], direct_neigh<nx>(i));
+        if (std::find(stencil.begin(), stencil.end(), new_neigh) == stencil.end())
+        {
+          stencil[nr_of_cells] = new_neigh;
+          nr_of_cells++;
+        }
+      }
+    }
+    old_size = nr_of_cells;
+  }
+  return nr_of_cells;
+}
+template <auto nx, unsigned int jump_parameter>
+static constexpr std::array<unsigned int, get_stencil_size<nx,jump_parameter>()> get_stencil_c()
+{
+  // if(std::is_constant_evaluated())
+  // {
+  //   std::cout<<"compile time"<<std::endl;
+  // }
+  // else
+  // {
+  //   std::cout<<"runtime"<<std::endl;
+  // }
+  std::array<unsigned int, get_stencil_size<nx,jump_parameter>()> stencil;
+  std::fill(stencil.begin(), stencil.end(), n_fields<nx>() + 1);
+  stencil[0] = 0;
+
+  unsigned int new_neigh, layers = jump_parameter, index = 0, nr_of_cells = 1;
+  unsigned int old_size = 1;
+  for (unsigned int lay = 0; lay < layers; ++lay)
+  {
+    for (; index < old_size; ++index)
+    {
+      for (unsigned int i = 0; i < 2 * nx.size(); ++i)
+      {
+        new_neigh = aim<nx>(stencil[index], direct_neigh<nx>(i));
+        if (std::find(stencil.begin(), stencil.end(), new_neigh) == stencil.end())
+        {
+          stencil[nr_of_cells] = new_neigh;
+          nr_of_cells++;
+        }
+      }
+    }
+    old_size = nr_of_cells;
+  }
+  return stencil;
+}
+
 /*!*********************************************************************************************
  * \brief Calculate maximal feret Diameter
  * Attentation: coords must be in R^n -> particle is not allowed to cross periodic domain boundary

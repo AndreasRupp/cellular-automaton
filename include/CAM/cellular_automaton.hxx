@@ -20,7 +20,7 @@
 namespace CAM
 {
 
-template <auto nx, typename fields_array_t>
+template <auto nx, typename fields_array_t>//, unsigned int default_jump_parameter
 class CellularAutomaton
 {
  public:
@@ -63,8 +63,23 @@ class CellularAutomaton
    **********************************************************************************************/
   static void move_bu(CAM::BuildingUnit<nx>& _unit, fields_array_t& _domain_fields)
   {
-    const std::vector<unsigned int> possible_moves =
+    //if((_unit.get_jump_parameter() % 1) == 0 && )
+    // if(_default_jump_parameter == 0 )
+    // {
+          const std::vector<unsigned int> possible_moves =
       CAM::get_stencil<nx>(_unit.get_jump_parameter());
+    // }
+    // else{
+    //   constexpr std::array<unsigned int, get_stencil_size<nx,_default_jump_parameter>()> possible_moves = CAM::get_stencil_c<nx,_default_jump_parameter()>();
+    // }
+    
+    //std::cout<<get_stencil_size<nx,1>()<<"nr_cells "<<std::endl;
+    //constexpr std::array<unsigned int, get_stencil_size<nx,(unsigned int)_unit.jump_parameter>()> stencil = CAM::get_stencil_c<nx,_unit.get_jump_parameter()>();
+    //static_assert(std::cout<<get_stencil_c<nx,5>()[0] == 0);      
+    // std::cout<<"start"<<std::endl;
+    // for(unsigned int i = 0; i < get_stencil_c<nx,1>().size(); i++)
+    //   std::cout<<get_stencil_c<nx,5>()[i]<<" "<<possible_moves[i]<<std::endl;
+    //   std::cout<<"ende"<<std::endl;
     std::vector<unsigned int> best_moves(1, 0);
     double current_attraction, attraction = 0.;
     std::for_each(possible_moves.begin(), possible_moves.end(),
@@ -159,7 +174,7 @@ class CellularAutomaton
                                   const fields_array_t& _domain_fields)
   {
     double attraction = 0.;
-    unsigned int aiming, field_index;
+    unsigned int aiming, field_index, neigh;
     for (unsigned int i = 0; i < _unit.get_shape().size(); ++i)
     {
       field_index = CAM::aim<nx>(_unit.get_reference_field(), _unit.get_shape()[i]);
@@ -167,8 +182,9 @@ class CellularAutomaton
       if (_domain_fields[aiming] != _unit.get_number() && _domain_fields[aiming] != 0)
         return double_min;
       for (unsigned int i = 0; i < 2 * nx.size(); ++i)
-        attraction += _domain_fields[aim<nx>(aiming, direct_neigh<nx>(i))] != _unit.get_number() &&
-                      _domain_fields[aim<nx>(aiming, direct_neigh<nx>(i))] != 0;
+        neigh = aim<nx>(aiming, direct_neigh<nx>(i));
+        attraction += _domain_fields[neigh] != _unit.get_number() &&
+                      _domain_fields[neigh] != 0;
     }
     return attraction;
   }

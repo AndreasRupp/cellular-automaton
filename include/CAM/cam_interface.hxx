@@ -24,7 +24,7 @@ class CAMInterface
   unsigned int rand_seed;
 
  public:
-  CAMInterface(double _jump_parameter_composites = 5)
+  CAMInterface(const double _jump_parameter_composites = 5)
   {
     CAM::jump_parameter_composite = _jump_parameter_composites;
   }

@@ -31,6 +31,7 @@ class BuildingUnit
  private:
   double jump_parameter;
   std::vector<unsigned int> shape, boundary;
+  std::vector<std::array<unsigned int, nx.size()*2>> boundary_edges;
   unsigned int reference_field, number;
 
  public:
