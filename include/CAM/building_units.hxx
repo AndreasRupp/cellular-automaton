@@ -15,6 +15,7 @@
 #include <iostream>
 #include <random>
 #include <vector>
+#include <unordered_map>
 namespace CAM
 {
 
