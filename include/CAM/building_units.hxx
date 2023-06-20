@@ -17,6 +17,7 @@
 #include <vector>
 namespace CAM
 {
+
 /*!*********************************************************************************************
  * \brief Class of building units (bu)
  * \param number index of cells in domain
@@ -29,10 +30,25 @@ template <auto nx>
 class BuildingUnit
 {
  private:
+  struct Boundary
+  {
+    std::vector<unsigned int> index;
+    std::vector<std::array<double, nx.size() * 2>> face_charges;
+    std::unordered_map<unsigned int, unsigned int> index_by_relation_to_reference;
+  };
+
+  static constexpr std::array<double, nx.size() * 2> default_values()
+  {
+    std::array<double, nx.size() * 2> arr;
+    std::fill(arr.begin(), arr.end(), 1);
+    return arr;
+  }
+  static constexpr std::array<double, nx.size()* 2> default_edge_values = default_values();
+
   double jump_parameter;
-  std::vector<unsigned int> shape, boundary;
-  std::vector<std::array<unsigned int, nx.size()*2>> boundary_edges;
+  std::vector<unsigned int> shape;
   unsigned int reference_field, number;
+  Boundary boundary;
 
  public:
   /*!*********************************************************************************************
@@ -47,7 +63,29 @@ class BuildingUnit
     reference_field(_reference_field),
     number(_number)
   {
-    boundary = CAM::get_boundary_fields<nx>(shape);
+    boundary.index = CAM::get_boundary_fields<nx>(shape);
+
+    std::vector<unsigned int>::iterator it;
+    for (it = shape.begin(); it != shape.end();)
+    {
+      if (std::find(boundary.index.begin(), boundary.index.end(), *it) != boundary.index.end())
+      {
+        it = shape.erase(it);
+      }
+      else
+        ++it;
+    }
+    shape.insert(shape.end(), boundary.index.begin(), boundary.index.end());
+
+    boundary.face_charges.resize(boundary.index.size());
+    std::fill(boundary.face_charges.begin(), boundary.face_charges.end(), default_edge_values);
+
+    for (unsigned int i = 0; i < boundary.index.size(); i++)
+    {
+      std::pair<unsigned int, unsigned int> pair(boundary.index[i], i);
+      // std::make_pair<unsigned int, unsigned int>(boundary.index[i], i)
+      boundary.index_by_relation_to_reference.insert(pair);
+    }
   }
 
   void set_reference_field(const unsigned int _reference_field)
@@ -58,7 +96,24 @@ class BuildingUnit
   unsigned int get_number() const { return number; }
   unsigned int get_jump_parameter() const { return jump_parameter; }
   const std::vector<unsigned int>& get_shape() const { return shape; }
-  const std::vector<unsigned int>& get_boundary() const { return boundary; }
+  const std::vector<unsigned int>& get_boundary() const { return boundary.index; }
+  const std::vector<std::array<double, nx.size() * 2>>& get_face_charges() const
+  {
+    return boundary.face_charges;
+  }
+  const std::array<double, nx.size() * 2>& get_face_charges_of_boundary_cell(
+    const unsigned int _relation_to_reference) const
+  {
+    // std::cout<<"prombel"<<std::endl;
+    auto it = boundary.index_by_relation_to_reference.find(_relation_to_reference);
+    if (it == boundary.index_by_relation_to_reference.end())
+      std::cout << "nooo" << std::endl;
+    return boundary.face_charges[it->second];
+  }
+  const std::unordered_map<unsigned int, unsigned int>& get_index_by_relation_to_reference() const
+  {
+    return boundary.index_by_relation_to_reference;
+  }
 
   bool constexpr is_member(const unsigned int _index)
   {
@@ -146,6 +201,8 @@ static CAM::BuildingUnit<nx> create_custom_bu(const double _jump_parameter,
                                               const int _reference_field = -1,
                                               const int _number = -1)
 {
+  // if (std::find(_shape.begin(), _shape.end(), 0) == _shape.end())
+  //   assert("_shape must constain 0 -> reference_field");
   unsigned int reference_field, number;
   if (_reference_field < 0)
     reference_field = CAM::get_random_field_index<nx>();

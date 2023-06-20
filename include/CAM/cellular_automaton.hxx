@@ -20,7 +20,7 @@
 namespace CAM
 {
 
-template <auto nx, typename fields_array_t>//, unsigned int default_jump_parameter
+template <auto nx, typename fields_array_t>  //, unsigned int default_jump_parameter
 class CellularAutomaton
 {
  public:
@@ -35,7 +35,7 @@ class CellularAutomaton
   {
     std::shuffle(_domain.building_units.begin(), _domain.building_units.end(),
                  std::default_random_engine(std::rand()));
-                 
+    // this way easier to handle deprecated bu and random bu numbers.
     _domain.field_number_2_index.resize(_domain.max_field_number + 1, _domain.max_field_number + 1);
     for (unsigned int i = 0; i < _domain.building_units.size(); i++)
     {
@@ -44,14 +44,13 @@ class CellularAutomaton
 
     std::cout << "Number of bu: " << _domain.building_units.size() << std::endl;
     std::for_each(_domain.building_units.begin(), _domain.building_units.end(),
-                  [&](CAM::BuildingUnit<nx>& unit) { move_bu(unit, _domain.domain_fields); });
+                  [&](CAM::BuildingUnit<nx>& unit) { move_bu(unit, _domain); });
     _domain.find_composites_via_bu_boundary();
     std::cout << "Number of composites: " << _domain.composites.size() << std::endl;
     std::shuffle(_domain.composites.begin(), _domain.composites.end(),
                  std::default_random_engine(std::rand()));
     std::for_each(_domain.composites.begin(), _domain.composites.end(),
-                  [&](CAM::Composite<nx> composite)
-                  { move_composites(composite, _domain.domain_fields); });
+                  [&](CAM::Composite<nx> composite) { move_composites(composite, _domain); });
   }
 
  private:
@@ -61,31 +60,33 @@ class CellularAutomaton
    * \param _unit building unit
    * \param _domain_fields cells of domain
    **********************************************************************************************/
-  static void move_bu(CAM::BuildingUnit<nx>& _unit, fields_array_t& _domain_fields)
+  static void move_bu(CAM::BuildingUnit<nx>& _unit, Domain<nx, fields_array_t>& _domain)
   {
-    //if((_unit.get_jump_parameter() % 1) == 0 && )
-    // if(_default_jump_parameter == 0 )
-    // {
-          const std::vector<unsigned int> possible_moves =
+    // if((_unit.get_jump_parameter() % 1) == 0 && )
+    //  if(_default_jump_parameter == 0 )
+    //  {
+    const std::vector<unsigned int> possible_moves =
       CAM::get_stencil<nx>(_unit.get_jump_parameter());
     // }
     // else{
-    //   constexpr std::array<unsigned int, get_stencil_size<nx,_default_jump_parameter>()> possible_moves = CAM::get_stencil_c<nx,_default_jump_parameter()>();
+    //   constexpr std::array<unsigned int, get_stencil_size<nx,_default_jump_parameter>()>
+    //   possible_moves = CAM::get_stencil_c<nx,_default_jump_parameter()>();
     // }
-    
-    //std::cout<<get_stencil_size<nx,1>()<<"nr_cells "<<std::endl;
-    //constexpr std::array<unsigned int, get_stencil_size<nx,(unsigned int)_unit.jump_parameter>()> stencil = CAM::get_stencil_c<nx,_unit.get_jump_parameter()>();
-    //static_assert(std::cout<<get_stencil_c<nx,5>()[0] == 0);      
-    // std::cout<<"start"<<std::endl;
-    // for(unsigned int i = 0; i < get_stencil_c<nx,1>().size(); i++)
-    //   std::cout<<get_stencil_c<nx,5>()[i]<<" "<<possible_moves[i]<<std::endl;
-    //   std::cout<<"ende"<<std::endl;
+
+    // std::cout<<get_stencil_size<nx,1>()<<"nr_cells "<<std::endl;
+    // constexpr std::array<unsigned int, get_stencil_size<nx,(unsigned int)_unit.jump_parameter>()>
+    // stencil = CAM::get_stencil_c<nx,_unit.get_jump_parameter()>();
+    // static_assert(std::cout<<get_stencil_c<nx,5>()[0] == 0);
+    //  std::cout<<"start"<<std::endl;
+    //  for(unsigned int i = 0; i < get_stencil_c<nx,1>().size(); i++)
+    //    std::cout<<get_stencil_c<nx,5>()[i]<<" "<<possible_moves[i]<<std::endl;
+    //    std::cout<<"ende"<<std::endl;
     std::vector<unsigned int> best_moves(1, 0);
     double current_attraction, attraction = 0.;
     std::for_each(possible_moves.begin(), possible_moves.end(),
                   [&](int move)
                   {
-                    current_attraction = get_attraction_bu(move, _unit, _domain_fields);
+                    current_attraction = get_attraction_bu(move, _unit, _domain);
                     if (current_attraction > attraction)
                     {
                       best_moves = std::vector<unsigned int>(1, move);
@@ -94,7 +95,7 @@ class CellularAutomaton
                     else if (current_attraction == attraction)
                       best_moves.push_back(move);
                   });
-    do_move_bu(best_moves[std::rand() % best_moves.size()], _unit, _domain_fields);
+    do_move_bu(best_moves[std::rand() % best_moves.size()], _unit, _domain.domain_fields);
   }
   /*!*********************************************************************************************
    * \brief  Executes the actual movement for an individual building unit
@@ -125,8 +126,9 @@ class CellularAutomaton
    * \param _unit composites
    * \param _domain_fields cells of domain
    **********************************************************************************************/
-  static void move_composites(CAM::Composite<nx>& _composite, fields_array_t& _domain_fields)
+  static void move_composites(CAM::Composite<nx>& _composite, Domain<nx, fields_array_t>& _domain)
   {
+    fields_array_t& _domain_fields = _domain.domain_fields;
     std::vector<unsigned int> indices(_composite.field_indices.size(), 0);
     for (unsigned int i = 0; i < _composite.field_indices.size(); i++)
     {
@@ -141,7 +143,7 @@ class CellularAutomaton
     std::for_each(possible_moves.begin(), possible_moves.end(),
                   [&](int move)
                   {
-                    current_attraction = get_attraction_composite(move, _composite, _domain_fields);
+                    current_attraction = get_attraction_composite(move, _composite, _domain);
                     if (current_attraction > attraction)
                     {
                       best_moves = std::vector<unsigned int>(1, move);
@@ -161,6 +163,11 @@ class CellularAutomaton
       do_move_bu(best_move, (*_composite.building_units[i]), _domain_fields);
     }
   }
+  static double get_attractivity_between_two_faces(const double charge_face1,
+                                                   const double charge_face2)
+  {
+    return charge_face1 && charge_face2;
+  }
   /*!*********************************************************************************************
    * \brief   Check attraction of the possible moves for a single bu.
    *
@@ -171,20 +178,50 @@ class CellularAutomaton
    **********************************************************************************************/
   static double get_attraction_bu(const unsigned int move,
                                   const CAM::BuildingUnit<nx>& _unit,
-                                  const fields_array_t& _domain_fields)
+                                  const Domain<nx, fields_array_t>& _domain)
   {
     double attraction = 0.;
-    unsigned int aiming, field_index, neigh;
+    const fields_array_t _domain_fields = _domain.fields();
+    unsigned int aiming, neigh_index;
+    unsigned int index_begin_bound = (_unit.get_shape().size() - _unit.get_boundary().size());
+
     for (unsigned int i = 0; i < _unit.get_shape().size(); ++i)
     {
-      field_index = CAM::aim<nx>(_unit.get_reference_field(), _unit.get_shape()[i]);
-      aiming = aim<nx>(field_index, move);
-      if (_domain_fields[aiming] != _unit.get_number() && _domain_fields[aiming] != 0)
+      aiming = aim<nx>(CAM::aim<nx>(_unit.get_reference_field(), _unit.get_shape()[i]), move);
+      if (_domain_fields[aiming] != _unit.get_number() &&
+          _domain_fields[aiming] != 0)  // occupied by cell
         return double_min;
-      for (unsigned int i = 0; i < 2 * nx.size(); ++i)
-        neigh = aim<nx>(aiming, direct_neigh<nx>(i));
-        attraction += _domain_fields[neigh] != _unit.get_number() &&
-                      _domain_fields[neigh] != 0;
+      // boundary cell
+      if (i >= index_begin_bound)
+      {
+        for (unsigned int j = 0; j < 2 * nx.size(); ++j)
+        {
+          neigh_index = aim<nx>(aiming, direct_neigh<nx>(j));
+
+          if (_domain_fields[neigh_index] != _unit.get_number() &&
+              _domain_fields[neigh_index] != 0)  // boundary cell with neighbor
+          {
+            // neigbor bu
+            const CAM::BuildingUnit<nx>& neigh_bu =
+              _domain.building_units[_domain.field_number_2_index[_domain_fields[neigh_index]]];
+            // faces
+            unsigned int neigh_boundary_cell =
+              CAM::aim<nx>(neigh_index, -neigh_bu.get_reference_field());
+
+            const std::array<double, nx.size()* 2> faces_neigh =
+              neigh_bu.get_face_charges_of_boundary_cell(neigh_boundary_cell);
+
+            const std::array<double, nx.size()* 2> faces_unit =
+              _unit.get_face_charges()[i - index_begin_bound];
+
+            // opposite face
+            unsigned int opposite_face = (j % 2 == 0) ? j + 1 : j - 1;
+            // attraction
+            attraction +=
+              get_attractivity_between_two_faces(faces_neigh[opposite_face], faces_unit[j]);
+          }
+        }
+      }
     }
     return attraction;
   }
@@ -197,17 +234,16 @@ class CellularAutomaton
    **********************************************************************************************/
   static double get_attraction_composite(const unsigned int move,
                                          const CAM::Composite<nx>& _composite,
-                                         const fields_array_t& _domain_fields)
+                                         const Domain<nx, fields_array_t>& _domain)
   {
-    double attraction = 0.;
-    unsigned int aiming;
-    for (unsigned int i = 0; i < _composite.field_indices.size(); i++)
+    double attraction_bu, attraction = 0.;
+    for (const CAM::BuildingUnit<nx>* bu : _composite.building_units)
     {
-      aiming = aim<nx>(_composite.field_indices[i], move);
-      if (_domain_fields[aiming] != 0 && move != 0)
+      attraction_bu = get_attraction_bu(move, (*bu), _domain);
+      if (attraction_bu == double_min)
         return double_min;
-      for (unsigned int i = 0; i < 2 * nx.size(); ++i)
-        attraction += _domain_fields[aim<nx>(aiming, direct_neigh<nx>(i))] != 0;
+      else
+        attraction += attraction_bu;
     }
     return attraction;
   }

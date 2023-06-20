@@ -246,7 +246,7 @@ static constexpr unsigned int get_stencil_size()
   // {
   //   std::cout<<"runtime"<<std::endl;
   // }
-  std::array<unsigned int, ipow((2 * jump_parameter +1),nx.size())> stencil;
+  std::array<unsigned int, ipow((2 * jump_parameter + 1), nx.size())> stencil;
   std::fill(stencil.begin(), stencil.end(), n_fields<nx>() + 1);
   stencil[0] = 0;
   unsigned int new_neigh, layers = jump_parameter, index = 0, nr_of_cells = 1;
@@ -270,7 +270,7 @@ static constexpr unsigned int get_stencil_size()
   return nr_of_cells;
 }
 template <auto nx, unsigned int jump_parameter>
-static constexpr std::array<unsigned int, get_stencil_size<nx,jump_parameter>()> get_stencil_c()
+static constexpr std::array<unsigned int, get_stencil_size<nx, jump_parameter>()> get_stencil_c()
 {
   // if(std::is_constant_evaluated())
   // {
@@ -280,7 +280,7 @@ static constexpr std::array<unsigned int, get_stencil_size<nx,jump_parameter>()>
   // {
   //   std::cout<<"runtime"<<std::endl;
   // }
-  std::array<unsigned int, get_stencil_size<nx,jump_parameter>()> stencil;
+  std::array<unsigned int, get_stencil_size<nx, jump_parameter>()> stencil;
   std::fill(stencil.begin(), stencil.end(), n_fields<nx>() + 1);
   stencil[0] = 0;
 
