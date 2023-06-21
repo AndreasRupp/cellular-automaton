@@ -84,14 +84,15 @@ class CAMInterface
    ************************************************************************************************/
   bool place_plane(double _jump_parameter = 1,
                    std::vector<unsigned int> _extent_v = std::vector<unsigned int>(nx.size(), 0),
-                   int _position = -1)
+                   int _position = -1,
+                   double _homogen_charge = 1)
   {
     std::array<unsigned int, nx.size()> extent_a;
     for (unsigned int i = 0; i < _extent_v.size(); i++)
       extent_a[i] = _extent_v[i];
 
-    const BuildingUnit<nx> bu = CAM::create_hyper_plane<nx>(_jump_parameter, extent_a, _position,
-                                                            domain.building_units.size() + 1);
+    const BuildingUnit<nx> bu = CAM::create_hyper_plane<nx>(
+      _jump_parameter, extent_a, _position, domain.building_units.size() + 1, _homogen_charge);
     return domain.place_bu(bu);
   }
   // TODO parameterize this function
@@ -141,13 +142,21 @@ class CAMInterface
     return CAM::Evaluation<nx, fields_array_t>::eval_measures(domain);
   }
 
-  double average_particle_size()
+  double average_particle_size_d()
   {
     return CAM::Evaluation<nx, fields_array_t>::average_particle_size(domain);
   }
-  std::vector<unsigned int> particle_size_distribution()
+  double average_particle_size(const fields_array_t& _domain)
+  {
+    return CAM::Evaluation<nx, fields_array_t>::average_particle_size(_domain);
+  }
+  std::vector<unsigned int> particle_size_distribution_d()
   {
     return CAM::Evaluation<nx, fields_array_t>::particle_size_distribution(domain);
+  }
+  std::vector<unsigned int> particle_size_distribution(const fields_array_t& _domain)
+  {
+    return CAM::Evaluation<nx, fields_array_t>::particle_size_distribution(_domain);
   }
   unsigned int bulk_distance(const fields_array_t& domain_a, const fields_array_t& domain_b)
   {

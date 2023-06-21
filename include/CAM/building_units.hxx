@@ -14,8 +14,8 @@
 #include <exception>
 #include <iostream>
 #include <random>
-#include <vector>
 #include <unordered_map>
+#include <vector>
 namespace CAM
 {
 
@@ -44,7 +44,7 @@ class BuildingUnit
     std::fill(arr.begin(), arr.end(), 1);
     return arr;
   }
-  static constexpr std::array<double, nx.size()* 2> default_edge_values = default_values();
+  static constexpr std::array<double, nx.size()* 2> default_face_values = default_values();
 
   double jump_parameter;
   std::vector<unsigned int> shape;
@@ -58,7 +58,8 @@ class BuildingUnit
   BuildingUnit(const double _jump_parameter,
                const std::vector<unsigned int>& _shape,
                const unsigned int _reference_field,
-               const unsigned int _number)
+               const unsigned int _number,
+               const std::array<double, nx.size() * 2> homogen_face_values = default_face_values)
   : jump_parameter(_jump_parameter),
     shape(_shape),
     reference_field(_reference_field),
@@ -79,7 +80,7 @@ class BuildingUnit
     shape.insert(shape.end(), boundary.index.begin(), boundary.index.end());
 
     boundary.face_charges.resize(boundary.index.size());
-    std::fill(boundary.face_charges.begin(), boundary.face_charges.end(), default_edge_values);
+    std::fill(boundary.face_charges.begin(), boundary.face_charges.end(), homogen_face_values);
 
     for (unsigned int i = 0; i < boundary.index.size(); i++)
     {
@@ -102,18 +103,17 @@ class BuildingUnit
   {
     return boundary.face_charges;
   }
+  void set_homogen_face_charges(const std::array<double, nx.size() * 2> _values_in_direction)
+  {
+    std::fill(boundary.face_charges.begin(), boundary.face_charges.end(), _values_in_direction);
+  }
   const std::array<double, nx.size() * 2>& get_face_charges_of_boundary_cell(
     const unsigned int _relation_to_reference) const
   {
-    // std::cout<<"prombel"<<std::endl;
     auto it = boundary.index_by_relation_to_reference.find(_relation_to_reference);
     if (it == boundary.index_by_relation_to_reference.end())
       std::cout << "nooo" << std::endl;
     return boundary.face_charges[it->second];
-  }
-  const std::unordered_map<unsigned int, unsigned int>& get_index_by_relation_to_reference() const
-  {
-    return boundary.index_by_relation_to_reference;
   }
 
   bool constexpr is_member(const unsigned int _index)
@@ -161,7 +161,8 @@ template <auto nx>
 static CAM::BuildingUnit<nx> create_hyper_plane(const double _jump_parameter,
                                                 const std::array<unsigned int, nx.size()>& _extent,
                                                 const int _reference_field = -1,
-                                                const int _number = -1)
+                                                const int _number = -1,
+                                                const double _homogen_charge = 1)
 {
   unsigned int size, new_move;
   std::vector<unsigned int> shape = {0};
@@ -188,7 +189,11 @@ static CAM::BuildingUnit<nx> create_hyper_plane(const double _jump_parameter,
   else
     number = _number;
 
-  return CAM::BuildingUnit<nx>(_jump_parameter, shape, reference_field, number);
+  std::array<double, nx.size() * 2> homogen_face_charge;
+  std::fill(homogen_face_charge.begin(), homogen_face_charge.end(), _homogen_charge);
+
+  return CAM::BuildingUnit<nx>(_jump_parameter, shape, reference_field, number,
+                               homogen_face_charge);
 }
 
 /*!*********************************************************************************************

@@ -41,6 +41,51 @@ class Evaluation
       }
     return distance;
   }
+
+  static std::vector<unsigned int> particle_size_distribution(fields_array_t fields)
+  {
+    constexpr unsigned int dim = nx.size();
+    unsigned int fluids_size, field, neigh_field;
+    std::vector<unsigned int> found_solids, distribution;
+
+    std::for_each(fields.begin(), fields.end(), [](unsigned int& field) { field = (field == 0); });
+
+    for (auto first_fluid = std::find(fields.begin(), fields.end(), 0); first_fluid != fields.end();
+         first_fluid = std::find(first_fluid, fields.end(), 0))
+    {
+      found_solids = std::vector<unsigned int>(1, std::distance(fields.begin(), first_fluid));
+      fields[found_solids[0]] = uint_max;
+      fluids_size = 1;
+      for (unsigned int k = 0; k < fluids_size; ++k, fluids_size = found_solids.size())
+      {
+        field = found_solids[k];
+        for (unsigned int i = 0; i < 2 * dim; ++i)
+        {
+          neigh_field = aim<nx>(field, direct_neigh<nx>(i));
+          if (fields[neigh_field] == 0)
+          {
+            fields[neigh_field] = uint_max;
+            found_solids.push_back(neigh_field);
+          }
+        }
+      }
+      distribution.push_back(found_solids.size());
+    }
+    std::sort(distribution.begin(), distribution.end());
+    return distribution;
+  }
+  static unsigned int n_solid_comp(const fields_array_t& fields)
+  {
+    return particle_size_distribution(fields).size();
+  }
+  static constexpr double average_particle_size(const fields_array_t& domain)
+  {
+    unsigned int n_solids = 0;
+    for (unsigned int i = 0; i < domain.size(); ++i)
+      n_solids += (domain[i] != 0);
+    return (double)n_solids / (double)n_solid_comp(domain);
+  }
+  //-----------------Faster Solutions with known Domain and particles --------
   /*!*********************************************************************************************
    * \brief Gives size of each particle in a sorted way
    *
@@ -49,37 +94,6 @@ class Evaluation
   static std::vector<unsigned int> particle_size_distribution(
     CAM::Domain<nx, fields_array_t>& domain)
   {
-    // \deprecated
-
-    // unsigned int fluids_size, field, neigh_field;
-    // std::vector<unsigned int> found_solids, distribution1;
-    // fields_array_t domain_fields =domain.domain_fields;
-    // std::for_each(domain_fields.begin(), domain_fields.end(),
-    //               [](unsigned int& field) { field = (field == 0); });
-
-    // for (auto first_fluid = std::find(domain_fields.begin(), domain_fields.end(), 0);
-    //      first_fluid != domain_fields.end();
-    //      first_fluid = std::find(first_fluid, domain_fields.end(), 0))
-    // {
-    //   found_solids = std::vector<unsigned int>(1, std::distance(domain_fields.begin(),
-    //   first_fluid)); domain_fields[found_solids[0]] = CAM::uint_max; fluids_size = 1; for
-    //   (unsigned int k = 0; k < fluids_size; ++k, fluids_size = found_solids.size())
-    //   {
-    //     field = found_solids[k];
-    //     for (unsigned int i = 0; i < 2 * nx.size(); ++i)
-    //     {
-    //       neigh_field = aim<nx>(field, direct_neigh<nx>(i));
-    //       if (domain_fields[neigh_field] == 0)
-    //       {
-    //         domain_fields[neigh_field] = uint_max;
-    //         found_solids.push_back(neigh_field);
-    //       }
-    //     }
-    //   }
-    //   distribution1.push_back(found_solids.size());
-    // }
-    // std::sort(distribution.begin(), distribution.end());
-
     domain.find_composites_via_bu_boundary();
     std::vector<unsigned int> distribution;
     distribution.resize(domain.particles.size());

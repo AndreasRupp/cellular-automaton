@@ -21,19 +21,28 @@ cdef class PythonClassName:
     if _radius == "default" : _radius = 1.0 
     if _position == "default" : _position = -1 
     return self.thisptr.place_sphere(_jump_parameter, _radius, _position) 
-  def place_plane(self, _jump_parameter, _extent, _position): 
+  def place_plane(self, _jump_parameter, _extent, _position, _face_charge): 
     if _jump_parameter == "default" : _jump_parameter = 1.0 
     if _extent == "default" : _extent = [ 0 ]* 3 
     if _position == "default": _position = -1 
-    return self.thisptr.place_plane(_jump_parameter, _extent, _position) 
+    if _face_charge == "default": _face_charge = 1 
+    return self.thisptr.place_plane(_jump_parameter, _extent, _position, _face_charge) 
   def place_particles(self): 
     self.thisptr.place_particles() 
   def do_cam(self) : 
     self.thisptr.do_cam()
-  def average_particle_size(self):
-    return self.thisptr.average_particle_size()
-  def particle_size_distribution(self) : 
-    return self.thisptr.particle_size_distribution()
+
+
+  def average_particle_size_d(self):
+    return self.thisptr.average_particle_size_d()
+  def particle_size_distribution_d(self) : 
+    return self.thisptr.particle_size_distribution_d()
+
+  def average_particle_size(self,vec):
+    return self.thisptr.average_particle_size(vec)
+  def particle_size_distribution(self, vec) : 
+    return self.thisptr.particle_size_distribution(vec)
+
   def bulk_distance(self,vec_a, vec_b):
     return self.thisptr.bulk_distance (vec_a, vec_b)
 

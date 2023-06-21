@@ -16,7 +16,7 @@
 #include <limits>
 #include <random>
 #include <vector>
-
+#define EVALUATE_ATTRACTIVITY 1
 namespace CAM
 {
 
@@ -45,12 +45,14 @@ class CellularAutomaton
     std::cout << "Number of bu: " << _domain.building_units.size() << std::endl;
     std::for_each(_domain.building_units.begin(), _domain.building_units.end(),
                   [&](CAM::BuildingUnit<nx>& unit) { move_bu(unit, _domain); });
+    std::cout << "move_bu done: " << std::endl;
     _domain.find_composites_via_bu_boundary();
     std::cout << "Number of composites: " << _domain.composites.size() << std::endl;
     std::shuffle(_domain.composites.begin(), _domain.composites.end(),
                  std::default_random_engine(std::rand()));
     std::for_each(_domain.composites.begin(), _domain.composites.end(),
                   [&](CAM::Composite<nx> composite) { move_composites(composite, _domain); });
+    std::cout << "move_comp done: " << std::endl;
   }
 
  private:
@@ -166,7 +168,26 @@ class CellularAutomaton
   static double get_attractivity_between_two_faces(const double charge_face1,
                                                    const double charge_face2)
   {
-    return charge_face1 && charge_face2;
+    // return charge_face1 && charge_face2;
+    return -(charge_face1 * charge_face2);
+  }
+  static double get_attraction_bu_(const unsigned int move,
+                                   const CAM::BuildingUnit<nx>& _unit,
+                                   const fields_array_t& _domain_fields)
+  {
+    double attraction = 0.;
+    unsigned int aiming, field_index;
+    for (unsigned int i = 0; i < _unit.get_shape().size(); ++i)
+    {
+      field_index = CAM::aim<nx>(_unit.get_reference_field(), _unit.get_shape()[i]);
+      aiming = aim<nx>(field_index, move);
+      if (_domain_fields[aiming] != _unit.get_number() && _domain_fields[aiming] != 0)
+        return double_min;
+      for (unsigned int i = 0; i < 2 * nx.size(); ++i)
+        attraction += _domain_fields[aim<nx>(aiming, direct_neigh<nx>(i))] != _unit.get_number() &&
+                      _domain_fields[aim<nx>(aiming, direct_neigh<nx>(i))] != 0;
+    }
+    return attraction;
   }
   /*!*********************************************************************************************
    * \brief   Check attraction of the possible moves for a single bu.
@@ -181,7 +202,7 @@ class CellularAutomaton
                                   const Domain<nx, fields_array_t>& _domain)
   {
     double attraction = 0.;
-    const fields_array_t _domain_fields = _domain.fields();
+    const fields_array_t& _domain_fields = _domain.domain_fields;
     unsigned int aiming, neigh_index;
     unsigned int index_begin_bound = (_unit.get_shape().size() - _unit.get_boundary().size());
 
@@ -197,10 +218,11 @@ class CellularAutomaton
         for (unsigned int j = 0; j < 2 * nx.size(); ++j)
         {
           neigh_index = aim<nx>(aiming, direct_neigh<nx>(j));
-
           if (_domain_fields[neigh_index] != _unit.get_number() &&
               _domain_fields[neigh_index] != 0)  // boundary cell with neighbor
           {
+#if EVALUATE_ATTRACTIVITY == 1
+
             // neigbor bu
             const CAM::BuildingUnit<nx>& neigh_bu =
               _domain.building_units[_domain.field_number_2_index[_domain_fields[neigh_index]]];
@@ -208,10 +230,10 @@ class CellularAutomaton
             unsigned int neigh_boundary_cell =
               CAM::aim<nx>(neigh_index, -neigh_bu.get_reference_field());
 
-            const std::array<double, nx.size()* 2> faces_neigh =
+            const std::array<double, nx.size()* 2>& faces_neigh =
               neigh_bu.get_face_charges_of_boundary_cell(neigh_boundary_cell);
 
-            const std::array<double, nx.size()* 2> faces_unit =
+            const std::array<double, nx.size()* 2>& faces_unit =
               _unit.get_face_charges()[i - index_begin_bound];
 
             // opposite face
@@ -219,6 +241,11 @@ class CellularAutomaton
             // attraction
             attraction +=
               get_attractivity_between_two_faces(faces_neigh[opposite_face], faces_unit[j]);
+
+#else
+
+            attraction += 1;
+#endif
           }
         }
       }
