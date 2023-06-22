@@ -38,18 +38,29 @@ class BuildingUnit
     std::unordered_map<unsigned int, unsigned int> index_by_relation_to_reference;
   };
 
-  static constexpr std::array<double, nx.size() * 2> default_values()
+  static constexpr std::array<double, nx.size() * 2> init_default_face_values()
   {
     std::array<double, nx.size() * 2> arr;
     std::fill(arr.begin(), arr.end(), 1);
     return arr;
   }
-  static constexpr std::array<double, nx.size()* 2> default_face_values = default_values();
+  static constexpr std::array<int, CAM::n_DoF_basis_rotation<nx>()> init_default_rotation()
+  {
+    std::array<int, CAM::n_DoF_basis_rotation<nx>()> arr;
+    std::fill(arr.begin(), arr.end(), 0);
+    // arr[0] = 1;
+    return arr;
+  }
+  static constexpr std::array<double, nx.size()* 2> default_face_values =
+    init_default_face_values();
+  static constexpr std::array<int, CAM::n_DoF_basis_rotation<nx>()> default_rotation =
+    init_default_rotation();
 
   double jump_parameter;
   std::vector<unsigned int> shape;
   unsigned int reference_field, number;
   Boundary boundary;
+  std::array<int, CAM::n_DoF_basis_rotation<nx>()> rotation;
 
  public:
   /*!*********************************************************************************************
@@ -78,7 +89,7 @@ class BuildingUnit
         ++it;
     }
     shape.insert(shape.end(), boundary.index.begin(), boundary.index.end());
-
+    // boundary
     boundary.face_charges.resize(boundary.index.size());
     std::fill(boundary.face_charges.begin(), boundary.face_charges.end(), homogen_face_values);
 
@@ -88,6 +99,8 @@ class BuildingUnit
       // std::make_pair<unsigned int, unsigned int>(boundary.index[i], i)
       boundary.index_by_relation_to_reference.insert(pair);
     }
+    // rotation
+    rotation = default_rotation;
   }
 
   void set_reference_field(const unsigned int _reference_field)
@@ -115,12 +128,15 @@ class BuildingUnit
       std::cout << "nooo" << std::endl;
     return boundary.face_charges[it->second];
   }
+  const std::array<int, CAM::n_DoF_basis_rotation<nx>()>& get_rotation() const { return rotation; }
+  // void set_rotation(const std::array<int, CAM::n_DoF_basis_rotation<nx>()> _rotation){rotation =
+  // _rotation;}
 
   bool constexpr is_member(const unsigned int _index)
   {
     for (unsigned int i = 0; i < shape.size(); i++)
     {
-      if (CAM::aim<nx>(reference_field, shape[i]) == _index)
+      if (CAM::aim<nx>(reference_field, shape[i], rotation) == _index)
         return true;
     }
     return false;

@@ -81,6 +81,11 @@ static constexpr unsigned int n_field_corner_points()
 {
   return ipow(2, nx.size());
 }
+template <auto nx>
+static constexpr unsigned int n_DoF_basis_rotation()
+{
+  return nx.size() * (nx.size() - 1) / 2;
+}
 /*!*************************************************************************************************
  * \brief   Find field if one moves from position to move.
  *
@@ -95,6 +100,66 @@ static constexpr unsigned int aim(const int position, const int move)
   for (unsigned int i = 0; i < nx.size(); ++i)
   {
     coord = ((position) / direct_neigh<nx>(2 * i + 1) + (move) / direct_neigh<nx>(2 * i + 1) +
+             n_fields<nx>()) %
+            nx[i];
+    new_pos += coord * direct_neigh<nx>(2 * i + 1);
+  }
+  return new_pos;
+}
+/*!*************************************************************************************************
+ * \brief   Find field if one moves from position to move.
+ *
+ * \param   position  Current position of field that may move.
+ * \param   move      Index shift induced by possible move.
+ * \retval  index     Index of move target.
+ **************************************************************************************************/
+template <auto nx>
+static constexpr unsigned int bu_in_world(
+  const unsigned int reference,
+  unsigned int shape,
+  const std::array<int, n_DoF_basis_rotation<nx>()> rotation,
+  unsigned int rotation_point = 0)
+{
+  // rotationn in plane -> wird von einer richtung in ander richtung geswapt, axen die ebene
+  // aufspannen
+  unsigned int coord_i, coord_j, direction, ii, jj;
+  bool swap;
+  unsigned int index = 0;
+  // unsigned int shape_before =  shape; std::cout<<shape_before  <<" ";
+  for (unsigned int i = 0; i < nx.size(); i++)
+  {
+    for (unsigned int j = i + 1; j < nx.size(); j++)
+    {
+      coord_i = ((shape) / direct_neigh<nx>(2 * i + 1)) % nx[i];
+      coord_j = ((shape) / direct_neigh<nx>(2 * j + 1)) % nx[j];
+      // std::cout<<" coord_before "<< coord_i<< " "<<coord_j<<" ";
+      shape -= coord_i * direct_neigh<nx>(2 * i + 1);
+      // std::cout<<"shape "<<shape  <<" ";
+      shape -= coord_j * direct_neigh<nx>(2 * j + 1);
+      // std::cout<<shape  <<" ";
+      swap = rotation[index] % 2 == 0;
+      ii = (swap) ? i : j;
+      jj = (swap) ? j : i;
+
+      direction = (rotation[index] < 0) ? -1 : 1;
+      // std::cout<<"mitel  "<< ii<<" "<<jj<<" "<<direction<<" ";
+      shape += (((direction * coord_i) + n_fields<nx>()) % nx[ii]) *
+               direct_neigh<nx>(2 * ii + 1);  // + n_fields<nx>()) %nx[ii];
+      // std::cout<<"shape_new "<<shape  <<" ";
+      shape += (((direction * coord_j) + n_fields<nx>()) % nx[jj]) *
+               direct_neigh<nx>(2 * jj + 1);  // + n_fields<nx>()) %nx[jj];
+      // std::cout<<shape  <<" ";
+
+      index++;
+    }
+  }
+
+  // std::cout<<"shape_after "<<shape<<std::endl;
+
+  unsigned int coord, new_pos = 0;
+  for (unsigned int i = 0; i < nx.size(); ++i)
+  {
+    coord = ((reference) / direct_neigh<nx>(2 * i + 1) + (shape) / direct_neigh<nx>(2 * i + 1) +
              n_fields<nx>()) %
             nx[i];
     new_pos += coord * direct_neigh<nx>(2 * i + 1);

@@ -116,8 +116,10 @@ class CellularAutomaton
     const unsigned int reference_field_new = _unit.get_reference_field();
     for (unsigned int i = 0; i < _unit.get_shape().size(); i++)
     {
-      field_old = CAM::aim<nx>(reference_field_old, _unit.get_shape()[i]);
-      field_new = CAM::aim<nx>(reference_field_new, _unit.get_shape()[i]);
+      field_old =
+        CAM::bu_in_world<nx>(reference_field_old, _unit.get_shape()[i], _unit.get_rotation());
+      field_new =
+        CAM::bu_in_world<nx>(reference_field_new, _unit.get_shape()[i], _unit.get_rotation());
       _domain_fields[field_new] += _unit.get_number();
       _domain_fields[field_old] -= _unit.get_number();
     }
@@ -179,7 +181,8 @@ class CellularAutomaton
     unsigned int aiming, field_index;
     for (unsigned int i = 0; i < _unit.get_shape().size(); ++i)
     {
-      field_index = CAM::aim<nx>(_unit.get_reference_field(), _unit.get_shape()[i]);
+      field_index = CAM::bu_in_world<nx>(_unit.get_reference_field(), _unit.get_shape()[i],
+                                         _unit.get_rotation());
       aiming = aim<nx>(field_index, move);
       if (_domain_fields[aiming] != _unit.get_number() && _domain_fields[aiming] != 0)
         return double_min;
@@ -203,12 +206,14 @@ class CellularAutomaton
   {
     double attraction = 0.;
     const fields_array_t& _domain_fields = _domain.domain_fields;
-    unsigned int aiming, neigh_index;
+    unsigned int aiming, neigh_index, field_index;
     unsigned int index_begin_bound = (_unit.get_shape().size() - _unit.get_boundary().size());
 
     for (unsigned int i = 0; i < _unit.get_shape().size(); ++i)
     {
-      aiming = aim<nx>(CAM::aim<nx>(_unit.get_reference_field(), _unit.get_shape()[i]), move);
+      field_index = CAM::bu_in_world<nx>(_unit.get_reference_field(), _unit.get_shape()[i],
+                                         _unit.get_rotation());
+      aiming = aim<nx>(field_index, move);
       if (_domain_fields[aiming] != _unit.get_number() &&
           _domain_fields[aiming] != 0)  // occupied by cell
         return double_min;
@@ -227,9 +232,13 @@ class CellularAutomaton
             const CAM::BuildingUnit<nx>& neigh_bu =
               _domain.building_units[_domain.field_number_2_index[_domain_fields[neigh_index]]];
             // faces
-            unsigned int neigh_boundary_cell =
-              CAM::aim<nx>(neigh_index, -neigh_bu.get_reference_field());
 
+            unsigned int neigh_boundary_cell =
+              CAM::bu_in_world<nx>(0, CAM::aim<nx>(neigh_index, -neigh_bu.get_reference_field()),
+                                   neigh_bu.get_rotation());
+            // unsigned int neigh_boundary_cell =
+            // CAM::aim<nx>(neigh_index, -neigh_bu.get_reference_field() );
+            // std::cout<<neigh_boundary_cell<<std::endl;
             const std::array<double, nx.size()* 2>& faces_neigh =
               neigh_bu.get_face_charges_of_boundary_cell(neigh_boundary_cell);
 
@@ -241,6 +250,7 @@ class CellularAutomaton
             // attraction
             attraction +=
               get_attractivity_between_two_faces(faces_neigh[opposite_face], faces_unit[j]);
+            // std::cout<<attraction<<std::endl;
 
 #else
 

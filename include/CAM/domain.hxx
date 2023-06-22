@@ -92,14 +92,16 @@ class Domain
     unsigned int field;
     for (unsigned int i = 0; i < _unit.get_shape().size(); i++)
     {
-      field = CAM::aim<nx>(_unit.get_reference_field(), _unit.get_shape()[i]);
+      field = CAM::bu_in_world<nx>(_unit.get_reference_field(), _unit.get_shape()[i],
+                                   _unit.get_rotation());
       if (domain_fields[field] != 0)
         return false;
     }
 
     for (unsigned int i = 0; i < _unit.get_shape().size(); i++)
     {
-      field = CAM::aim<nx>(_unit.get_reference_field(), _unit.get_shape()[i]);
+      field = CAM::bu_in_world<nx>(_unit.get_reference_field(), _unit.get_shape()[i],
+                                   _unit.get_rotation());
       domain_fields[field] = _unit.get_number();
     }
     building_units.push_back(_unit);
@@ -194,11 +196,14 @@ class Domain
 
       boundaries.clear();
       for (unsigned int boundary_field : building_units[i].get_boundary())
-        boundaries.push_back(CAM::aim<nx>(building_units[i].get_reference_field(), boundary_field));
+        boundaries.push_back(CAM::bu_in_world<nx>(building_units[i].get_reference_field(),
+                                                  boundary_field,
+                                                  building_units[i].get_rotation()));
 
       found_solids.clear();
       for (unsigned int shape_field : building_units[i].get_shape())
-        found_solids.push_back(CAM::aim<nx>(building_units[i].get_reference_field(), shape_field));
+        found_solids.push_back(CAM::bu_in_world<nx>(building_units[i].get_reference_field(),
+                                                    shape_field, building_units[i].get_rotation()));
 
       field_number = building_units[i].get_number();
       is_bu_visited[field_number] = true;
@@ -228,7 +233,8 @@ class Domain
 
             for (unsigned int shape_field : (building_units[index]).get_shape())
               found_solids.push_back(
-                CAM::aim<nx>((building_units[index]).get_reference_field(), shape_field));
+                CAM::bu_in_world<nx>((building_units[index]).get_reference_field(), shape_field,
+                                     building_units[i].get_rotation()));
           }
         }
       }
