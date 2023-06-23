@@ -15,6 +15,7 @@
 #include <iostream>
 #include <limits>
 #include <random>
+#include <utility>
 #include <vector>
 #define EVALUATE_ATTRACTIVITY 1
 namespace CAM
@@ -83,22 +84,40 @@ class CellularAutomaton
     //  for(unsigned int i = 0; i < get_stencil_c<nx,1>().size(); i++)
     //    std::cout<<get_stencil_c<nx,5>()[i]<<" "<<possible_moves[i]<<std::endl;
     //    std::cout<<"ende"<<std::endl;
-    std::vector<unsigned int> best_moves(1, 0);
+    //::vector<unsigned int> best_moves(1, 0);
+    std::vector <
+      std::pair<unsigned int, std::array<int, CAM::n_DoF_basis_rotation<nx>()>>> best_trans_rot;
     double current_attraction, attraction = 0.;
-    std::for_each(possible_moves.begin(), possible_moves.end(),
-                  [&](int move)
-                  {
-                    current_attraction = get_attraction_bu(move, _unit, _domain);
-                    if (current_attraction > attraction)
+
+    std::array<int, CAM::n_DoF_basis_rotation<nx>()> rotation;
+    for (unsigned int i = 0; i < n_DoF_basis_rotation<nx>() * 2 + 1; i++)
+    {
+      std::fill(rotation.begin(), rotation.end(), 0);
+      if (i < n_DoF_basis_rotation<nx>() * 2)
+      {
+        rotation[i / 2] = (i % 2 == 0) ? 1 : -1;
+        ;
+      }
+      BuildingUnit<nx> current_rotation_bu(_unit);
+      current_rotation_bu.rotate(rotation);
+
+      std::for_each(possible_moves.begin(), possible_moves.end(),
+                    [&](int move)
                     {
-                      best_moves = std::vector<unsigned int>(1, move);
-                      attraction = current_attraction;
-                    }
-                    else if (current_attraction == attraction)
-                      best_moves.push_back(move);
-                  });
-    do_move_bu(best_moves[std::rand() % best_moves.size()], _unit, _domain.domain_fields);
+                      current_attraction = get_attraction_bu(move, current_rotation_bu, _domain);
+                      if (current_attraction > attraction)
+                      {
+                        best_trans_rot.clear();
+                        best_trans_rot.push_back(std::make_pair(move, rotation));
+                        attraction = current_attraction;
+                      }
+                      else if (current_attraction == attraction)
+                        best_trans_rot.push_back(std::make_pair(move, rotation));
+                    });
+    }
+    do_move_bu(best_trans_rot[std::rand() % best_trans_rot.size()], _unit, _domain.domain_fields);
   }
+
   /*!*********************************************************************************************
    * \brief  Executes the actual movement for an individual building unit
    *
@@ -106,20 +125,26 @@ class CellularAutomaton
    * \param _unit building unit
    * \param _domain_fields cells of domain
    **********************************************************************************************/
-  static void do_move_bu(const int move,
-                         CAM::BuildingUnit<nx>& _unit,
-                         fields_array_t& _domain_fields)
+  static void do_move_bu(
+    const std::pair<unsigned int, std::array<int, CAM::n_DoF_basis_rotation<nx>()>>& move,
+    CAM::BuildingUnit<nx>& _unit,
+    fields_array_t& _domain_fields)
   {
+    BuildingUnit bu_old = _unit;
+    _unit.rotate(move.second);
+
     unsigned int field_new, field_old;
     const unsigned int reference_field_old = _unit.get_reference_field();
-    _unit.set_reference_field(CAM::aim<nx>(_unit.get_reference_field(), move));
+    _unit.set_reference_field(CAM::aim<nx>(_unit.get_reference_field(), move.first));
     const unsigned int reference_field_new = _unit.get_reference_field();
     for (unsigned int i = 0; i < _unit.get_shape().size(); i++)
     {
-      field_old =
-        CAM::bu_in_world<nx>(reference_field_old, _unit.get_shape()[i], _unit.get_rotation());
-      field_new =
-        CAM::bu_in_world<nx>(reference_field_new, _unit.get_shape()[i], _unit.get_rotation());
+      // field_old =
+      //   CAM::bu_in_world<nx>(reference_field_old, _unit.get_shape()[i], _unit.get_rotation());
+      field_old = CAM::aim<nx>(reference_field_old, bu_old.get_shape()[i]);
+      // field_new =
+      //   CAM::bu_in_world<nx>(reference_field_new, _unit.get_shape()[i], _unit.get_rotation());
+      field_new = CAM::aim<nx>(reference_field_new, _unit.get_shape()[i]);
       _domain_fields[field_new] += _unit.get_number();
       _domain_fields[field_old] -= _unit.get_number();
     }
@@ -162,9 +187,11 @@ class CellularAutomaton
     }
 
     int best_move = best_moves[std::rand() % best_moves.size()];
+    std::array<int, CAM::n_DoF_basis_rotation<nx>()> rotation;
+    std::fill(rotation.begin(), rotation.end(), 0);
     for (unsigned int i = 0; i < _composite.building_units.size(); i++)
     {
-      do_move_bu(best_move, (*_composite.building_units[i]), _domain_fields);
+      do_move_bu(std::make_pair(best_move, rotation), (*_composite.building_units[i]), _domain_fields);
     }
   }
   static double get_attractivity_between_two_faces(const double charge_face1,
@@ -181,8 +208,9 @@ class CellularAutomaton
     unsigned int aiming, field_index;
     for (unsigned int i = 0; i < _unit.get_shape().size(); ++i)
     {
-      field_index = CAM::bu_in_world<nx>(_unit.get_reference_field(), _unit.get_shape()[i],
-                                         _unit.get_rotation());
+      // field_index = CAM::bu_in_world<nx>(_unit.get_reference_field(), _unit.get_shape()[i],
+      //                                    _unit.get_rotation());
+      field_index = CAM::aim<nx>(_unit.get_reference_field(), _unit.get_shape()[i]);
       aiming = aim<nx>(field_index, move);
       if (_domain_fields[aiming] != _unit.get_number() && _domain_fields[aiming] != 0)
         return double_min;
@@ -211,8 +239,9 @@ class CellularAutomaton
 
     for (unsigned int i = 0; i < _unit.get_shape().size(); ++i)
     {
-      field_index = CAM::bu_in_world<nx>(_unit.get_reference_field(), _unit.get_shape()[i],
-                                         _unit.get_rotation());
+      // field_index = CAM::bu_in_world<nx>(_unit.get_reference_field(), _unit.get_shape()[i],
+      //                                    _unit.get_rotation());
+      field_index = CAM::aim<nx>(_unit.get_reference_field(), _unit.get_shape()[i]);
       aiming = aim<nx>(field_index, move);
       if (_domain_fields[aiming] != _unit.get_number() &&
           _domain_fields[aiming] != 0)  // occupied by cell
@@ -233,11 +262,11 @@ class CellularAutomaton
               _domain.building_units[_domain.field_number_2_index[_domain_fields[neigh_index]]];
             // faces
 
-            unsigned int neigh_boundary_cell =
-              CAM::bu_in_world<nx>(0, CAM::aim<nx>(neigh_index, -neigh_bu.get_reference_field()),
-                                   neigh_bu.get_rotation());
             // unsigned int neigh_boundary_cell =
-            // CAM::aim<nx>(neigh_index, -neigh_bu.get_reference_field() );
+            //   CAM::bu_in_world<nx>(0, CAM::aim<nx>(neigh_index, -neigh_bu.get_reference_field()),
+            //                        neigh_bu.get_rotation());
+            unsigned int neigh_boundary_cell =
+              CAM::aim<nx>(neigh_index, -neigh_bu.get_reference_field());
             // std::cout<<neigh_boundary_cell<<std::endl;
             const std::array<double, nx.size()* 2>& faces_neigh =
               neigh_bu.get_face_charges_of_boundary_cell(neigh_boundary_cell);

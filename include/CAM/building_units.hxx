@@ -102,6 +102,25 @@ class BuildingUnit
     // rotation
     rotation = default_rotation;
   }
+  BuildingUnit(const BuildingUnit& b)
+  {
+    // Boundary boundary(b.boundary);
+    // shape(b.shape);
+    // jump_parameter(b.jump_parameter);
+    // reference_field(b.reference_field);
+    // number(b.number);
+    // rotation(b.rotation);
+    // boundary = b.boundary;
+
+    boundary.face_charges = b.boundary.face_charges;
+    boundary.index = b.boundary.index;
+    boundary.index_by_relation_to_reference = b.boundary.index_by_relation_to_reference;
+    shape = b.shape;
+    jump_parameter = b.jump_parameter;
+    reference_field = b.reference_field;
+    number = b.number;
+    rotation = b.rotation;
+  }
 
   void set_reference_field(const unsigned int _reference_field)
   {
@@ -140,6 +159,29 @@ class BuildingUnit
         return true;
     }
     return false;
+  }
+  void rotate(const std::array<int, CAM::n_DoF_basis_rotation<nx>()>& _rotation)
+  {
+    for (unsigned int i = 0; i < shape.size(); i++)
+    {
+      shape[i] = get_rotated_index<nx>(shape[i], _rotation);
+    }
+    for (unsigned int i = 0; i < boundary.index.size(); i++)
+    {
+      boundary.index[i] = get_rotated_index<nx>(boundary.index[i], _rotation);
+    }
+    for (unsigned int i = 0; i < boundary.index.size(); i++)
+    {
+      std::pair<unsigned int, unsigned int> pair(boundary.index[i], i);
+      // std::make_pair<unsigned int, unsigned int>(boundary.index[i], i)
+      boundary.index_by_relation_to_reference.insert(pair);
+    }
+    // for (unsigned int i = 0; i < boundary.index_by_relation_to_reference.size(); i++)
+    // {
+    //   boundary.index_by_relation_to_reference[i] =
+    //     get_rotated_index<nx>(boundary.index_by_relation_to_reference[i], _rotation);
+    // }
+    // TODO face_charges
   }
 };
 /*!*********************************************************************************************

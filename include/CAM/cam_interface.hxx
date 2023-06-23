@@ -93,6 +93,10 @@ class CAMInterface
 
     const BuildingUnit<nx> bu = CAM::create_hyper_plane<nx>(
       _jump_parameter, extent_a, _position, domain.building_units.size() + 1, _homogen_charge);
+    // std::array<int, CAM::n_DoF_basis_rotation<nx>()> arr;
+    // std::fill(arr.begin(), arr.end(), 0);
+    // arr[0] = 1;
+    // bu.rotate(arr);
     return domain.place_bu(bu);
   }
   // TODO parameterize this function

@@ -166,6 +166,47 @@ static constexpr unsigned int bu_in_world(
   }
   return new_pos;
 }
+template <auto nx>
+static constexpr unsigned int get_rotated_index(
+  unsigned int index,
+  const std::array<int, n_DoF_basis_rotation<nx>()> rotation,
+  unsigned int rotation_point = 0)
+{
+  // rotationn in plane -> wird von einer richtung in ander richtung geswapt, axen die ebene
+  // aufspannen
+  unsigned int coord_i, coord_j, direction, ii, jj;
+  bool swap;
+  unsigned int count = 0;
+  // unsigned int shape_before =  index; std::cout<<shape_before  <<" ";
+  for (unsigned int i = 0; i < nx.size(); i++)
+  {
+    for (unsigned int j = i + 1; j < nx.size(); j++)
+    {
+      coord_i = ((index) / direct_neigh<nx>(2 * i + 1)) % nx[i];
+      coord_j = ((index) / direct_neigh<nx>(2 * j + 1)) % nx[j];
+      // std::cout<<" coord_before "<< coord_i<< " "<<coord_j<<" ";
+      index -= coord_i * direct_neigh<nx>(2 * i + 1);
+      // std::cout<<"index "<<index  <<" ";
+      index -= coord_j * direct_neigh<nx>(2 * j + 1);
+      // std::cout<<index  <<" ";
+      swap = rotation[count] % 2 == 0;
+      ii = (swap) ? i : j;
+      jj = (swap) ? j : i;
+
+      direction = (rotation[count] < 0) ? -1 : 1;
+      // std::cout<<"mitel  "<< ii<<" "<<jj<<" "<<direction<<" ";
+      index += (((direction * coord_i) + n_fields<nx>()) % nx[ii]) *
+               direct_neigh<nx>(2 * ii + 1);  // + n_fields<nx>()) %nx[ii];
+      // std::cout<<"shape_new "<<index  <<" ";
+      index += (((direction * coord_j) + n_fields<nx>()) % nx[jj]) *
+               direct_neigh<nx>(2 * jj + 1);  // + n_fields<nx>()) %nx[jj];
+      // std::cout<<shape  <<" ";
+
+      count++;
+    }
+  }
+  return index;
+}
 /*!*********************************************************************************************
  * \brief Get the all 2^dim corner points of a cell
  *
