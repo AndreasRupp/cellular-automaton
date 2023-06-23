@@ -85,8 +85,8 @@ class CellularAutomaton
     //    std::cout<<get_stencil_c<nx,5>()[i]<<" "<<possible_moves[i]<<std::endl;
     //    std::cout<<"ende"<<std::endl;
     //::vector<unsigned int> best_moves(1, 0);
-    std::vector <
-      std::pair<unsigned int, std::array<int, CAM::n_DoF_basis_rotation<nx>()>>> best_trans_rot;
+    std::vector<std::pair<unsigned int, std::array<int, CAM::n_DoF_basis_rotation<nx>()>>>
+      best_trans_rot;
     double current_attraction, attraction = 0.;
 
     std::array<int, CAM::n_DoF_basis_rotation<nx>()> rotation;
@@ -191,7 +191,8 @@ class CellularAutomaton
     std::fill(rotation.begin(), rotation.end(), 0);
     for (unsigned int i = 0; i < _composite.building_units.size(); i++)
     {
-      do_move_bu(std::make_pair(best_move, rotation), (*_composite.building_units[i]), _domain_fields);
+      do_move_bu(std::make_pair(best_move, rotation), (*_composite.building_units[i]),
+                 _domain_fields);
     }
   }
   static double get_attractivity_between_two_faces(const double charge_face1,
