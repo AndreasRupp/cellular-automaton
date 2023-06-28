@@ -47,42 +47,38 @@ def cam_particles(n_steps, jump_parameter, distribution, porosity, debug_mode=Fa
   summe = 0
   success = 0
   while success < n_g/3:
-    success = success + Domain.place_plane(jump_parameter, [2,2,30], -1, +1)
+    success = success + Domain.place_plane(jump_parameter, [2,2,30], -1, [+1] * 6)
   print(success)
   summe = summe + success
   success = 0
   while success < n_g/3:
-    success = success + Domain.place_plane(jump_parameter, [2,30,2], -1, +1)
+    success = success + Domain.place_plane(jump_parameter, [2,30,2], -1, [+1] * 6)
   print(success)
   summe = summe + success
   success = 0
   while success < n_g/3:
-    success = success + Domain.place_plane(jump_parameter, [30,2,2], -1, +1)
+    success = success + Domain.place_plane(jump_parameter, [30,2,2], -1, [+1] * 6)
   print(success)
   summe = summe + success
   #illite
   success = 0
   while success < n_i/3:
-    success = success + Domain.place_plane(jump_parameter, [2,2,6], -1, -1)
+    success = success + Domain.place_plane(jump_parameter, [2,2,6], -1, [-1] * 6)
   print(success)
   summe = summe + success
   success = 0
   while success < n_i/3:
-    success = success + Domain.place_plane(jump_parameter, [2,6,2], -1, -1)
+    success = success + Domain.place_plane(jump_parameter, [2,6,2], -1, [-1] * 6)
   print(success)
   summe = summe + success
   success = 0
   while success < n_i/3:
-    success = success + Domain.place_plane(jump_parameter, [6,2,2], -1, 1)
+    success = success + Domain.place_plane(jump_parameter, [6,2,2], -1, [-1] * 6)
   print(success)
   summe = summe + success
 
 
   # Domain.print_array()
-
-  # Domain.place_particles()
-    #   //  constexpr std::array<unsigned int, stencil_size<nx,5>()> possible_moves =
-    # //   CAM::get_stencil_a<nx, 5>();
   save_data = np.zeros( (n_steps + 1, np.prod(const.nx)) ) 
   save_data[0] = Domain.fields()
   # plot_to_vtk("output/cam", [save_data[0]], const.nx)
@@ -109,7 +105,7 @@ def cam_particles(n_steps, jump_parameter, distribution, porosity, debug_mode=Fa
 # Function main.
 # --------------------------------------------------------------------------------------------------
 def main(debug_mode):
-  n_steps =20
+  n_steps =10
   cam_particles(n_steps,5,0.75, 0.9,debug_mode)
 
 

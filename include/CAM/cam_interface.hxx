@@ -35,10 +35,16 @@ class CAMInterface
    * \param _jump_parameter How far individual particles are allowed to jump.
    * \param random_seed If given, sets random seed to given seed.
    ************************************************************************************************/
-  void place_single_cell_bu_randomly(double _jump_parameter = 1,
-                                     double _porosity = 0.5,
-                                     unsigned int _random_seed = 0)
+  void place_single_cell_bu_randomly(
+    double _jump_parameter = 1,
+    double _porosity = 0.5,
+    unsigned int _random_seed = 0,
+    std::vector<double> _face_charge_v = std::vector<double>(2 * nx.size(), 0))
   {
+    std::array<double, 2 * nx.size()> face_charge_a;
+    for (unsigned int i = 0; i < _face_charge_v.size(); i++)
+      face_charge_a[i] = _face_charge_v[i];
+
     if (_random_seed == 0)
     {
       rand_seed = std::chrono::system_clock::now().time_since_epoch().count();
@@ -54,8 +60,8 @@ class CAMInterface
     {
       while (domain.domain_fields[position] != 0)
         position = std::rand() % (n_fields<nx>());
-      domain.place_bu(CAM::create_single_cell_bu<nx>(_jump_parameter, position,
-                                                     domain.building_units.size() + 1));
+      domain.place_bu(CAM::create_single_cell_bu<nx>(
+        _jump_parameter, position, domain.building_units.size() + 1, face_charge_a));
     }
   }
   /*!*********************************************************************************************
@@ -67,10 +73,17 @@ class CAMInterface
    * \return true: sphere is placed
    * \return false: sphere could not be placed. all its cells are removed
    ************************************************************************************************/
-  bool place_sphere(double _jump_parameter = 1, double _radius = 1, int _position = -1)
+  bool place_sphere(double _jump_parameter = 1,
+                    double _radius = 1,
+                    int _position = -1,
+                    std::vector<double> _face_charge_v = std::vector<double>(2 * nx.size(), 0))
   {
+    std::array<double, 2 * nx.size()> face_charge_a;
+    for (unsigned int i = 0; i < _face_charge_v.size(); i++)
+      face_charge_a[i] = _face_charge_v[i];
+
     const CAM::BuildingUnit<nx> bu = CAM::create_hyper_sphere<nx>(
-      _jump_parameter, _radius, _position, domain.building_units.size() + 1);
+      _jump_parameter, _radius, _position, domain.building_units.size() + 1, face_charge_a);
     return domain.place_bu(bu);
   }
   /*!*********************************************************************************************
@@ -85,18 +98,18 @@ class CAMInterface
   bool place_plane(double _jump_parameter = 1,
                    std::vector<unsigned int> _extent_v = std::vector<unsigned int>(nx.size(), 0),
                    int _position = -1,
-                   double _homogen_charge = 1)
+                   std::vector<double> _face_charge_v = std::vector<double>(2 * nx.size(), 0))
   {
     std::array<unsigned int, nx.size()> extent_a;
     for (unsigned int i = 0; i < _extent_v.size(); i++)
       extent_a[i] = _extent_v[i];
 
+    std::array<double, 2 * nx.size()> face_charge_a;
+    for (unsigned int i = 0; i < _face_charge_v.size(); i++)
+      face_charge_a[i] = _face_charge_v[i];
+
     const BuildingUnit<nx> bu = CAM::create_hyper_plane<nx>(
-      _jump_parameter, extent_a, _position, domain.building_units.size() + 1, _homogen_charge);
-    // std::array<int, CAM::n_DoF_basis_rotation<nx>()> arr;
-    // std::fill(arr.begin(), arr.end(), 0);
-    // arr[0] = 1;
-    // bu.rotate(arr);
+      _jump_parameter, extent_a, _position, domain.building_units.size() + 1, face_charge_a);
     return domain.place_bu(bu);
   }
   // TODO parameterize this function

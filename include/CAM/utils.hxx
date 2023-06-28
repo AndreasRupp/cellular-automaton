@@ -81,6 +81,9 @@ static constexpr unsigned int n_field_corner_points()
 {
   return ipow(2, nx.size());
 }
+/*!*********************************************************************************************
+ * \brief Number of planes/ orthogonal rotation axis
+ **************************************************************************************************/
 template <auto nx>
 static constexpr unsigned int n_DoF_basis_rotation()
 {
@@ -97,115 +100,93 @@ template <auto nx>
 static constexpr unsigned int aim(const int position, const int move)
 {
   unsigned int coord, new_pos = 0;
+  int direct_neigh_i;
   for (unsigned int i = 0; i < nx.size(); ++i)
   {
-    coord = ((position) / direct_neigh<nx>(2 * i + 1) + (move) / direct_neigh<nx>(2 * i + 1) +
-             n_fields<nx>()) %
-            nx[i];
-    new_pos += coord * direct_neigh<nx>(2 * i + 1);
+    direct_neigh_i = direct_neigh<nx>(2 * i + 1);
+    coord = ((position) / direct_neigh_i + (move) / direct_neigh_i + n_fields<nx>()) % nx[i];
+    new_pos += coord * direct_neigh_i;
   }
   return new_pos;
 }
 /*!*************************************************************************************************
- * \brief   Find field if one moves from position to move.
+ * \brief  get index after rotation
  *
- * \param   position  Current position of field that may move.
- * \param   move      Index shift induced by possible move.
- * \retval  index     Index of move target.
+ * \param   index      Current position of field that may rotate.
+ * \param   rotation   Index shift induced by possible rotation.
+ * \retval  index     Index of rotated target.
  **************************************************************************************************/
-template <auto nx>
-static constexpr unsigned int bu_in_world(
-  const unsigned int reference,
-  unsigned int shape,
-  const std::array<int, n_DoF_basis_rotation<nx>()> rotation,
-  unsigned int rotation_point = 0)
-{
-  // rotationn in plane -> wird von einer richtung in ander richtung geswapt, axen die ebene
-  // aufspannen
-  unsigned int coord_i, coord_j, direction, ii, jj;
-  bool swap;
-  unsigned int index = 0;
-  // unsigned int shape_before =  shape; std::cout<<shape_before  <<" ";
-  for (unsigned int i = 0; i < nx.size(); i++)
-  {
-    for (unsigned int j = i + 1; j < nx.size(); j++)
-    {
-      coord_i = ((shape) / direct_neigh<nx>(2 * i + 1)) % nx[i];
-      coord_j = ((shape) / direct_neigh<nx>(2 * j + 1)) % nx[j];
-      // std::cout<<" coord_before "<< coord_i<< " "<<coord_j<<" ";
-      shape -= coord_i * direct_neigh<nx>(2 * i + 1);
-      // std::cout<<"shape "<<shape  <<" ";
-      shape -= coord_j * direct_neigh<nx>(2 * j + 1);
-      // std::cout<<shape  <<" ";
-      swap = rotation[index] % 2 == 0;
-      ii = (swap) ? i : j;
-      jj = (swap) ? j : i;
-
-      direction = (rotation[index] < 0) ? -1 : 1;
-      // std::cout<<"mitel  "<< ii<<" "<<jj<<" "<<direction<<" ";
-      shape += (((direction * coord_i) + n_fields<nx>()) % nx[ii]) *
-               direct_neigh<nx>(2 * ii + 1);  // + n_fields<nx>()) %nx[ii];
-      // std::cout<<"shape_new "<<shape  <<" ";
-      shape += (((direction * coord_j) + n_fields<nx>()) % nx[jj]) *
-               direct_neigh<nx>(2 * jj + 1);  // + n_fields<nx>()) %nx[jj];
-      // std::cout<<shape  <<" ";
-
-      index++;
-    }
-  }
-
-  // std::cout<<"shape_after "<<shape<<std::endl;
-
-  unsigned int coord, new_pos = 0;
-  for (unsigned int i = 0; i < nx.size(); ++i)
-  {
-    coord = ((reference) / direct_neigh<nx>(2 * i + 1) + (shape) / direct_neigh<nx>(2 * i + 1) +
-             n_fields<nx>()) %
-            nx[i];
-    new_pos += coord * direct_neigh<nx>(2 * i + 1);
-  }
-  return new_pos;
-}
 template <auto nx>
 static constexpr unsigned int get_rotated_index(
   unsigned int index,
-  const std::array<int, n_DoF_basis_rotation<nx>()> rotation,
-  unsigned int rotation_point = 0)
+  const std::array<int, n_DoF_basis_rotation<nx>()> rotation)
 {
-  // rotationn in plane -> wird von einer richtung in ander richtung geswapt, axen die ebene
-  // aufspannen
-  unsigned int coord_i, coord_j, direction, ii, jj;
+  unsigned int coord_i, coord_j, ii, jj, n_cclw_90_degree, count = 0;
   bool swap;
-  unsigned int count = 0;
-  // unsigned int shape_before =  index; std::cout<<shape_before  <<" ";
+  int direction_ii, direction_jj;
+  int rot, direct_neigh_i, direct_neigh_j, direct_neigh_jj, direct_neigh_ii;
   for (unsigned int i = 0; i < nx.size(); i++)
   {
     for (unsigned int j = i + 1; j < nx.size(); j++)
     {
-      coord_i = ((index) / direct_neigh<nx>(2 * i + 1)) % nx[i];
-      coord_j = ((index) / direct_neigh<nx>(2 * j + 1)) % nx[j];
-      // std::cout<<" coord_before "<< coord_i<< " "<<coord_j<<" ";
-      index -= coord_i * direct_neigh<nx>(2 * i + 1);
-      // std::cout<<"index "<<index  <<" ";
-      index -= coord_j * direct_neigh<nx>(2 * j + 1);
-      // std::cout<<index  <<" ";
-      swap = rotation[count] % 2 == 0;
-      ii = (swap) ? i : j;
-      jj = (swap) ? j : i;
+      rot = rotation[count] % 4;
+      n_cclw_90_degree = (rot < 0) ? 4 + rot : rot;
 
-      direction = (rotation[count] < 0) ? -1 : 1;
-      // std::cout<<"mitel  "<< ii<<" "<<jj<<" "<<direction<<" ";
-      index += (((direction * coord_i) + n_fields<nx>()) % nx[ii]) *
-               direct_neigh<nx>(2 * ii + 1);  // + n_fields<nx>()) %nx[ii];
-      // std::cout<<"shape_new "<<index  <<" ";
-      index += (((direction * coord_j) + n_fields<nx>()) % nx[jj]) *
-               direct_neigh<nx>(2 * jj + 1);  // + n_fields<nx>()) %nx[jj];
-      // std::cout<<shape  <<" ";
+      direct_neigh_i = direct_neigh<nx>(2 * i + 1);
+      direct_neigh_j = direct_neigh<nx>(2 * j + 1);
+      coord_i = ((index) / direct_neigh_i) % nx[i];
+      coord_j = ((index) / direct_neigh_j) % nx[j];
+
+      index -= coord_i * direct_neigh_i;
+      index -= coord_j * direct_neigh_j;
+      swap = n_cclw_90_degree % 2 != 0;
+      ii = (swap) ? j : i;
+      jj = (swap) ? i : j;
+
+      direct_neigh_ii = (swap) ? direct_neigh_j : direct_neigh_i;
+      direct_neigh_jj = (swap) ? direct_neigh_i : direct_neigh_j;
+
+      direction_ii = (n_cclw_90_degree == 3) ? -1 : 1;
+      direction_jj = (n_cclw_90_degree == 1) ? -1 : 1;
+
+      index += (((direction_ii * coord_i) + n_fields<nx>()) % nx[ii]) * direct_neigh_ii;
+      index += (((direction_jj * coord_j) + n_fields<nx>()) % nx[jj]) * direct_neigh_jj;
 
       count++;
     }
   }
   return index;
+}
+template <auto nx>
+static unsigned int get_center_field(const std::vector<unsigned int>& _fields)
+{
+  unsigned int coord, center = 0;
+  ;
+  double theta, x_bar, z_bar, coord_bar, r;
+  std::vector<double> x, z;
+  int direct_neigh_i;
+  for (unsigned int i = 0; i < nx.size(); i++)
+  {
+    direct_neigh_i = direct_neigh<nx>(2 * i + 1);
+    x.clear();
+    z.clear();
+    r = nx[i] / (2 * M_PI);
+    for (unsigned int field : _fields)
+    {
+      coord = ((field) / direct_neigh_i) % nx[i];
+
+      theta = (coord / (double)nx[i]) * 2 * M_PI;
+      x.push_back(r * std::cos(theta));
+      z.push_back(r * std::sin(theta));
+    }
+    x_bar = std::reduce(x.begin(), x.end()) / static_cast<double>(x.size());
+    z_bar = std::reduce(z.begin(), z.end()) / static_cast<double>(z.size());
+
+    theta = std::atan2(-z_bar, -x_bar) + M_PI;
+    coord_bar = std::round((double)nx[i] / (2 * M_PI) * theta);
+    center += (unsigned int)coord_bar * direct_neigh_i;
+  }
+  return center;
 }
 /*!*********************************************************************************************
  * \brief Get the all 2^dim corner points of a cell
@@ -375,6 +356,9 @@ static constexpr unsigned int get_stencil_size()
   }
   return nr_of_cells;
 }
+/*!*********************************************************************************************
+ * \brief   Define stencil during compile time
+ **********************************************************************************************/
 template <auto nx, unsigned int jump_parameter>
 static constexpr std::array<unsigned int, get_stencil_size<nx, jump_parameter>()> get_stencil_c()
 {

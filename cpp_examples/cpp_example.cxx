@@ -25,8 +25,11 @@ int main()
   CAM.place_single_cell_bu_randomly(jump_param, porosity, random_seed);
 
   // std::vector<unsigned int> extent = {3, 1};
-  // std::cout << "is placed? " << CAM.place_plane(jump_param, extent, -1) << std::endl;
-  // std::cout << "is placed? " << CAM.place_sphere(jump_param, 4, -1) << std::endl;
+  // std::vector<unsigned int> face_charges_pos = {1, 1, 1, 1};
+  // std::vector<unsigned int> face_charges_neg = {-1, -1, -1, -1};
+  // std::cout << "is placed? " << CAM.place_plane(jump_param, extent, face_charges_pos) <<
+  // std::endl; std::cout << "is placed? " << CAM.place_sphere(jump_param, 4, face_charges_neg) <<
+  // std::endl;
   CAM.print_array();
   std::cout << std::endl << std::endl;
   for (unsigned int i = 0; i < n_moves; ++i)

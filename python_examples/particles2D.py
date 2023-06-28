@@ -25,7 +25,7 @@ def cam_particles(n_steps, jump_parameter, distribution,porosity, debug_mode=Fal
 
   
   const                 = CAM.config()
-  const.nx              = [500, 500]
+  const.nx              = [100, 100]
   const.debug_mode      = debug_mode
   PyCAM = CAM.include(const)
   Domain = PyCAM(jump_parameter)
@@ -43,29 +43,31 @@ def cam_particles(n_steps, jump_parameter, distribution,porosity, debug_mode=Fal
   print(placement_g/size_g)
   n_g = placement_g/size_g
   n_i = placement_g/size_i
+  horiz = [1 ,1 , 0 ,0]
+  vert = [0, 0, 1, 1]
    #goethite
   summe = 0
   success = 0
-  while success < n_g:
-    success = success + Domain.place_plane(jump_parameter, [2,30], -1, 1)
+  while success < n_g/2:
+    success = success + Domain.place_plane(jump_parameter, [2,30], -1, [1] * 4) 
   print(success)
   summe = summe + success
-  # success = 0
-  # while success < n_g:
-  #   success = success + Domain.place_plane(jump_parameter, [30,2], -1, -1)
-  # print(success)
-  # summe = summe + success
+  success = 0
+  while success < n_g/2:
+    success = success + Domain.place_plane(jump_parameter, [30,2], -1,  [1] * 4)
+  print(success)
+  summe = summe + success
   #illite
   success = 0
-  while success < n_i:
-    success = success + Domain.place_plane(jump_parameter, [2,6], -1, -1)
+  while success < n_i/2:
+    success = success + Domain.place_plane(jump_parameter, [2,6], -1,  [-1] * 4)
   print(success)
   summe = summe + success
-  # success = 0
-  # while success < n_i:
-  #   success = success + Domain.place_plane(jump_parameter, [6,2], -1, 1)
-  # print(success)
-  # summe = summe + success
+  success = 0
+  while success < n_i/2:
+    success = success + Domain.place_plane(jump_parameter, [6,2], -1,  [-1] * 4)
+  print(success)
+  summe = summe + success
 
 
   # Domain.print_array()
@@ -84,8 +86,8 @@ def cam_particles(n_steps, jump_parameter, distribution,porosity, debug_mode=Fal
   # print(Domain.bulk_distance(save_data[0],save_data[-1]))
   end_time = datetime.now() 
   print("Program ended at", end_time, "after", end_time-start_time)
-  save_data[(save_data < n_g) & (save_data > 0)] = 1
-  save_data[save_data >= n_g] = 2
+  # save_data[(save_data < n_g) & (save_data > 0)] = 1
+  # save_data[save_data >= n_g] = 2
   # if not os.path.exists('output'):  os.makedirs('output')
   # plot_to_vtk("output/cam", [save_data[0]], const.nx)
   if not os.path.exists('output2D'):  os.makedirs('output2D')
@@ -99,8 +101,8 @@ def cam_particles(n_steps, jump_parameter, distribution,porosity, debug_mode=Fal
 # Function main.
 # --------------------------------------------------------------------------------------------------
 def main(debug_mode):
-  n_steps =50
-  cam_particles(n_steps,5,0.75, 0.9,debug_mode)
+  n_steps =100
+  cam_particles(n_steps,5,0.75, 0.5,debug_mode)
 
 
 # --------------------------------------------------------------------------------------------------
