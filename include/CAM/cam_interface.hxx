@@ -35,16 +35,10 @@ class CAMInterface
    * \param _jump_parameter How far individual particles are allowed to jump.
    * \param random_seed If given, sets random seed to given seed.
    ************************************************************************************************/
-  void place_single_cell_bu_randomly(
-    double _jump_parameter = 1,
-    double _porosity = 0.5,
-    unsigned int _random_seed = 0,
-    std::vector<double> _face_charge_v = std::vector<double>(2 * nx.size(), 0))
+  void place_single_cell_bu_randomly(double _jump_parameter = 1,
+                                     double _porosity = 0.5,
+                                     unsigned int _random_seed = 0)
   {
-    std::array<double, 2 * nx.size()> face_charge_a;
-    for (unsigned int i = 0; i < _face_charge_v.size(); i++)
-      face_charge_a[i] = _face_charge_v[i];
-
     if (_random_seed == 0)
     {
       rand_seed = std::chrono::system_clock::now().time_since_epoch().count();
@@ -60,8 +54,8 @@ class CAMInterface
     {
       while (domain.domain_fields[position] != 0)
         position = std::rand() % (n_fields<nx>());
-      domain.place_bu(CAM::create_single_cell_bu<nx>(
-        _jump_parameter, position, domain.building_units.size() + 1, face_charge_a));
+      domain.place_bu(CAM::create_single_cell_bu<nx>(_jump_parameter, position,
+                                                     domain.building_units.size() + 1));
     }
   }
   /*!*********************************************************************************************

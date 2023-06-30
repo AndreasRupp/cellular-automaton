@@ -29,13 +29,13 @@ def cam_test(n_steps, debug_mode=False):
   const                 = CAM.config()
   const.nx              = [500,500]
   const.debug_mode      = debug_mode
-  jump_parameter_composites  = 10
+  jump_parameter_composites  = 5
   jump_parameter = 5
   porosity = 0.75
   PyCAM = CAM.include(const)
   Domain = PyCAM(jump_parameter_composites)
 
-  Domain.place_single_cell_bu_randomly(jump_parameter, porosity , 0, [0] * 4)
+  Domain.place_single_cell_bu_randomly(jump_parameter, porosity , 0)
 
   # success = 0
   # while success < 10:

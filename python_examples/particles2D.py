@@ -43,29 +43,31 @@ def cam_particles(n_steps, jump_parameter, distribution,porosity, debug_mode=Fal
   print(placement_g/size_g)
   n_g = placement_g/size_g
   n_i = placement_g/size_i
-  horiz = [1 ,1 , 0 ,0]
-  vert = [0, 0, 1, 1]
+  y = [0 ,0 , 1 ,1]
+  y_neg = [0 ,0 , -1 ,-1]
+  x =  [ 1,1,0,0]
+  x_neg =  [ -1,-1,0,0]
    #goethite
   summe = 0
   success = 0
   while success < n_g/2:
-    success = success + Domain.place_plane(jump_parameter, [2,30], -1, [1] * 4) 
+    success = success + Domain.place_plane(jump_parameter, [2,30], -1,  [1] * 4 )#y
   print(success)
   summe = summe + success
   success = 0
   while success < n_g/2:
-    success = success + Domain.place_plane(jump_parameter, [30,2], -1,  [1] * 4)
+    success = success + Domain.place_plane(jump_parameter, [30,2], -1, [1] * 4)#x 
   print(success)
   summe = summe + success
   #illite
   success = 0
   while success < n_i/2:
-    success = success + Domain.place_plane(jump_parameter, [2,6], -1,  [-1] * 4)
+    success = success + Domain.place_plane(jump_parameter, [2,6], -1,   [-1] * 4)#y_neg
   print(success)
   summe = summe + success
   success = 0
   while success < n_i/2:
-    success = success + Domain.place_plane(jump_parameter, [6,2], -1,  [-1] * 4)
+    success = success + Domain.place_plane(jump_parameter, [6,2], -1,  [-1] * 4)#x_neg 
   print(success)
   summe = summe + success
 

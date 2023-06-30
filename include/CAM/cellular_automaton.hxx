@@ -20,7 +20,7 @@
 
 #define FACE_ATTRACTIVITY 1
 #define ROTATION 1
-#define STENCIL_4_ALL_BUS 5
+#define STENCIL_4_ALL_BUS 0
 namespace CAM
 {
 
@@ -168,19 +168,20 @@ current_attraction = get_attraction_bu(move,_unit, _domain);
     fields_array_t& _domain_fields,
     unsigned int _rotation_point = 0)
   {
-    BuildingUnit bu_old = _unit;
+    const unsigned int reference_field_old = _unit.get_reference_field();
+    const std::vector<unsigned int> shape_old = _unit.get_shape();
 #if ROTATION == 1
     if (_rotation_point == 0)
       _rotation_point = CAM::aim<nx>(_unit.get_reference_field(), _unit.get_center_field());
     _unit.rotate(move_rotation.second, _rotation_point);  //
 #endif
     unsigned int field_new, field_old;
-    const unsigned int reference_field_old = bu_old.get_reference_field();
+
     _unit.set_reference_field(CAM::aim<nx>(_unit.get_reference_field(), move_rotation.first));
     const unsigned int reference_field_new = _unit.get_reference_field();
     for (unsigned int i = 0; i < _unit.get_shape().size(); i++)
     {
-      field_old = CAM::aim<nx>(reference_field_old, bu_old.get_shape()[i]);
+      field_old = CAM::aim<nx>(reference_field_old, shape_old[i]);
       field_new = CAM::aim<nx>(reference_field_new, _unit.get_shape()[i]);
       _domain_fields[field_new] += _unit.get_number();
       _domain_fields[field_old] -= _unit.get_number();

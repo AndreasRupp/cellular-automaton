@@ -16,7 +16,7 @@ porosity       = 0.7
 n_steps        = 5
 jump_parameter = 5
 
-subset_sizes    = [100] * 4
+subset_sizes    = [100] * 40
 min_value_shift = 0.1
 max_value_shift = -0.1
 n_choose_bins   = 20
