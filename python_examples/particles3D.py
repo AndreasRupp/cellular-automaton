@@ -105,7 +105,7 @@ def cam_particles(n_steps, jump_parameter, distribution, porosity, debug_mode=Fa
 # Function main.
 # --------------------------------------------------------------------------------------------------
 def main(debug_mode):
-  n_steps =50
+  n_steps =25
   cam_particles(n_steps,5,0.75, 0.5,debug_mode)
 
 

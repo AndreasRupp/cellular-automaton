@@ -143,19 +143,19 @@ class BuildingUnit
   {
     if (rotation_point == 0)
       rotation_point = reference_field;
-
-    for (unsigned int i = 0; i < shape.size(); i++)
+    unsigned int n_interior_cells = shape.size() - boundary.index.size();
+    if (n_interior_cells != 0)
     {
-      shape[i] = get_rotated_index<nx>(shape[i], _rotation);
+      for (unsigned int i = 0; i < shape.size() - boundary.index.size(); i++)
+      {
+        shape[i] = get_rotated_index<nx>(shape[i], _rotation);
+      }
     }
     for (unsigned int i = 0; i < boundary.index.size(); i++)
     {
+      shape[n_interior_cells + i] = get_rotated_index<nx>(shape[n_interior_cells + i], _rotation);
       boundary.index[i] = get_rotated_index<nx>(boundary.index[i], _rotation);
-    }
-    for (unsigned int i = 0; i < boundary.index.size(); i++)
-    {
       std::pair<unsigned int, unsigned int> pair(boundary.index[i], i);
-      // std::make_pair<unsigned int, unsigned int>(boundary.index[i], i)
       boundary.index_by_relation_to_reference.insert(pair);
     }
 
