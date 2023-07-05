@@ -35,10 +35,17 @@ class CellularAutomaton
    *
    * \param _domain domain object
    **********************************************************************************************/
+
+  static bool compare_size(const CAM::BuildingUnit<nx>& _unit_a,
+                           const CAM::BuildingUnit<nx>& _unit_b)
+  {
+    return _unit_a.get_shape().size() < _unit_b.get_shape().size();
+  }
   static void apply(Domain<nx, fields_array_t>& _domain)
   {
-    std::shuffle(_domain.building_units.begin(), _domain.building_units.end(),
-                 std::default_random_engine(std::rand()));
+    // std::shuffle(_domain.building_units.begin(), _domain.building_units.end(),
+    //  std::default_random_engine(std::rand()));
+    std::sort(_domain.building_units.begin(), _domain.building_units.end(), compare_size);
     // this way easier to handle deprecated bu and random bu numbers.
     _domain.field_number_2_index.resize(_domain.max_field_number + 1, _domain.max_field_number + 1);
     for (unsigned int i = 0; i < _domain.building_units.size(); i++)
@@ -46,17 +53,17 @@ class CellularAutomaton
       _domain.field_number_2_index[_domain.building_units[i].get_number()] = i;
     }
 
-    std::cout << "Number of bu: " << _domain.building_units.size() << std::endl;
+    //  std::cout << "Number of bu: " << _domain.building_units.size() << std::endl;
     std::for_each(_domain.building_units.begin(), _domain.building_units.end(),
                   [&](CAM::BuildingUnit<nx>& unit) { move_bu(unit, _domain); });
-    std::cout << "move_bu done: " << std::endl;
+    // std::cout << "move_bu done: " << std::endl;
     _domain.find_composites_via_bu_boundary();
-    std::cout << "Number of composites: " << _domain.composites.size() << std::endl;
+    // std::cout << "Number of composites: " << _domain.composites.size() << std::endl;
     std::shuffle(_domain.composites.begin(), _domain.composites.end(),
                  std::default_random_engine(std::rand()));
     std::for_each(_domain.composites.begin(), _domain.composites.end(),
                   [&](CAM::Composite<nx> composite) { move_composites(composite, _domain); });
-    std::cout << "move_comp done: " << std::endl;
+    // std::cout << "move_comp done: " << std::endl;
   }
 
  private:

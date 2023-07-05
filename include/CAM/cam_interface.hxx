@@ -148,9 +148,18 @@ class CAMInterface
 
   const fields_array_t& fields() const { return domain.domain_fields; }
 
-  std::array<double, 12> eval_measures()
+  std::vector<double> eval_measures()
   {
-    return CAM::Evaluation<nx, fields_array_t>::eval_measures(domain);
+    const std::array<double, 12> meas_a =
+      CAM::Evaluation<nx, fields_array_t>::eval_measures(domain);
+    std::vector<double> meas_v;
+    for (unsigned int k = 0; k < 12; ++k)
+    {
+      // std::cout << "Meas[" << k << "] = " << meas_a[k] << std::endl;
+      meas_v.push_back(meas_a[k]);
+    }
+
+    return meas_v;
   }
 
   double average_particle_size_d()

@@ -25,7 +25,7 @@ def cam_particles(n_steps, jump_parameter, distribution, porosity, debug_mode=Fa
 
   
   const                 = CAM.config()
-  const.nx              = [250, 250, 250]
+  const.nx              = [100, 100, 100]
   const.debug_mode      = debug_mode
   PyCAM = CAM.include(const)
   Domain = PyCAM(jump_parameter)

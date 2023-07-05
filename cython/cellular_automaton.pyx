@@ -33,6 +33,9 @@ cdef class PythonClassName:
   def do_cam(self) : 
     self.thisptr.do_cam()
 
+  def eval_measures(self):
+    return self.thisptr.eval_measures()
+
 
   def average_particle_size_d(self):
     return self.thisptr.average_particle_size_d()

@@ -17,7 +17,9 @@ cdef extern from "<CAM/cam_interface.hxx>" :
     void place_particles()
     double average_particle_size_d()
     vector[unsigned int] particle_size_distribution_d()
+    vector[double] eval_measures()
 
     double average_particle_size(const vector[ unsigned int]&)
     vector[unsigned int] particle_size_distribution(const vector[ unsigned int]&)
     unsigned int bulk_distance (const vector[ unsigned int]&, const vector[ unsigned int ]&)
+    

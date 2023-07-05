@@ -40,7 +40,7 @@ int main()
   }
 
   std::cout << std::endl << "Characteristics / Measures:" << std::endl;
-  const std::array<double, 12> meas = CAM.eval_measures();
+  const std::vector<double> meas = CAM.eval_measures();
   for (unsigned int k = 0; k < 12; ++k)
     std::cout << "Meas[" << k << "] = " << meas[k] << std::endl;
 }
