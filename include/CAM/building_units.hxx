@@ -54,7 +54,7 @@ class BuildingUnit
     std::unordered_map<unsigned int, unsigned int> index_by_relation_to_reference;
   };
   double jump_parameter;
-  std::vector<unsigned int> shape;
+  std::vector<unsigned int> shape, rotation_points;
   unsigned int reference_field, center_field, number;
   Boundary boundary;
 
@@ -74,9 +74,21 @@ class BuildingUnit
   {
     boundary.index = CAM::get_boundary_fields<nx>(shape);
 
+    std::array<unsigned int, nx.size()> max_extent;
+    std::fill(max_extent.begin(), max_extent.end(), 0);
+
+    unsigned int coord;
+
     std::vector<unsigned int>::iterator it;
     for (it = shape.begin(); it != shape.end();)
     {
+      for (unsigned int i = 0; i < nx.size(); i++)
+      {
+        coord = ((*it) / direct_neigh<nx>(2 * i + 1)) % nx[i];
+        if (coord > max_extent[i])
+          max_extent[i] = coord;
+      }
+
       if (std::find(boundary.index.begin(), boundary.index.end(), *it) != boundary.index.end())
       {
         it = shape.erase(it);
@@ -84,7 +96,39 @@ class BuildingUnit
       else
         ++it;
     }
+
     shape.insert(shape.end(), boundary.index.begin(), boundary.index.end());
+
+    // two rotation points (edge points on basal axis (maximum extent, maximum torque) )
+    unsigned int max_dim =
+      std::distance(max_extent.begin(), std::max_element(max_extent.begin(), max_extent.end()));
+    unsigned int rotation_point = 0;
+
+    for (unsigned int i = 0; i < nx.size(); i++)
+    {
+      if (i != max_dim)
+      {
+        rotation_point =
+          CAM::aim<nx>(rotation_point,
+                       (unsigned int)(((double)max_extent[i] / 2.0)) * direct_neigh<nx>(2 * i + 1));
+      }
+    }
+
+    rotation_points.push_back(rotation_point);
+    ;
+    rotation_point =
+      CAM::aim<nx>(0, (unsigned int)(max_extent[max_dim]) * direct_neigh<nx>(2 * max_dim + 1));
+    for (unsigned int i = 0; i < nx.size(); i++)
+    {
+      if (i != max_dim)
+      {
+        rotation_point =
+          CAM::aim<nx>(rotation_point,
+                       (unsigned int)(((double)max_extent[i] / 2.0)) * direct_neigh<nx>(2 * i + 1));
+      }
+    }
+    rotation_points.push_back(rotation_point);
+
     // boundary
     boundary.face_charges.resize(boundary.index.size());
     std::fill(boundary.face_charges.begin(), boundary.face_charges.end(), homogen_face_values);
@@ -112,6 +156,7 @@ class BuildingUnit
   {
     return boundary.face_charges;
   }
+  const std::vector<unsigned int>& get_rotation_points() const { return rotation_points; }
   void set_homogen_face_charges(const std::array<double, nx.size() * 2> _values_in_direction)
   {
     std::fill(boundary.face_charges.begin(), boundary.face_charges.end(), _values_in_direction);
@@ -139,10 +184,8 @@ class BuildingUnit
    * \param _rotation rotation around each basis rotation axis
    ************************************************************************************************/
   void rotate(const std::array<int, CAM::n_DoF_basis_rotation<nx>()>& _rotation,
-              unsigned int rotation_point = 0)
+              unsigned int rotation_point)
   {
-    if (rotation_point == 0)
-      rotation_point = reference_field;
     unsigned int n_interior_cells = shape.size() - boundary.index.size();
     if (n_interior_cells != 0)
     {
@@ -167,6 +210,11 @@ class BuildingUnit
 
     reference_field = CAM::aim<nx>(reference_field, difference);
     center_field = get_rotated_index<nx>(center_field, _rotation);
+
+    for (unsigned int r = 0; r < rotation_points.size(); r++)
+    {
+      rotation_points[r] = get_rotated_index<nx>(rotation_points[r], _rotation);
+    }
 
     unsigned int n_cclw_90_degree, count;
     std::array<double, 4> faces;

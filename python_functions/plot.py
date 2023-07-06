@@ -32,7 +32,7 @@ def plot_to_file(axes, save_data, file_name, text = 'boxed italics text in data 
   
   ax.text(0,525, text)#, style='italic', bbox={'facecolor': 'red', 'alpha': 0.5, 'pad': 10}
   plot_update(axes, save_data, ax)
-  fig.savefig(file_name)
+  fig.savefig(file_name, dpi=400)
 # save to vtk file for analysing in paraview 
 def plot_to_vtk(filename, data, shape):
   n_steps = np.shape(data)[0]
@@ -69,9 +69,9 @@ def plot_update(axes, data, ax=plt):
   if np.size(axes) == 1:  axes.append(1)
 
   if np.size(axes) == 2:
-    # data = (data != 0)
+    data = (data != 0)
     cmap = colors.ListedColormap(['white', 'k'])
-    cmap = colors.ListedColormap(['white' ,'sandybrown','darkgray'])
+    # cmap = colors.ListedColormap(['white' ,'sandybrown','darkgray'])
     ax.pcolor(data[::-1], cmap=cmap,edgecolors='b', linewidths=0)#
   elif np.size(axes) == 3:
     data = (data != 0)

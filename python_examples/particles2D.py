@@ -39,6 +39,8 @@ def cam_particles(n_steps, jump_parameter, distribution,porosity, type_g, charge
   placement_i = n_solids * distribution
   placement_g = n_solids * (1- distribution)
   print('Number cells of goethite', placement_g,'Number cells of illite', placement_i)
+  print(type_g)
+  print(type_i)
   size_g = np.prod(type_g)
   size_i = np.prod(type_i)
   n_g = round(placement_g/size_g)
@@ -47,7 +49,7 @@ def cam_particles(n_steps, jump_parameter, distribution,porosity, type_g, charge
   print('number of goethite',n_g,'number of illite',n_i)
 
   def stencil_size(const_stencil, area):
-    return const_stencil/np.sqrt(area) + 0.5
+    return np.floor((const_stencil/(np.sqrt(area))) + 0.5)
   #typ 1
   summe = 0
   success = 0
@@ -60,7 +62,7 @@ def cam_particles(n_steps, jump_parameter, distribution,porosity, type_g, charge
   success = 0
   type_g = list(np.roll(type_g,1))
   charges_g = list(np.roll(charges_g,2))
-  while success < np.ceil(n_g/2):
+  while success <  np.ceil(n_g/2):
     success = success + Domain.place_plane(jp_g,type_g,  -1, charges_g )#x #[1] * 4 
   print(success)
   summe = summe + success
@@ -72,7 +74,7 @@ def cam_particles(n_steps, jump_parameter, distribution,porosity, type_g, charge
   #type 2
   jp_i = stencil_size(jump_parameter,size_i)
   success = 0
-  while success < np.floor(n_i/2):
+  while success <  np.floor(n_i/2):
     success = success + Domain.place_plane(jp_i, type_i, -1,   charges_i)#y_neg #[-1] * 4
   print(success)
   summe = summe + success
@@ -90,8 +92,7 @@ def cam_particles(n_steps, jump_parameter, distribution,porosity, type_g, charge
   # Domain.print_array()
 
   # Domain.place_particles()
-    #   //  constexpr std::array<unsigned int, stencil_size<nx,5>()> possible_moves =
-    # //   CAM::get_stencil_a<nx, 5>();
+
   # save_data = np.zeros( (n_steps + 1, np.prod(const.nx)) ) 
   plot_data = np.zeros( (2, np.prod(const.nx)) ) 
 
@@ -125,7 +126,6 @@ def cam_particles(n_steps, jump_parameter, distribution,porosity, type_g, charge
   # plot_to_vtk("output1/cam", [save_data[-1]], const.nx)
   print("done")
   text = 'SSA ' + str(round(eval[7],2)) + ' (L^-1), CA/V ' + str(round(eval[8],2)) + ' (L^-1)'
-  text = ''
   print(filename)
   plot_to_file(const.nx, plot_data[-1], filename, text)
   # plot(const.nx, plot_data, 0)
@@ -158,32 +158,31 @@ def main(debug_mode):
   x =  [ 1,1,0,0]
   x_neg =  [ -1,-1,0,0]
 
-  # type_i_addition = 1- 0.05
-  # filename = 'output/goethite_illite_5.png'
-  # cam_particles(n_steps,jump_const,type_i_addition, porosity,  goethite_coarse,uniform_positive, illite_fine,uniform_negative ,filename,debug_mode)
+  type_i_addition = 1- 0.05
+  filename = 'output/goethite_illite_5.png'
+  cam_particles(n_steps,jump_const,type_i_addition, porosity,  goethite_coarse,uniform_positive, illite_fine,uniform_negative ,filename,debug_mode)
   type_i_addition = 1 - 0.45
   filename = 'output/goethite_illite_45.png'
   cam_particles(n_steps,jump_const,type_i_addition, porosity,  goethite_coarse,uniform_positive, illite_fine,uniform_negative ,filename,debug_mode)
-  # type_i_addition = 1 - 0.55
-  # filename = 'output/goethite_illite_55.png'
-  # cam_particles(n_steps,jump_const,type_i_addition, porosity,  goethite_coarse,uniform_positive, illite_fine,uniform_negative ,filename,debug_mode)
-  # type_i_addition = 1 - 0.95
-  # filename = 'output/goethite_illite_95.png'
-  # cam_particles(n_steps,jump_const,type_i_addition, porosity,  goethite_coarse,uniform_positive, illite_fine,uniform_negative ,filename,debug_mode)
+  type_i_addition = 1 - 0.55
+  filename = 'output/goethite_illite_55.png'
+  cam_particles(n_steps,jump_const,type_i_addition, porosity,  goethite_coarse,uniform_positive, illite_fine,uniform_negative ,filename,debug_mode)
+  type_i_addition = 1 - 0.95
+  filename = 'output/goethite_illite_95.png'
+  cam_particles(n_steps,jump_const,type_i_addition, porosity,  goethite_coarse,uniform_positive, illite_fine,uniform_negative ,filename,debug_mode)
 
 
 
-  # type_i_addition = 0.5
-  # filename = 'output/illite_medium_edge_to_face.png'
-  # cam_particles(n_steps,jump_const,type_i_addition, porosity,  illite_medium, face_to_edge, illite_medium, face_to_edge ,filename, debug_mode)
-  # filename = 'output/illite_fine_edge_to_face.png'
-  # cam_particles(n_steps,jump_const,type_i_addition, porosity,  illite_fine, face_to_edge, illite_fine, face_to_edge ,filename, debug_mode)
+  type_i_addition = 0.5
+  filename = 'output/illite_medium_edge_to_face.png'
+  cam_particles(n_steps,jump_const,type_i_addition, porosity,  illite_medium, face_to_edge, illite_medium, face_to_edge ,filename, debug_mode)
+  filename = 'output/illite_fine_edge_to_face.png'
+  cam_particles(n_steps,jump_const,type_i_addition, porosity,  illite_fine, face_to_edge, illite_fine, face_to_edge ,filename, debug_mode)
 
-  # face to face -> FACE_ATTRACTIVITY 0 in cellular_automaton.hxx
-  # filename = 'output/illite_medium_face_to_face.png'
-  # cam_particles(n_steps,jump_const,type_i_addition, porosity,  illite_medium, face_to_face, illite_medium, (-1)*face_to_face ,filename,debug_mode)
-  # filename = 'output/illite_fine_face_to_face.png'
-  # cam_particles(n_steps,jump_const,type_i_addition, porosity,  illite_fine, face_to_face, illite_fine, face_to_face ,filename, debug_mode)
+  filename = 'output/illite_medium_face_to_face.png'
+  cam_particles(n_steps,jump_const,type_i_addition, porosity,  illite_medium, face_to_face, illite_medium, [i * (-1) for i in face_to_face],filename,debug_mode)
+  filename = 'output/illite_fine_face_to_face.png'
+  cam_particles(n_steps,jump_const,type_i_addition, porosity,  illite_fine, face_to_face, illite_fine, [i * (-1) for i in face_to_face] ,filename, debug_mode)
 
 
 

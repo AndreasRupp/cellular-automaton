@@ -303,6 +303,9 @@ static constexpr std::vector<unsigned int> get_stencil(const double _jump_parame
   //   std::cout<<"runtime"<<std::endl;
   // }
   std::vector<unsigned int> stencil(1, 0);
+  if (_jump_parameter < 1)
+    return stencil;
+
   unsigned int new_neigh, layers = std::max(1., _jump_parameter), index = 0,
                           old_size = stencil.size();
   for (unsigned int lay = 0; lay < layers; ++lay)

@@ -20,7 +20,9 @@
 
 #define FACE_ATTRACTIVITY 1
 #define ROTATION 1
+#define ROTATION_COMPOSITES 0
 #define STENCIL_4_ALL_BUS 0
+
 namespace CAM
 {
 
@@ -56,7 +58,7 @@ class CellularAutomaton
     //  std::cout << "Number of bu: " << _domain.building_units.size() << std::endl;
     std::for_each(_domain.building_units.begin(), _domain.building_units.end(),
                   [&](CAM::BuildingUnit<nx>& unit) { move_bu(unit, _domain); });
-    // std::cout << "move_bu done: " << std::endl;
+    // // std::cout << "move_bu done: " << std::endl;
     _domain.find_composites_via_bu_boundary();
     // std::cout << "Number of composites: " << _domain.composites.size() << std::endl;
     std::shuffle(_domain.composites.begin(), _domain.composites.end(),
@@ -122,39 +124,45 @@ class CellularAutomaton
     const std::vector<unsigned int> possible_moves =
       CAM::get_stencil<nx>(_unit.get_jump_parameter());
 #endif
-    std::vector<std::pair<unsigned int, std::array<int, CAM::n_DoF_basis_rotation<nx>()>>>
+    std::vector<
+      std::tuple<unsigned int, std::array<int, CAM::n_DoF_basis_rotation<nx>()>, unsigned int>>
       best_move_rotation;
-    best_move_rotation.push_back(std::make_pair(0, no_rotation));
+    best_move_rotation.push_back(std::make_tuple(0, no_rotation, 0));
     double current_attraction, attraction = 0.;
-
+    unsigned int rotation_point = 0;
 #if ROTATION == 1
-    for (const std::array<int, CAM::n_DoF_basis_rotation<nx>()>& rotation : possible_rotations)
+    for (unsigned int r = 0; r < _unit.get_rotation_points().size(); r++)
     {
-      BuildingUnit<nx> rotated_unit(_unit);
-      rotated_unit.rotate(rotation,
-                          CAM::aim<nx>(_unit.get_reference_field(), _unit.get_center_field()));
+      rotation_point = CAM::aim<nx>(_unit.get_reference_field(), _unit.get_rotation_points()[r]);
+      for (const std::array<int, CAM::n_DoF_basis_rotation<nx>()>& rotation : possible_rotations)
+      {
+        BuildingUnit<nx> rotated_unit(_unit);
+        rotated_unit.rotate(rotation, rotation_point);  // _unit.get_center_field()
+
 #else
     std::array<int, CAM::n_DoF_basis_rotation<nx>()> rotation;
     std::fill(rotation.begin(), rotation.end(), 0);
 #endif
-      std::for_each(possible_moves.begin(), possible_moves.end(),
-                    [&](int move)
-                    {
+        std::for_each(
+          possible_moves.begin(), possible_moves.end(),
+          [&](unsigned int move)
+          {
 #if ROTATION == 1
-                      current_attraction = get_attraction_bu(move, rotated_unit, _domain);
+            current_attraction = get_attraction_bu(move, rotated_unit, _domain);
 #else
-current_attraction = get_attraction_bu(move,_unit, _domain);
+        current_attraction = get_attraction_bu(move, _unit, _domain);
 #endif
-                      if (current_attraction > attraction)
-                      {
-                        best_move_rotation.clear();
-                        best_move_rotation.push_back(std::make_pair(move, rotation));
-                        attraction = current_attraction;
-                      }
-                      else if (current_attraction == attraction)
-                        best_move_rotation.push_back(std::make_pair(move, rotation));
-                    });
+            if (current_attraction > attraction)
+            {
+              best_move_rotation.clear();
+              best_move_rotation.push_back(std::make_tuple(move, rotation, rotation_point));
+              attraction = current_attraction;
+            }
+            else if (current_attraction == attraction)
+              best_move_rotation.push_back(std::make_tuple(move, rotation, rotation_point));
+          });
 #if ROTATION == 1
+      }
     }
 #endif
     do_move_bu(best_move_rotation[std::rand() % best_move_rotation.size()], _unit,
@@ -164,27 +172,24 @@ current_attraction = get_attraction_bu(move,_unit, _domain);
   /*!*********************************************************************************************
    * \brief  Executes the actual movement for an individual building unit
    *
-   * \param {move, rotation} {Index shift induced by possible move, rotation around rotation_point}
-   * \param _unit building unit
-   * \param _domain_fields cells of domain
-   * \param _rotation_point point bu is rotated around
+   * \param {move, rotation} {Index shift induced by possible move <0>, rotation <1> around
+   *rotation_point <2>} \param _unit building unit \param _domain_fields cells of domain \param
+   *_rotation_point point bu is rotated around
    **********************************************************************************************/
   static void do_move_bu(
-    const std::pair<unsigned int, std::array<int, CAM::n_DoF_basis_rotation<nx>()>>& move_rotation,
+    const std::tuple<unsigned int, std::array<int, CAM::n_DoF_basis_rotation<nx>()>, unsigned int>&
+      move_rotation,
     CAM::BuildingUnit<nx>& _unit,
-    fields_array_t& _domain_fields,
-    unsigned int _rotation_point = 0)
+    fields_array_t& _domain_fields)
   {
     const unsigned int reference_field_old = _unit.get_reference_field();
     const std::vector<unsigned int> shape_old = _unit.get_shape();
 #if ROTATION == 1
-    if (_rotation_point == 0)
-      _rotation_point = CAM::aim<nx>(_unit.get_reference_field(), _unit.get_center_field());
-    _unit.rotate(move_rotation.second, _rotation_point);  //
+    _unit.rotate(std::get<1>(move_rotation), std::get<2>(move_rotation));
 #endif
     unsigned int field_new, field_old;
-
-    _unit.set_reference_field(CAM::aim<nx>(_unit.get_reference_field(), move_rotation.first));
+    _unit.set_reference_field(
+      CAM::aim<nx>(_unit.get_reference_field(), std::get<0>(move_rotation)));
     const unsigned int reference_field_new = _unit.get_reference_field();
     for (unsigned int i = 0; i < _unit.get_shape().size(); i++)
     {
@@ -213,17 +218,18 @@ current_attraction = get_attraction_bu(move,_unit, _domain);
     const std::vector<unsigned int> possible_moves =
       CAM::get_stencil<nx>(_composite.jump_parameter);
 
-    std::vector<std::pair<unsigned int, std::array<int, CAM::n_DoF_basis_rotation<nx>()>>>
+    std::vector<
+      std::tuple<unsigned int, std::array<int, CAM::n_DoF_basis_rotation<nx>()>, unsigned int>>
       best_move_rotation;
-    best_move_rotation.push_back(std::make_pair(0, no_rotation));
 
     double current_attraction, attraction = 0.;
     std::vector<CAM::BuildingUnit<nx>> bus;
     for (const CAM::BuildingUnit<nx>* bu : _composite.building_units)
       bus.push_back(*bu);
-
-#if ROTATION == 1
-    unsigned int rotation_center = CAM::get_center_field<nx>(_composite.field_indices);
+    unsigned int rotation_center;
+#if (ROTATION == 1 && ROTATION_COMPOSITES == 1)
+    rotation_center = CAM::get_center_field<nx>(_composite.field_indices);
+    best_move_rotation.push_back(std::make_tuple(0, no_rotation, rotation_center));
     for (const std::array<int, CAM::n_DoF_basis_rotation<nx>()>& rotation : possible_rotations)
     {
       for (unsigned int i = 0; i < _composite.building_units.size(); i++)
@@ -234,24 +240,27 @@ current_attraction = get_attraction_bu(move,_unit, _domain);
       }
 
 #else
+    rotation_center = 0;
     std::array<int, CAM::n_DoF_basis_rotation<nx>()> rotation;
     std::fill(rotation.begin(), rotation.end(), 0);
+    best_move_rotation.push_back(std::make_tuple(0, no_rotation, 0));
 #endif
-      std::for_each(possible_moves.begin(), possible_moves.end(),
-                    [&](int move)
-                    {
-                      current_attraction = get_attraction_composite(move, bus, _domain);
+      std::for_each(
+        possible_moves.begin(), possible_moves.end(),
+        [&](unsigned int move)
+        {
+          current_attraction = get_attraction_composite(move, bus, _domain);
 
-                      if (current_attraction > attraction)
-                      {
-                        best_move_rotation.clear();
-                        best_move_rotation.push_back(std::make_pair(move, rotation));
-                        attraction = current_attraction;
-                      }
-                      else if (current_attraction == attraction)
-                        best_move_rotation.push_back(std::make_pair(move, rotation));
-                    });
-#if ROTATION == 1
+          if (current_attraction > attraction)
+          {
+            best_move_rotation.clear();
+            best_move_rotation.push_back(std::make_tuple(move, rotation, rotation_center));
+            attraction = current_attraction;
+          }
+          else if (current_attraction == attraction)
+            best_move_rotation.push_back(std::make_tuple(move, rotation, rotation_center));
+        });
+#if (ROTATION == 1 && ROTATION_COMPOSITES == 1)
     }
 #endif
     for (unsigned int i = 0; i < _composite.field_indices.size(); i++)
@@ -259,17 +268,12 @@ current_attraction = get_attraction_bu(move,_unit, _domain);
       _domain_fields[_composite.field_indices[i]] = indices[i];
     }
 
-    std::pair<unsigned int, std::array<int, CAM::n_DoF_basis_rotation<nx>()>> chosen_move_rotation =
-      best_move_rotation[std::rand() % best_move_rotation.size()];
+    std::tuple<unsigned int, std::array<int, CAM::n_DoF_basis_rotation<nx>()>, unsigned int>
+      chosen_move_rotation = best_move_rotation[std::rand() % best_move_rotation.size()];
 
     for (unsigned int i = 0; i < _composite.building_units.size(); i++)
     {
-#if ROTATION == 1
-      do_move_bu(chosen_move_rotation, *(_composite.building_units[i]), _domain_fields,
-                 rotation_center);
-#else
       do_move_bu(chosen_move_rotation, *(_composite.building_units[i]), _domain_fields);
-#endif
     }
   }
   /*!*********************************************************************************************
