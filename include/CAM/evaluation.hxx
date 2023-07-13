@@ -335,7 +335,7 @@ class Evaluation
    *
    * \retval  array                 Array of measure parameters.
    ************************************************************************************************/
-  static std::array<double, 12> eval_measures(CAM::Domain<nx, fields_array_t>& domain)
+  static std::array<double, 12> eval_measures_old(CAM::Domain<nx, fields_array_t>& domain)
   {
     domain.find_composites_via_bu_boundary();
     // unsigned int n_single_cells =
@@ -427,6 +427,114 @@ class Evaluation
             (double)max_max_min_distance,
             mean_sphericity,
             max_diameters_ratio};
+  }
+  /*!***********************************************************************************************
+   * \brief   Evaluates measure parameters 3D Paper
+   *
+   * Measure parameters:
+   * n_single_cells                 number of cells that are not part of any larger agglomerate
+   * n_particles                    number of connected solid cells, including single cells and
+   *                                larger agglomerates
+   * n_solids                       total number of solid cells
+   * n_surfaces_solid_fluid         total number of faces between solid and fluid
+   * n_connected_fluids             number of connected fluids
+   * n_periodic_fluid_components    number of connected fluids which are periodic
+   * mean_particle_size             average particle size (n_solids / n_particles)
+   * variance_particle_sizes        variance of particle sizes
+   * compactness                    evaluates the degree of which a particle is compact
+   * max_max_min_distance           maximum over all particles with respect to the maximum of
+   *                                shortest distances between two solid cells within a particle
+   * mean_sphericity                sphericity rates how close a shape is to the perfect sphere
+   * max_diameters_ratio            maximum ratio of diameters with respect to one dimension
+   *
+   * \retval  array                 Array of measure parameters.
+   ************************************************************************************************/
+  static std::array<double, 12> eval_measures(CAM::Domain<nx, fields_array_t>& domain)
+  {
+    if(domain.field_number_2_index.size() != domain.max_field_number + 1)
+    {
+      domain.field_number_2_index.resize(domain.max_field_number + 1, domain.max_field_number + 1);
+      for (unsigned int i = 0; i < domain.building_units.size(); i++)
+      {
+        domain.field_number_2_index[domain.building_units[i].get_number()] = i;
+      }
+    }
+
+    domain.find_composites_via_bu_boundary();
+    // unsigned int n_single_cells =
+    //   std::count_if(domain.particles.begin(), domain.particles.end(),
+    //                 [](Particle particle) -> bool { return particle.field_indices.size() == 1;
+    //                 });
+
+    unsigned int n_particles = domain.particles.size();
+    unsigned int n_composites = domain.composites.size();
+
+    unsigned int n_solids = 0;
+    unsigned int n_solids_in_composites = 0;
+    unsigned int n_solids_in_discrete_BUs = 0;
+    unsigned int n_surfaces_solid_fluid = 0;
+    unsigned int n_surfaces_solid_solid = 0;
+
+    unsigned int n_solids_part = 0;
+    unsigned int n_surfaces_part_solid_fluid = 0;
+    unsigned int n_surfaces_part_solid_solid = 0;
+    //double diameter_part = 0;
+    
+    double mean_particle_size = 0;
+    //double mean_diameter = 0;
+    double specific_surface_area = 0;
+    double contact_area_per_volume = 0;
+
+    double param = 0;
+
+    std::for_each(
+      domain.particles.begin(), domain.particles.end(),
+      [&](Particle particle)
+      {
+        n_solids_part = particle.field_indices.size();
+        // diameter_part = 2 * std::pow((double)n_solids_part/M_PI,0.5);//TODO implement general formual
+        //mean_diameter += diameter_part;
+
+        if (particle.numbers.size() > 1)
+          n_solids_in_composites += n_solids_part;
+        else
+          n_solids_in_discrete_BUs += n_solids_part;
+
+        n_surfaces_part_solid_fluid = particle.n_surfaces_solid_fluid;//get_n_surfaces_solid_fluid(domain, particle.field_indices);//TODO über surface von BUs evaluieren
+        if(n_surfaces_part_solid_fluid != particle.n_surfaces_solid_fluid)
+        std::cout<<"falschfluid"<<n_surfaces_part_solid_fluid<<" "<<particle.n_surfaces_solid_fluid<<std::endl;
+        
+        n_surfaces_part_solid_solid = particle.n_surfaces_solid_solid;//get_n_surfaces_solid_solid(domain, particle.field_indices);
+        if(n_surfaces_part_solid_solid != particle.n_surfaces_solid_solid)
+        std::cout<<"falschsolid"<<n_surfaces_part_solid_solid<<" "<<particle.n_surfaces_solid_solid<<std::endl;
+        
+        n_solids += n_solids_part;
+        n_surfaces_solid_fluid += n_surfaces_part_solid_fluid;
+        n_surfaces_solid_solid += n_surfaces_part_solid_solid;
+      });
+
+    mean_particle_size = (double)n_solids / (double)n_particles;
+    //mean_diameter = (double)mean_diameter / (double)n_particles;
+
+    n_surfaces_solid_solid /= 2;
+    specific_surface_area = (double)n_surfaces_solid_fluid / (double)n_solids;
+    contact_area_per_volume =
+      (double)n_surfaces_solid_solid /
+      (double)(n_solids_in_composites);  
+
+    return {(double)n_solids,
+            (double)n_particles,
+            (double)n_composites,
+            (double)n_solids_in_composites,
+            (double)n_solids_in_discrete_BUs,
+            mean_particle_size, 
+            specific_surface_area,
+            contact_area_per_volume,
+            param,
+            param,
+            param,
+            param
+            };
   }
   /*!***********************************************************************************************
    * \brief   Computes connected fluid areas.

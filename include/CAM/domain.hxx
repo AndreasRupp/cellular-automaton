@@ -28,10 +28,12 @@ namespace CAM
 struct Particle
 {
   Particle(const std::vector<unsigned int>& _field_indices,
-           const std::vector<unsigned int>& _numbers)
+           const std::vector<unsigned int>& _numbers ,unsigned int _n_surfaces_solid_fluid, unsigned int _n_surfaces_solid_solid)
   {
     field_indices = _field_indices;
     numbers = _numbers;
+    n_surfaces_solid_fluid = _n_surfaces_solid_fluid;
+    n_surfaces_solid_solid = _n_surfaces_solid_solid;
   }
   /*!*********************************************************************************************
    * \brief   Indices of building units contained in a particle
@@ -42,6 +44,9 @@ struct Particle
    * \brief   Location of the particle.
    **********************************************************************************************/
   std::vector<unsigned int> field_indices;
+  
+  unsigned int n_surfaces_solid_fluid;
+  unsigned int n_surfaces_solid_solid;
 };
 template <auto nx, typename fields_array_t>
 class Domain
@@ -184,6 +189,8 @@ class Domain
     constexpr unsigned int dim = nx.size();
     unsigned int neigh_field, boundaries_size;
     unsigned int field_number;
+    unsigned int n_surfaces_solid_fluid, n_surfaces_solid_solid;
+    	
     std::vector<unsigned int> boundaries, found_solids, helper;
     particles.clear();
     composites.clear();
@@ -193,9 +200,12 @@ class Domain
     {
       if (is_bu_visited[building_units[i].get_number()] == true)
         continue;
+
       CAM::Composite<nx> new_composite;
       new_composite.building_units.push_back(&building_units[i]);
-
+		
+	  n_surfaces_solid_fluid = 0;
+      n_surfaces_solid_solid = 0;	
       boundaries.clear();
       for (unsigned int boundary_field : building_units[i].get_boundary())
         boundaries.push_back(CAM::aim<nx>(building_units[i].get_reference_field(), boundary_field));
@@ -223,6 +233,12 @@ class Domain
         {
           neigh_field = aim<nx>(boundaries[j], direct_neigh<nx>(k));
           field_number = fields[neigh_field];
+          
+          if(field_number == 0)
+			n_surfaces_solid_fluid += 1; 
+		  else if(field_number != fields[boundaries[j]])
+			n_surfaces_solid_solid += 1;
+				
           if (field_number != 0 && is_bu_visited[field_number] != true)
           {
             is_bu_visited[field_number] = true;
@@ -245,6 +261,7 @@ class Domain
           }
         }
       }
+      //complete particle/composite is found
       if (composite_components.size() > 1)
       {
         new_composite.field_indices = found_solids;
@@ -252,7 +269,7 @@ class Domain
           CAM::get_jump_range_composite<nx>(new_composite.field_indices.size());
         composites.push_back(new_composite);
       }
-      particles.push_back(Particle(found_solids, composite_components));
+      particles.push_back(Particle(found_solids, composite_components, n_surfaces_solid_fluid,n_surfaces_solid_solid));
     }
   }
   /*!***********************************************************************************************
