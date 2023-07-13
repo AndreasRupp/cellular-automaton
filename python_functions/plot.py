@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 from matplotlib import colors
 from mpl_toolkits.mplot3d import Axes3D
 import matplotlib
-matplotlib.use("TkAgg")
+#matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 from tkinter import *
@@ -30,7 +30,8 @@ def plot_to_file(axes, save_data, file_name, text = 'boxed italics text in data 
   if np.size(axes) == 1:  axes.append(1)
   fig, ax = config_plot(axes)
   
-  ax.text(0,525, text)#, style='italic', bbox={'facecolor': 'red', 'alpha': 0.5, 'pad': 10}
+  # ax.text(0,axes[0], text, horizontalalignment='left', verticalalignment='top')#, style='italic', bbox={'facecolor': 'red', 'alpha': 0.5, 'pad': 10}
+  ax.set_title(text)
   plot_update(axes, save_data, ax)
   fig.savefig(file_name, dpi=400)
 # save to vtk file for analysing in paraview 
@@ -74,11 +75,13 @@ def plot_update(axes, data, ax=plt):
     # cmap = colors.ListedColormap(['white' ,'sandybrown','darkgray'])
     ax.pcolor(data[::-1], cmap=cmap,edgecolors='b', linewidths=0)#
   elif np.size(axes) == 3:
-    data = (data != 0)
+    # data = (data != 0)
     Colors = np.empty(axes + [4], dtype=np.float32)
     # Control Transparency
     alpha = .9
-    Colors[data] = [1, 0, 1, alpha]
+    Colors[data == 1] = [0.957, 0.643, 0.376, alpha]
+    Colors[data == 2] = [0.66, 0.66, 0.66, alpha]
+    # Colors[data] = [0, 0, 0, alpha]
     ax.voxels(data, facecolors=Colors, edgecolors='black')
   return ax
 
