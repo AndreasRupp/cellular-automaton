@@ -71,7 +71,7 @@ def cam_test(n_steps, debug_mode=False):
   if not os.path.exists('output'):  os.makedirs('output')
   plot_to_vtk("output/cam", save_data, const.nx)
   #plot_to_file(const.nx, save_data[-1], 'output/cam.png')
-  plot(const.nx, save_data, 0)
+  #plot(const.nx, save_data, 0)
 # --------------------------------------------------------------------------------------------------
 # Function main.
 # --------------------------------------------------------------------------------------------------
