@@ -2,7 +2,9 @@
  * \file cellular_automaton.hxx
  * \brief This class implements the rules of a cellular automaton
  * Can be applied on a domain
- *TODO calculate attraction only on basis of bu or composites boundary
+ * nx
+ * config_cam  FACE_ATTRACTIVITY | ROTATION | ROTATION_COMPOSITE
+ * const_jump_parameter if = 0 -> define individual jump_paramters else equal parameter for all BUs
  **********************************************************************************************/
 #pragma once
 
@@ -18,15 +20,13 @@
 #include <utility>
 #include <vector>
 
-#define FACE_ATTRACTIVITY 1
-#define ROTATION 1
-#define ROTATION_COMPOSITES 0
-#define STENCIL_4_ALL_BUS 0
-
 namespace CAM
 {
 
-template <auto nx, typename fields_array_t>  //, unsigned int default_jump_parameter
+template <auto nx,
+          auto ca_settings,
+          unsigned int const_jump_parameter,
+          typename fields_array_t>  //, unsigned int default_jump_parameter
 class CellularAutomaton
 {
  public:
@@ -69,6 +69,11 @@ class CellularAutomaton
   }
 
  private:
+  static constexpr bool FACE_ATTRACTIVITY = ca_settings[0];
+  static constexpr bool ROTATION = ca_settings[1];
+  static constexpr bool ROTATION_COMPOSITES = ca_settings[2];
+  static constexpr unsigned int STENCIL_4_ALL_BUS = const_jump_parameter;
+
   static constexpr std::array<std::array<int, CAM::n_DoF_basis_rotation<nx>()>,
                               CAM::n_DoF_basis_rotation<nx>() * 2 + 1>
   get_90_degree_rotations()

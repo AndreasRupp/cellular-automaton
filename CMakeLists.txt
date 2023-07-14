@@ -1,8 +1,4 @@
 cmake_minimum_required(VERSION 3.16)
-# THIS HAS TO COME BEFORE THE PROJECT LINE
-set(CMAKE_C_COMPILER "gcc-10")
-set(CMAKE_CXX_COMPILER "g++-10")
-# THIS HAS TO COME BEFORE THE PROJECT LINE
 project(CAM LANGUAGES CXX)
 
 ## Check whether appropriate compiler version is used

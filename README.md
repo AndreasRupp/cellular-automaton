@@ -1,12 +1,10 @@
 # Welcome to cellular-automaton
 
-by **Andreas Rupp**, **Simon Zech**, and **Joona Lappalainen**.
-
 It contains the C++ based library CAM implementing a simple [cellular automaton method (CAM)](
-https://en.wikipedia.org/wiki/Cellular_automaton). In this CAM, single cells/pixels are allowed to
+https://en.wikipedia.org/wiki/Cellular_automaton). In this CAM, building units containing several cells/pixels are allowed to
 move within a [von Neumann neighborhood (VNN)](
 https://en.wikipedia.org/wiki/Von_Neumann_neighborhood) of range `jump_parameter` and larger
-particles, which are edge-connected sets of pixels, are allowed to move in a VNN depending on their
+particles (composites), which are edge-connected sets of pixels, are allowed to move in a VNN depending on their
 size, i.e., the number of the edge-connected pixels. The range of the VNN of larger particles can be
 calculated as `jump_parameter` over the square-root of the larger particle's size. All particles,
 i.e., single pixels and larger particles, move in such a way that the amount of their particle
@@ -17,11 +15,6 @@ neighbors is maximized.
 
 There is two ways of using CAM:
 
-- In `MATLAB`, one has to add the path of the `mex/CAM/` directory using MATLAB's `addpath`
-  function. Then, one can run the CAM using `run_cam.m` as illustrated in `matlab_example.m`.
-  Notably, for the MATLAB code to work smoothly in Ubuntu, you need to have `g++-10` installed,
-  since it is currently the only compiler supporting both C++20 and MATLAB's supported libstdc++.
-  In any case, you will also need `cmake`.
 - In `Python`, one has to import the module as illustrated in the Python examples. One has to run
   `cmake` and obtain all submodules, or the `setup.sh` script to use the Python version of the code.
   In any case, the selected compiler needs to be compatible with C++20.
@@ -54,15 +47,6 @@ project is held by its respective contributors who have each agreed to release t
 code under a compatible open source license (LGPL v2.1 for library code). The full text of the 
 Developer Certificate of Origin version 1.1 is quoted in [DeveloperCertificateOfOrigin.txt](
 DeveloperCertificateOfOrigin.txt).
-
-
-## Third party software
-
-- The documentation for the MATLAB code is created using the submodule [doxymatlab](
-  https://github.com/simgunz/doxymatlab). Please refer to  Simone Gaiarin's [GitHub page](
-  https://github.com/simgunz/doxymatlab) and the [official file exchange page](
-  https://se.mathworks.com/matlabcentral/fileexchange/25925-using-doxygen-with-matlab/)
-  by Fabrice for additional information (e.g. considering licenses).
 
 
 ## Referencing the library

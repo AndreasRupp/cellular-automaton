@@ -16,7 +16,10 @@
 #include <limits>
 namespace CAM
 {
-template <auto nx, typename fields_array_t = std::array<unsigned int, CAM::n_fields<nx>()>>
+template <auto nx,
+          auto ca_settings,
+          unsigned int const_jump_parameter,
+          typename fields_array_t = std::array<unsigned int, CAM::n_fields<nx>()>>
 class CAMInterface
 {
  private:
@@ -144,7 +147,10 @@ class CAMInterface
 
   void print_array() { domain.print_array(); }
 
-  void do_cam() { CAM::CellularAutomaton<nx, fields_array_t>::apply(domain); }
+  void do_cam()
+  {
+    CAM::CellularAutomaton<nx, ca_settings, const_jump_parameter, fields_array_t>::apply(domain);
+  }
 
   const fields_array_t& fields() const { return domain.domain_fields; }
 

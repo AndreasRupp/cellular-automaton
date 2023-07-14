@@ -55,9 +55,11 @@ def ecdf_identify(nx, porosity, n_steps, jump_parameter, ecdf_type, subset_sizes
   start_time = datetime.now()
   print("Starting time is", start_time)
 
-  CAM_config            = CAM.config()
-  CAM_config.nx         = nx
-  CAM_config.debug_mode = debug_mode
+  const            = CAM.config()
+  const.nx         = nx
+  const.ca_settings      = [True,True, False]
+  const.const_jump_parameter = jump_parameter
+  const.debug_mode      = debug_mode
   PyCAM                 = CAM.include(CAM_config)
 
   n_fields, n_iter = np.prod(nx), subset_sizes[0] # Small subsets come first

@@ -166,7 +166,7 @@ class BuildingUnit
   {
     auto it = boundary.index_by_relation_to_reference.find(_relation_to_reference);
     if (it == boundary.index_by_relation_to_reference.end())
-      std::cout << "nooo" << std::endl;
+      std::cout << "index not found" << std::endl;
     return boundary.face_charges[it->second];
   }
 

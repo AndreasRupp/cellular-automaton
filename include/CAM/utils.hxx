@@ -11,7 +11,6 @@
 #include <cmath>
 #include <iostream>
 #include <random>
-#include <type_traits>
 #include <vector>
 namespace CAM
 {
@@ -294,14 +293,6 @@ static constexpr std::vector<unsigned int> get_p_normed_shape(const double _radi
 template <auto nx>
 static constexpr std::vector<unsigned int> get_stencil(const double _jump_parameter)
 {
-  // if(std::is_constant_evaluated())
-  // {
-  //   std::cout<<"compile time"<<std::endl;
-  // }
-  // else
-  // {
-  //   std::cout<<"runtime"<<std::endl;
-  // }
   std::vector<unsigned int> stencil(1, 0);
   if (_jump_parameter < 1)
     return stencil;
@@ -328,14 +319,6 @@ static constexpr std::vector<unsigned int> get_stencil(const double _jump_parame
 template <auto nx, unsigned int jump_parameter>
 static constexpr unsigned int get_stencil_size()
 {
-  // if(std::is_constant_evaluated())
-  // {
-  //   std::cout<<"compile time"<<std::endl;
-  // }
-  // else
-  // {
-  //   std::cout<<"runtime"<<std::endl;
-  // }
   std::array<unsigned int, ipow((2 * jump_parameter + 1), nx.size())> stencil;
   std::fill(stencil.begin(), stencil.end(), n_fields<nx>() + 1);
   stencil[0] = 0;
@@ -365,14 +348,6 @@ static constexpr unsigned int get_stencil_size()
 template <auto nx, unsigned int jump_parameter>
 static constexpr std::array<unsigned int, get_stencil_size<nx, jump_parameter>()> get_stencil_c()
 {
-  // if(std::is_constant_evaluated())
-  // {
-  //   std::cout<<"compile time"<<std::endl;
-  // }
-  // else
-  // {
-  //   std::cout<<"runtime"<<std::endl;
-  // }
   std::array<unsigned int, get_stencil_size<nx, jump_parameter>()> stencil;
   std::fill(stencil.begin(), stencil.end(), n_fields<nx>() + 1);
   stencil[0] = 0;

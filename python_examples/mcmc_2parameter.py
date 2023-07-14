@@ -51,7 +51,9 @@ print("Starting time is", start_time)
 
 const            = CAM.config()
 const.nx         = nx
-const.debug_mode = debug_mode
+const.ca_settings      = [True,True, False]
+const.const_jump_parameter = jump_parameter
+const.debug_mode      = debug_mode
 PyCAM            = CAM.include(const)
 
 CAM_wrapper = PyCAM()

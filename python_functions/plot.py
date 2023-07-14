@@ -29,8 +29,6 @@ def plot(axes, save_data, time_step):
 def plot_to_file(axes, save_data, file_name, text = 'boxed italics text in data coords', ax=plt ):
   if np.size(axes) == 1:  axes.append(1)
   fig, ax = config_plot(axes)
-  
-  # ax.text(0,axes[0], text, horizontalalignment='left', verticalalignment='top')#, style='italic', bbox={'facecolor': 'red', 'alpha': 0.5, 'pad': 10}
   ax.set_title(text)
   plot_update(axes, save_data, ax)
   fig.savefig(file_name, dpi=400)
