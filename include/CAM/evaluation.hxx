@@ -331,7 +331,7 @@ class Evaluation
    *
    * \retval  array                 Array of measure parameters.
    ************************************************************************************************/
-  static std::array<double, 12> eval_measures_old(CAM::Domain<nx, fields_array_t>& domain)
+    static std::array<double, 12> eval_measures_old(CAM::Domain<nx, fields_array_t>& domain)
   {
     domain.find_composites_via_bu_boundary();
     unsigned int n_single_cells =
@@ -341,12 +341,9 @@ class Evaluation
     unsigned int n_particles = domain.particles.size();
 
     unsigned int n_solids = 0;
-    unsigned int n_solids_in_composites = 0;
-    unsigned int n_surfaces_solid_fluid = 0;
-    unsigned int n_surfaces_solid_solid = 0;
+    unsigned int n_surfaces = 0;
     unsigned int n_solids_part = 0;
-    unsigned int n_surfaces_part_solid_fluid = 0;
-    unsigned int n_surfaces_part_solid_solid = 0;
+    unsigned int n_surfaces_part = 0;
     unsigned int max_max_min_distance = 0;
     unsigned int local_max_min_distance = 0;
 
@@ -355,44 +352,33 @@ class Evaluation
     double max_diameters_ratio = 0;
     double local_diameters_ratio = 0;
 
-    std::for_each(
-      domain.particles.begin(), domain.particles.end(),
-      [&](Particle particle)
-      {
-        n_solids_part = particle.field_indices.size();
-        if (particle.numbers.size() > 1)
-          n_solids_in_composites += n_solids_part;
+    std::for_each(domain.particles.begin(), domain.particles.end(),
+                  [&](Particle particle)
+                  {
+                    n_solids_part = particle.field_indices.size();
+                    n_surfaces_part = getNSurfaces(domain, particle.field_indices);
 
-        n_surfaces_part_solid_fluid = get_n_surfaces_solid_fluid(domain, particle.field_indices);
-        n_surfaces_part_solid_solid = get_n_surfaces_solid_solid(domain, particle.field_indices);
+                    n_solids += n_solids_part;
+                    n_surfaces += n_surfaces_part;
 
-        n_solids += n_solids_part;
-        n_surfaces_solid_fluid += n_surfaces_part_solid_fluid;
-        n_surfaces_solid_solid += n_surfaces_part_solid_solid;
+                    local_sphericity =
+                      std::pow((double)n_solids_part, (double)(nx.size() - 1) / (double)nx.size()) /
+                      (double)n_surfaces_part;
+                    mean_sphericity += local_sphericity;
 
-        local_sphericity =
-          std::pow((double)n_solids_part, (double)(nx.size() - 1) / (double)nx.size()) /
-          (double)n_surfaces_part_solid_fluid;
-        mean_sphericity += local_sphericity;
+                    local_max_min_distance = max_min_distance(domain, particle);
+                    max_max_min_distance = std::max(max_max_min_distance, local_max_min_distance);
 
-        local_max_min_distance = max_min_distance(domain, particle);
-        max_max_min_distance = std::max(max_max_min_distance, local_max_min_distance);
-
-        local_diameters_ratio = max_dimension_ratio(domain, particle);
-        max_diameters_ratio = std::max(max_diameters_ratio, local_diameters_ratio);
-      });
+                    local_diameters_ratio = max_dimension_ratio(domain, particle);
+                    max_diameters_ratio = std::max(max_diameters_ratio, local_diameters_ratio);
+                  });
     mean_sphericity /= n_particles;
 
     double mean_particle_size = (double)n_solids / (double)n_particles;
 
     double compactness =
-      std::pow((double)n_surfaces_solid_fluid, ((double)nx.size() / (double)(nx.size() - 1))) /
+      std::pow((double)n_surfaces, ((double)nx.size() / (double)(nx.size() - 1))) /
       (double)n_solids;
-    n_surfaces_solid_solid /= 2;
-    double specific_surface_area = (double)n_surfaces_solid_fluid / (double)n_solids;
-    double contact_area_per_volume =
-      (double)n_surfaces_solid_solid /
-      (double)(n_solids_in_composites);  //((double)nx.size() / (double)(nx.size() - 1))
 
     double variance_particle_sizes = 0;
     for (unsigned int i = 0; i < n_particles; ++i)
@@ -406,15 +392,15 @@ class Evaluation
     unsigned int n_connected_fluids = n_fluid_components[0];
     unsigned int n_periodic_fluid_components = n_fluid_components[1];
 
-    return {(double)n_particles,
+    return {(double)n_single_cells,
+            (double)n_particles,
             (double)n_solids,
-            (double)n_surfaces_solid_fluid,
+            (double)n_surfaces,
             (double)n_connected_fluids,
             (double)n_periodic_fluid_components,
             mean_particle_size,
             variance_particle_sizes,
-            specific_surface_area,
-            contact_area_per_volume,
+            compactness,
             (double)max_max_min_distance,
             mean_sphericity,
             max_diameters_ratio};

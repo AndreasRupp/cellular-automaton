@@ -147,8 +147,8 @@ def cam_particles( domain_size, n_steps, jump_parameter, distribution,porosity, 
   
 class setting:
   def __init__(self,
-    domain_size = [50,50],
-    n_steps = 5000, 
+    domain_size = [500,500],
+    n_steps = 500, 
     jump_parameter = 20, 
     distribution= 0.5,
     porosity = 0.9, 
