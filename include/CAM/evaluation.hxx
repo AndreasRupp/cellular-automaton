@@ -331,7 +331,7 @@ class Evaluation
    *
    * \retval  array                 Array of measure parameters.
    ************************************************************************************************/
-    static std::array<double, 12> eval_measures_old(CAM::Domain<nx, fields_array_t>& domain)
+  static std::array<double, 12> eval_measures_old(CAM::Domain<nx, fields_array_t>& domain)
   {
     domain.find_composites_via_bu_boundary();
     unsigned int n_single_cells =
