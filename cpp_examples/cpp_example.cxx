@@ -16,17 +16,19 @@ int main()
 {
   constexpr std::array<unsigned int, 2> nx = {10, 10};
   const unsigned int n_moves = 5;
-  const double jump_param = 1.;
-
-  CAM::CAMInterface<nx> CAM;
+  const unsigned int jump_param = 1.;
+  constexpr std::array<bool, 3> ca_settings = {true, true, false};
+  CAM::CAMInterface<nx, ca_settings, jump_param> CAM;
 
   const double porosity = 0.5;
   const double random_seed = 0;
   CAM.place_single_cell_bu_randomly(jump_param, porosity, random_seed);
 
   // std::vector<unsigned int> extent = {3, 1};
-  // std::cout << "is placed? " << CAM.place_plane(jump_param, extent, -1) << std::endl;
-  // std::cout << "is placed? " << CAM.place_sphere(jump_param, 4, -1) << std::endl;
+  // std::vector<unsigned int> face_charges_pos = {1, 1, 1, 1};
+  // std::vector<unsigned int> face_charges_neg = {-1, -1, -1, -1};
+  // std::cout << "is placed? " << CAM.place_plane(jump_param, extent, face_charges_pos) <<
+
   CAM.print_array();
   std::cout << std::endl << std::endl;
   for (unsigned int i = 0; i < n_moves; ++i)
@@ -37,7 +39,7 @@ int main()
   }
 
   std::cout << std::endl << "Characteristics / Measures:" << std::endl;
-  const std::array<double, 12> meas = CAM.eval_measures();
+  const std::vector<double> meas = CAM.eval_measures();
   for (unsigned int k = 0; k < 12; ++k)
     std::cout << "Meas[" << k << "] = " << meas[k] << std::endl;
 }

@@ -41,6 +41,51 @@ class Evaluation
       }
     return distance;
   }
+
+  static std::vector<unsigned int> particle_size_distribution(fields_array_t fields)
+  {
+    constexpr unsigned int dim = nx.size();
+    unsigned int fluids_size, field, neigh_field;
+    std::vector<unsigned int> found_solids, distribution;
+
+    std::for_each(fields.begin(), fields.end(), [](unsigned int& field) { field = (field == 0); });
+
+    for (auto first_fluid = std::find(fields.begin(), fields.end(), 0); first_fluid != fields.end();
+         first_fluid = std::find(first_fluid, fields.end(), 0))
+    {
+      found_solids = std::vector<unsigned int>(1, std::distance(fields.begin(), first_fluid));
+      fields[found_solids[0]] = uint_max;
+      fluids_size = 1;
+      for (unsigned int k = 0; k < fluids_size; ++k, fluids_size = found_solids.size())
+      {
+        field = found_solids[k];
+        for (unsigned int i = 0; i < 2 * dim; ++i)
+        {
+          neigh_field = aim<nx>(field, direct_neigh<nx>(i));
+          if (fields[neigh_field] == 0)
+          {
+            fields[neigh_field] = uint_max;
+            found_solids.push_back(neigh_field);
+          }
+        }
+      }
+      distribution.push_back(found_solids.size());
+    }
+    std::sort(distribution.begin(), distribution.end());
+    return distribution;
+  }
+  static unsigned int n_solid_comp(const fields_array_t& fields)
+  {
+    return particle_size_distribution(fields).size();
+  }
+  static constexpr double average_particle_size(const fields_array_t& domain)
+  {
+    unsigned int n_solids = 0;
+    for (unsigned int i = 0; i < domain.size(); ++i)
+      n_solids += (domain[i] != 0);
+    return (double)n_solids / (double)n_solid_comp(domain);
+  }
+  //-----------------Faster Solutions with known Domain and particles --------
   /*!*********************************************************************************************
    * \brief Gives size of each particle in a sorted way
    *
@@ -49,37 +94,6 @@ class Evaluation
   static std::vector<unsigned int> particle_size_distribution(
     CAM::Domain<nx, fields_array_t>& domain)
   {
-    // \deprecated
-
-    // unsigned int fluids_size, field, neigh_field;
-    // std::vector<unsigned int> found_solids, distribution1;
-    // fields_array_t domain_fields =domain.domain_fields;
-    // std::for_each(domain_fields.begin(), domain_fields.end(),
-    //               [](unsigned int& field) { field = (field == 0); });
-
-    // for (auto first_fluid = std::find(domain_fields.begin(), domain_fields.end(), 0);
-    //      first_fluid != domain_fields.end();
-    //      first_fluid = std::find(first_fluid, domain_fields.end(), 0))
-    // {
-    //   found_solids = std::vector<unsigned int>(1, std::distance(domain_fields.begin(),
-    //   first_fluid)); domain_fields[found_solids[0]] = CAM::uint_max; fluids_size = 1; for
-    //   (unsigned int k = 0; k < fluids_size; ++k, fluids_size = found_solids.size())
-    //   {
-    //     field = found_solids[k];
-    //     for (unsigned int i = 0; i < 2 * nx.size(); ++i)
-    //     {
-    //       neigh_field = aim<nx>(field, direct_neigh<nx>(i));
-    //       if (domain_fields[neigh_field] == 0)
-    //       {
-    //         domain_fields[neigh_field] = uint_max;
-    //         found_solids.push_back(neigh_field);
-    //       }
-    //     }
-    //   }
-    //   distribution1.push_back(found_solids.size());
-    // }
-    // std::sort(distribution.begin(), distribution.end());
-
     domain.find_composites_via_bu_boundary();
     std::vector<unsigned int> distribution;
     distribution.resize(domain.particles.size());
@@ -101,12 +115,12 @@ class Evaluation
     return particle_size_distribution(domain).size();
   }
   /*!*********************************************************************************************
-   * \brief   Counts surfaces of particle.
+   * \brief   Counts surfaces of particle solid fluid
    * \param _fields fields of particle
    * \retval  n_surfaces      Surfaces of particle.
    **********************************************************************************************/
-  static unsigned int getNSurfaces(const CAM::Domain<nx, fields_array_t>& domain,
-                                   const std::vector<unsigned int>& _fields)
+  static unsigned int get_n_surfaces_solid_fluid(const CAM::Domain<nx, fields_array_t>& domain,
+                                                 const std::vector<unsigned int>& _fields)
   {
     unsigned int n_surfaces = 0;
     std::for_each(_fields.begin(), _fields.end(),
@@ -115,6 +129,28 @@ class Evaluation
                     for (unsigned int i = 0; i < 2 * nx.size(); ++i)
                       if (domain.domain_fields[aim<nx>(field, direct_neigh<nx>(i))] == 0)
                         ++n_surfaces;
+                  });
+    return n_surfaces;
+  }
+  /*!*********************************************************************************************
+   * \brief   Counts surfaces of particle solid soild
+   * \param _fields fields of particle
+   * \retval  n_surfaces      Surfaces of particle.
+   **********************************************************************************************/
+  static unsigned int get_n_surfaces_solid_solid(const CAM::Domain<nx, fields_array_t>& domain,
+                                                 const std::vector<unsigned int>& _fields)
+  {
+    unsigned int n_surfaces = 0;
+    std::for_each(_fields.begin(), _fields.end(),
+                  [&](const unsigned int field)
+                  {
+                    for (unsigned int i = 0; i < 2 * nx.size(); ++i)
+                    {
+                      unsigned int neigh = aim<nx>(field, direct_neigh<nx>(i));
+                      if (domain.domain_fields[neigh] != 0 &&
+                          domain.domain_fields[field] != domain.domain_fields[neigh])
+                        ++n_surfaces;
+                    }
                   });
     return n_surfaces;
   }
@@ -282,7 +318,7 @@ class Evaluation
    * n_particles                    number of connected solid cells, including single cells and
    *                                larger agglomerates
    * n_solids                       total number of solid cells
-   * n_surfaces                     total number of faces between solid and fluid
+   * n_surfaces_solid_fluid         total number of faces between solid and fluid
    * n_connected_fluids             number of connected fluids
    * n_periodic_fluid_components    number of connected fluids which are periodic
    * mean_particle_size             average particle size (n_solids / n_particles)
@@ -295,7 +331,7 @@ class Evaluation
    *
    * \retval  array                 Array of measure parameters.
    ************************************************************************************************/
-  static std::array<double, 12> eval_measures(CAM::Domain<nx, fields_array_t>& domain)
+  static std::array<double, 12> eval_measures_old(CAM::Domain<nx, fields_array_t>& domain)
   {
     domain.find_composites_via_bu_boundary();
     unsigned int n_single_cells =
@@ -368,6 +404,94 @@ class Evaluation
             (double)max_max_min_distance,
             mean_sphericity,
             max_diameters_ratio};
+  }
+
+  /*!***********************************************************************************************
+   * \brief   Evaluates measure parameters 3D Paper
+   *
+   * Measure parameters:
+   * n_particles                    number of connected solid cells, including single cells and
+   *                                larger agglomerates
+   * n_solids                       total number of solid cells
+   * n_solids_in_composites         number of solid cells in composites (neglecting BUs without
+   *neighbors) n_solids_in_discrete_BUs       number of solid cells in discrete/solo BUs without
+   *neighbors n_surfaces_solid_fluid         total number of faces between solid and fluid
+   * n_surfaces_solid_solid         total number of faces between solid and solid
+   * mean_particle_size             average particle size (n_solids / n_particles)
+   * specific_surface_area          ratio of the length of the fluid–solid interface over the total
+   *area contact_area_per_volume        length of the solid–solid interface between all composites
+   *over the total area of all BUs (discrete BUs are ignored)
+   *
+   * \retval  array                 Array of measure parameters.
+   ************************************************************************************************/
+  static std::array<double, 12> eval_measures(CAM::Domain<nx, fields_array_t>& domain)
+  {
+    if (domain.field_number_2_index.size() != domain.max_field_number + 1)
+    {
+      domain.field_number_2_index.resize(domain.max_field_number + 1, domain.max_field_number + 1);
+      for (unsigned int i = 0; i < domain.building_units.size(); i++)
+      {
+        domain.field_number_2_index[domain.building_units[i].get_number()] = i;
+      }
+    }
+
+    domain.find_composites_via_bu_boundary();
+
+    unsigned int n_particles = domain.particles.size();
+    unsigned int n_composites = domain.composites.size();
+
+    unsigned int n_solids = 0;
+    unsigned int n_solids_in_composites = 0;
+    unsigned int n_solids_in_discrete_BUs = 0;
+    unsigned int n_surfaces_solid_fluid = 0;
+    unsigned int n_surfaces_solid_solid = 0;
+
+    unsigned int n_solids_part = 0;
+    unsigned int n_surfaces_part_solid_fluid = 0;
+    unsigned int n_surfaces_part_solid_solid = 0;
+
+    double mean_particle_size = 0;
+    double specific_surface_area = 0;
+    double contact_area_per_volume = 0;
+
+    double param = 0;
+
+    std::for_each(domain.particles.begin(), domain.particles.end(),
+                  [&](Particle particle)
+                  {
+                    n_solids_part = particle.field_indices.size();
+
+                    if (particle.numbers.size() > 1)
+                      n_solids_in_composites += n_solids_part;
+                    else
+                      n_solids_in_discrete_BUs += n_solids_part;
+
+                    n_surfaces_part_solid_fluid = particle.n_surfaces_solid_fluid;
+                    n_surfaces_part_solid_solid = particle.n_surfaces_solid_solid;
+
+                    n_solids += n_solids_part;
+                    n_surfaces_solid_fluid += n_surfaces_part_solid_fluid;
+                    n_surfaces_solid_solid += n_surfaces_part_solid_solid;
+                  });
+
+    mean_particle_size = (double)n_solids / (double)n_particles;
+
+    n_surfaces_solid_solid /= 2;
+    specific_surface_area = (double)n_surfaces_solid_fluid / (double)n_solids;
+    contact_area_per_volume = (double)n_surfaces_solid_solid / (double)(n_solids_in_composites);
+
+    return {(double)n_solids,
+            (double)n_particles,
+            (double)n_composites,
+            (double)n_solids_in_composites,
+            (double)n_solids_in_discrete_BUs,
+            mean_particle_size,
+            specific_surface_area,
+            contact_area_per_volume,
+            param,
+            param,
+            param,
+            param};
   }
   /*!***********************************************************************************************
    * \brief   Computes connected fluid areas.

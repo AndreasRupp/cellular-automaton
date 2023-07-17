@@ -80,6 +80,14 @@ static constexpr unsigned int n_field_corner_points()
 {
   return ipow(2, nx.size());
 }
+/*!*********************************************************************************************
+ * \brief Number of planes/ orthogonal rotation axis
+ **************************************************************************************************/
+template <auto nx>
+static constexpr unsigned int n_DoF_basis_rotation()
+{
+  return nx.size() * (nx.size() - 1) / 2;
+}
 /*!*************************************************************************************************
  * \brief   Find field if one moves from position to move.
  *
@@ -91,14 +99,93 @@ template <auto nx>
 static constexpr unsigned int aim(const int position, const int move)
 {
   unsigned int coord, new_pos = 0;
+  int direct_neigh_i;
   for (unsigned int i = 0; i < nx.size(); ++i)
   {
-    coord = ((position) / direct_neigh<nx>(2 * i + 1) + (move) / direct_neigh<nx>(2 * i + 1) +
-             n_fields<nx>()) %
-            nx[i];
-    new_pos += coord * direct_neigh<nx>(2 * i + 1);
+    direct_neigh_i = direct_neigh<nx>(2 * i + 1);
+    coord = ((position) / direct_neigh_i + (move) / direct_neigh_i + n_fields<nx>()) % nx[i];
+    new_pos += coord * direct_neigh_i;
   }
   return new_pos;
+}
+/*!*************************************************************************************************
+ * \brief  get index after rotation
+ *
+ * \param   index      Current position of field that may rotate.
+ * \param   rotation   Index shift induced by possible rotation.
+ * \retval  index     Index of rotated target.
+ **************************************************************************************************/
+template <auto nx>
+static constexpr unsigned int get_rotated_index(
+  unsigned int index,
+  const std::array<int, n_DoF_basis_rotation<nx>()> rotation)
+{
+  unsigned int coord_i, coord_j, ii, jj, n_cclw_90_degree, count = 0;
+  bool swap;
+  int direction_ii, direction_jj;
+  int rot, direct_neigh_i, direct_neigh_j, direct_neigh_jj, direct_neigh_ii;
+  for (unsigned int i = 0; i < nx.size(); i++)
+  {
+    for (unsigned int j = i + 1; j < nx.size(); j++)
+    {
+      rot = rotation[count] % 4;
+      n_cclw_90_degree = (rot < 0) ? 4 + rot : rot;
+
+      direct_neigh_i = direct_neigh<nx>(2 * i + 1);
+      direct_neigh_j = direct_neigh<nx>(2 * j + 1);
+      coord_i = ((index) / direct_neigh_i) % nx[i];
+      coord_j = ((index) / direct_neigh_j) % nx[j];
+
+      index -= coord_i * direct_neigh_i;
+      index -= coord_j * direct_neigh_j;
+      swap = n_cclw_90_degree % 2 != 0;
+      ii = (swap) ? j : i;
+      jj = (swap) ? i : j;
+
+      direct_neigh_ii = (swap) ? direct_neigh_j : direct_neigh_i;
+      direct_neigh_jj = (swap) ? direct_neigh_i : direct_neigh_j;
+
+      direction_ii = (n_cclw_90_degree == 3) ? -1 : 1;
+      direction_jj = (n_cclw_90_degree == 1) ? -1 : 1;
+
+      index += (((direction_ii * coord_i) + n_fields<nx>()) % nx[ii]) * direct_neigh_ii;
+      index += (((direction_jj * coord_j) + n_fields<nx>()) % nx[jj]) * direct_neigh_jj;
+
+      count++;
+    }
+  }
+  return index;
+}
+template <auto nx>
+static unsigned int get_center_field(const std::vector<unsigned int>& _fields)
+{
+  unsigned int coord, center = 0;
+  ;
+  double theta, x_bar, z_bar, coord_bar, r;
+  std::vector<double> x, z;
+  int direct_neigh_i;
+  for (unsigned int i = 0; i < nx.size(); i++)
+  {
+    direct_neigh_i = direct_neigh<nx>(2 * i + 1);
+    x.clear();
+    z.clear();
+    r = nx[i] / (2 * M_PI);
+    for (unsigned int field : _fields)
+    {
+      coord = ((field) / direct_neigh_i) % nx[i];
+
+      theta = (coord / (double)nx[i]) * 2 * M_PI;
+      x.push_back(r * std::cos(theta));
+      z.push_back(r * std::sin(theta));
+    }
+    x_bar = std::reduce(x.begin(), x.end()) / static_cast<double>(x.size());
+    z_bar = std::reduce(z.begin(), z.end()) / static_cast<double>(z.size());
+
+    theta = std::atan2(-z_bar, -x_bar) + M_PI;
+    coord_bar = std::round((double)nx[i] / (2 * M_PI) * theta);
+    center += (unsigned int)coord_bar * direct_neigh_i;
+  }
+  return center;
 }
 /*!*********************************************************************************************
  * \brief Get the all 2^dim corner points of a cell
@@ -207,6 +294,9 @@ template <auto nx>
 static constexpr std::vector<unsigned int> get_stencil(const double _jump_parameter)
 {
   std::vector<unsigned int> stencil(1, 0);
+  if (_jump_parameter < 1)
+    return stencil;
+
   unsigned int new_neigh, layers = std::max(1., _jump_parameter), index = 0,
                           old_size = stencil.size();
   for (unsigned int lay = 0; lay < layers; ++lay)
@@ -226,6 +316,63 @@ static constexpr std::vector<unsigned int> get_stencil(const double _jump_parame
   }
   return stencil;
 }
+template <auto nx, unsigned int jump_parameter>
+static constexpr unsigned int get_stencil_size()
+{
+  std::array<unsigned int, ipow((2 * jump_parameter + 1), nx.size())> stencil;
+  std::fill(stencil.begin(), stencil.end(), n_fields<nx>() + 1);
+  stencil[0] = 0;
+  unsigned int new_neigh, layers = jump_parameter, index = 0, nr_of_cells = 1;
+  unsigned int old_size = 1;
+  for (unsigned int lay = 0; lay < layers; ++lay)
+  {
+    for (; index < old_size; ++index)
+    {
+      for (unsigned int i = 0; i < 2 * nx.size(); ++i)
+      {
+        new_neigh = aim<nx>(stencil[index], direct_neigh<nx>(i));
+        if (std::find(stencil.begin(), stencil.end(), new_neigh) == stencil.end())
+        {
+          stencil[nr_of_cells] = new_neigh;
+          nr_of_cells++;
+        }
+      }
+    }
+    old_size = nr_of_cells;
+  }
+  return nr_of_cells;
+}
+/*!*********************************************************************************************
+ * \brief   Define stencil during compile time
+ **********************************************************************************************/
+template <auto nx, unsigned int jump_parameter>
+static constexpr std::array<unsigned int, get_stencil_size<nx, jump_parameter>()> get_stencil_c()
+{
+  std::array<unsigned int, get_stencil_size<nx, jump_parameter>()> stencil;
+  std::fill(stencil.begin(), stencil.end(), n_fields<nx>() + 1);
+  stencil[0] = 0;
+
+  unsigned int new_neigh, layers = jump_parameter, index = 0, nr_of_cells = 1;
+  unsigned int old_size = 1;
+  for (unsigned int lay = 0; lay < layers; ++lay)
+  {
+    for (; index < old_size; ++index)
+    {
+      for (unsigned int i = 0; i < 2 * nx.size(); ++i)
+      {
+        new_neigh = aim<nx>(stencil[index], direct_neigh<nx>(i));
+        if (std::find(stencil.begin(), stencil.end(), new_neigh) == stencil.end())
+        {
+          stencil[nr_of_cells] = new_neigh;
+          nr_of_cells++;
+        }
+      }
+    }
+    old_size = nr_of_cells;
+  }
+  return stencil;
+}
+
 /*!*********************************************************************************************
  * \brief Calculate maximal feret Diameter
  * Attentation: coords must be in R^n -> particle is not allowed to cross periodic domain boundary

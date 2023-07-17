@@ -27,9 +27,9 @@ def cam_test(n_steps, debug_mode=False):
 
   
   const                 = CAM.config()
-  const.nx              = [10, 10, 10]
+  const.nx              = [500,500]
   const.debug_mode      = debug_mode
-  jump_parameter_composites  = 10
+  jump_parameter_composites  = 5
   jump_parameter = 5
   porosity = 0.75
   PyCAM = CAM.include(const)
@@ -42,8 +42,12 @@ def cam_test(n_steps, debug_mode=False):
   #   success = success + Domain.place_sphere(jump_parameter, 5, -1)
   # print("Nr of spheres " + str(success))
   # success = 0
-  # while success < 10:
-  #   success = success + Domain.place_plane(jump_parameter, [1,3], -1)
+  # while success < 2500:
+  #   success = success + Domain.place_plane(jump_parameter, [2,2,30], -1, 1)
+  # print("Nr of planes " + str(success))
+  # success = 0
+  # while success < 5000:
+  #   success = success + Domain.place_plane(jump_parameter, [2,2,6], -1, -1)
   # print("Nr of planes " + str(success))
   
   # Domain.print_array()
@@ -56,21 +60,23 @@ def cam_test(n_steps, debug_mode=False):
   for step in range(n_steps):
     Domain.do_cam()
     save_data[step+1] = Domain.fields()
-
-  # print(Domain.average_particle_size())
+  
+  # print(Domain.average_particle_size_d())
+  # print(Domain.average_particle_size(save_data[-1]))
   # print(Domain.bulk_distance(save_data[0],save_data[-1]))
   end_time = datetime.now() 
   print("Program ended at", end_time, "after", end_time-start_time)
-  
+  save_data[(save_data < 2500) & (save_data > 0)] = 1
+  save_data[save_data >= 2500] = 2
   if not os.path.exists('output'):  os.makedirs('output')
   plot_to_vtk("output/cam", save_data, const.nx)
-  plot_to_file(const.nx, save_data[-1], 'output/cam.png')
-  plot(const.nx, save_data, 0)
+  #plot_to_file(const.nx, save_data[-1], 'output/cam.png')
+  #plot(const.nx, save_data, 0)
 # --------------------------------------------------------------------------------------------------
 # Function main.
 # --------------------------------------------------------------------------------------------------
 def main(debug_mode):
-  n_steps =5
+  n_steps =10
   cam_test(n_steps, debug_mode)
 
 

@@ -6,6 +6,8 @@ from .paths import main_dir
 ## \brief   Object that comprises all information for HyperHDG to create a problem.
 class config:
   nx                  = []
+  ca_settings        = []
+  const_jump_paramter = 0
   cython_replacements = []
   cpp_code            = ""
   include_files       = []
@@ -20,6 +22,11 @@ def consistent(conf):
   for entry in conf.nx:
     if not isinstance(entry, int) or entry < 0:
       return False
+  for entry in conf.ca_settings:
+    if not isinstance(entry, bool):
+      return False
+  if not isinstance(conf.const_jump_paramter, int):
+    return False
   if not isinstance(conf.cpp_code, str):
     return False
   if not isinstance(conf.debug_mode, bool):

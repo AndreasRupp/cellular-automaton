@@ -1,5 +1,4 @@
 cmake_minimum_required(VERSION 3.16)
-
 project(CAM LANGUAGES CXX)
 
 ## Check whether appropriate compiler version is used

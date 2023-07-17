@@ -16,7 +16,10 @@
 #include <limits>
 namespace CAM
 {
-template <auto nx, typename fields_array_t = std::array<unsigned int, CAM::n_fields<nx>()>>
+template <auto nx,
+          auto ca_settings,
+          unsigned int const_jump_parameter,
+          typename fields_array_t = std::array<unsigned int, CAM::n_fields<nx>()>>
 class CAMInterface
 {
  private:
@@ -24,7 +27,7 @@ class CAMInterface
   unsigned int rand_seed;
 
  public:
-  CAMInterface(double _jump_parameter_composites = 5)
+  CAMInterface(const double _jump_parameter_composites = 5)
   {
     CAM::jump_parameter_composite = _jump_parameter_composites;
   }
@@ -67,10 +70,17 @@ class CAMInterface
    * \return true: sphere is placed
    * \return false: sphere could not be placed. all its cells are removed
    ************************************************************************************************/
-  bool place_sphere(double _jump_parameter = 1, double _radius = 1, int _position = -1)
+  bool place_sphere(double _jump_parameter = 1,
+                    double _radius = 1,
+                    int _position = -1,
+                    std::vector<double> _face_charge_v = std::vector<double>(2 * nx.size(), 0))
   {
+    std::array<double, 2 * nx.size()> face_charge_a;
+    for (unsigned int i = 0; i < _face_charge_v.size(); i++)
+      face_charge_a[i] = _face_charge_v[i];
+
     const CAM::BuildingUnit<nx> bu = CAM::create_hyper_sphere<nx>(
-      _jump_parameter, _radius, _position, domain.building_units.size() + 1);
+      _jump_parameter, _radius, _position, domain.building_units.size() + 1, face_charge_a);
     return domain.place_bu(bu);
   }
   /*!*********************************************************************************************
@@ -84,14 +94,19 @@ class CAMInterface
    ************************************************************************************************/
   bool place_plane(double _jump_parameter = 1,
                    std::vector<unsigned int> _extent_v = std::vector<unsigned int>(nx.size(), 0),
-                   int _position = -1)
+                   int _position = -1,
+                   std::vector<double> _face_charge_v = std::vector<double>(2 * nx.size(), 0))
   {
     std::array<unsigned int, nx.size()> extent_a;
     for (unsigned int i = 0; i < _extent_v.size(); i++)
       extent_a[i] = _extent_v[i];
 
-    const BuildingUnit<nx> bu = CAM::create_hyper_plane<nx>(_jump_parameter, extent_a, _position,
-                                                            domain.building_units.size() + 1);
+    std::array<double, 2 * nx.size()> face_charge_a;
+    for (unsigned int i = 0; i < _face_charge_v.size(); i++)
+      face_charge_a[i] = _face_charge_v[i];
+
+    const BuildingUnit<nx> bu = CAM::create_hyper_plane<nx>(
+      _jump_parameter, extent_a, _position, domain.building_units.size() + 1, face_charge_a);
     return domain.place_bu(bu);
   }
   // TODO parameterize this function
@@ -132,22 +147,42 @@ class CAMInterface
 
   void print_array() { domain.print_array(); }
 
-  void do_cam() { CAM::CellularAutomaton<nx, fields_array_t>::apply(domain); }
+  void do_cam()
+  {
+    CAM::CellularAutomaton<nx, ca_settings, const_jump_parameter, fields_array_t>::apply(domain);
+  }
 
   const fields_array_t& fields() const { return domain.domain_fields; }
 
-  std::array<double, 12> eval_measures()
+  std::vector<double> eval_measures()
   {
-    return CAM::Evaluation<nx, fields_array_t>::eval_measures(domain);
+    const std::array<double, 12> meas_a =
+      CAM::Evaluation<nx, fields_array_t>::eval_measures(domain);
+    std::vector<double> meas_v;
+    for (unsigned int k = 0; k < 12; ++k)
+    {
+      // std::cout << "Meas[" << k << "] = " << meas_a[k] << std::endl;
+      meas_v.push_back(meas_a[k]);
+    }
+
+    return meas_v;
   }
 
-  double average_particle_size()
+  double average_particle_size_d()
   {
     return CAM::Evaluation<nx, fields_array_t>::average_particle_size(domain);
   }
-  std::vector<unsigned int> particle_size_distribution()
+  double average_particle_size(const fields_array_t& _domain)
+  {
+    return CAM::Evaluation<nx, fields_array_t>::average_particle_size(_domain);
+  }
+  std::vector<unsigned int> particle_size_distribution_d()
   {
     return CAM::Evaluation<nx, fields_array_t>::particle_size_distribution(domain);
+  }
+  std::vector<unsigned int> particle_size_distribution(const fields_array_t& _domain)
+  {
+    return CAM::Evaluation<nx, fields_array_t>::particle_size_distribution(_domain);
   }
   unsigned int bulk_distance(const fields_array_t& domain_a, const fields_array_t& domain_b)
   {

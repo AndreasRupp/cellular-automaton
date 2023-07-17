@@ -14,24 +14,49 @@
 #include <exception>
 #include <iostream>
 #include <random>
+#include <unordered_map>
 #include <vector>
 namespace CAM
 {
+template <auto nx>
+static constexpr std::array<double, 2 * nx.size()> init_default_face_values()
+{
+  std::array<double, nx.size() * 2> arr;
+  std::fill(arr.begin(), arr.end(), 0);
+  return arr;
+}
 /*!*********************************************************************************************
  * \brief Class of building units (bu)
  * \param number index of cells in domain
  * \param jump_parameter How far bu is allowed to jump.
  * \param reference_field cells in domain which is moved by CA and is calculation basis for all
- *cells in bu  (for sphere center_point) \param shape shape of bu \param boundary shape boundary of
- *bu \tparam nx
+ *  cells in bu  (for sphere center_point)
+ * \param shape shape of bu
+ * \param boundary boundary of bu
+ * \param center_field gravity point
+ * \param homogen_face_values face values of each boundary field (2 faces in each dimension)
+ * \tparam nx
  **********************************************************************************************/
 template <auto nx>
 class BuildingUnit
 {
  private:
+  /*!*********************************************************************************************
+   * \brief boundary
+   * \param index index of boundary cells
+   * \param face_charges 2 * nx.size() faces of each boundary field
+   * \param index_by_relation_to_reference move from boundary index to reference field
+   **********************************************************************************************/
+  struct Boundary
+  {
+    std::vector<unsigned int> index;
+    std::vector<std::array<double, nx.size() * 2>> face_charges;
+    std::unordered_map<unsigned int, unsigned int> index_by_relation_to_reference;
+  };
   double jump_parameter;
-  std::vector<unsigned int> shape, boundary;
-  unsigned int reference_field, number;
+  std::vector<unsigned int> shape, rotation_points;
+  unsigned int reference_field, center_field, number;
+  Boundary boundary;
 
  public:
   /*!*********************************************************************************************
@@ -40,13 +65,81 @@ class BuildingUnit
   BuildingUnit(const double _jump_parameter,
                const std::vector<unsigned int>& _shape,
                const unsigned int _reference_field,
-               const unsigned int _number)
+               const unsigned int _number,
+               const std::array<double, nx.size() * 2> homogen_face_values)
   : jump_parameter(_jump_parameter),
     shape(_shape),
     reference_field(_reference_field),
     number(_number)
   {
-    boundary = CAM::get_boundary_fields<nx>(shape);
+    boundary.index = CAM::get_boundary_fields<nx>(shape);
+
+    std::array<unsigned int, nx.size()> max_extent;
+    std::fill(max_extent.begin(), max_extent.end(), 0);
+
+    unsigned int coord;
+
+    std::vector<unsigned int>::iterator it;
+    for (it = shape.begin(); it != shape.end();)
+    {
+      for (unsigned int i = 0; i < nx.size(); i++)
+      {
+        coord = ((*it) / direct_neigh<nx>(2 * i + 1)) % nx[i];
+        if (coord > max_extent[i])
+          max_extent[i] = coord;
+      }
+
+      if (std::find(boundary.index.begin(), boundary.index.end(), *it) != boundary.index.end())
+      {
+        it = shape.erase(it);
+      }
+      else
+        ++it;
+    }
+
+    shape.insert(shape.end(), boundary.index.begin(), boundary.index.end());
+
+    // two rotation points (edge points on basal axis (maximum extent, maximum torque) )
+    unsigned int max_dim =
+      std::distance(max_extent.begin(), std::max_element(max_extent.begin(), max_extent.end()));
+    unsigned int rotation_point = 0;
+
+    for (unsigned int i = 0; i < nx.size(); i++)
+    {
+      if (i != max_dim)
+      {
+        rotation_point =
+          CAM::aim<nx>(rotation_point,
+                       (unsigned int)(((double)max_extent[i] / 2.0)) * direct_neigh<nx>(2 * i + 1));
+      }
+    }
+
+    rotation_points.push_back(rotation_point);
+    ;
+    rotation_point =
+      CAM::aim<nx>(0, (unsigned int)(max_extent[max_dim]) * direct_neigh<nx>(2 * max_dim + 1));
+    for (unsigned int i = 0; i < nx.size(); i++)
+    {
+      if (i != max_dim)
+      {
+        rotation_point =
+          CAM::aim<nx>(rotation_point,
+                       (unsigned int)(((double)max_extent[i] / 2.0)) * direct_neigh<nx>(2 * i + 1));
+      }
+    }
+    rotation_points.push_back(rotation_point);
+
+    // boundary
+    boundary.face_charges.resize(boundary.index.size());
+    std::fill(boundary.face_charges.begin(), boundary.face_charges.end(), homogen_face_values);
+
+    for (unsigned int i = 0; i < boundary.index.size(); i++)
+    {
+      std::pair<unsigned int, unsigned int> pair(boundary.index[i], i);
+      // std::make_pair<unsigned int, unsigned int>(boundary.index[i], i)
+      boundary.index_by_relation_to_reference.insert(pair);
+    }
+    center_field = CAM::get_center_field<nx>(shape);
   }
 
   void set_reference_field(const unsigned int _reference_field)
@@ -54,10 +147,28 @@ class BuildingUnit
     reference_field = _reference_field;
   }
   unsigned int get_reference_field() const { return reference_field; }
+  unsigned int get_center_field() const { return center_field; }
   unsigned int get_number() const { return number; }
   unsigned int get_jump_parameter() const { return jump_parameter; }
   const std::vector<unsigned int>& get_shape() const { return shape; }
-  const std::vector<unsigned int>& get_boundary() const { return boundary; }
+  const std::vector<unsigned int>& get_boundary() const { return boundary.index; }
+  const std::vector<std::array<double, nx.size() * 2>>& get_face_charges() const
+  {
+    return boundary.face_charges;
+  }
+  const std::vector<unsigned int>& get_rotation_points() const { return rotation_points; }
+  void set_homogen_face_charges(const std::array<double, nx.size() * 2> _values_in_direction)
+  {
+    std::fill(boundary.face_charges.begin(), boundary.face_charges.end(), _values_in_direction);
+  }
+  const std::array<double, nx.size() * 2>& get_face_charges_of_boundary_cell(
+    const unsigned int _relation_to_reference) const
+  {
+    auto it = boundary.index_by_relation_to_reference.find(_relation_to_reference);
+    if (it == boundary.index_by_relation_to_reference.end())
+      std::cout << "index not found" << std::endl;
+    return boundary.face_charges[it->second];
+  }
 
   bool constexpr is_member(const unsigned int _index)
   {
@@ -68,6 +179,70 @@ class BuildingUnit
     }
     return false;
   }
+  /*!*********************************************************************************************
+   * \brief Rotate bu aroound rotation_point
+   * \param _rotation rotation around each basis rotation axis
+   ************************************************************************************************/
+  void rotate(const std::array<int, CAM::n_DoF_basis_rotation<nx>()>& _rotation,
+              unsigned int rotation_point)
+  {
+    unsigned int n_interior_cells = shape.size() - boundary.index.size();
+    if (n_interior_cells != 0)
+    {
+      for (unsigned int i = 0; i < shape.size() - boundary.index.size(); i++)
+      {
+        shape[i] = get_rotated_index<nx>(shape[i], _rotation);
+      }
+    }
+    for (unsigned int i = 0; i < boundary.index.size(); i++)
+    {
+      shape[n_interior_cells + i] = get_rotated_index<nx>(shape[n_interior_cells + i], _rotation);
+      boundary.index[i] = get_rotated_index<nx>(boundary.index[i], _rotation);
+      std::pair<unsigned int, unsigned int> pair(boundary.index[i], i);
+      boundary.index_by_relation_to_reference.insert(pair);
+    }
+
+    unsigned int reference_2_rotation_point = CAM::aim<nx>(rotation_point, -reference_field);
+    unsigned int rotation_point_rotated =
+      get_rotated_index<nx>(reference_2_rotation_point, _rotation);
+
+    unsigned int difference = CAM::aim<nx>(-rotation_point_rotated, reference_2_rotation_point);
+
+    reference_field = CAM::aim<nx>(reference_field, difference);
+    center_field = get_rotated_index<nx>(center_field, _rotation);
+
+    for (unsigned int r = 0; r < rotation_points.size(); r++)
+    {
+      rotation_points[r] = get_rotated_index<nx>(rotation_points[r], _rotation);
+    }
+
+    unsigned int n_cclw_90_degree, count;
+    std::array<double, 4> faces;
+    int rot;
+    for (std::array<double, nx.size() * 2>& charges : boundary.face_charges)
+    {
+      count = 0;
+      for (unsigned int i = 0; i < nx.size(); i++)
+      {
+        for (unsigned int j = i + 1; j < nx.size(); j++)
+        {
+          rot = _rotation[count] % 4;
+          n_cclw_90_degree = (rot < 0) ? 4 + rot : rot;
+
+          faces[0] = charges[2 * i];
+          faces[1] = charges[2 * j];
+          faces[2] = charges[2 * i + 1];
+          faces[3] = charges[2 * j + 1];
+          std::rotate(faces.rbegin(), faces.rbegin() + n_cclw_90_degree, faces.rend());
+          charges[2 * i] = faces[0];
+          charges[2 * j] = faces[1];
+          charges[2 * i + 1] = faces[2];
+          charges[2 * j + 1] = faces[3];
+          count++;
+        }
+      }
+    }
+  }
 };
 /*!*********************************************************************************************
  * \brief Hyper sphere (2D: Circle, 3D: Sphere)
@@ -75,10 +250,12 @@ class BuildingUnit
  * \param _radius all cells of bu are completely within the radius
  **********************************************************************************************/
 template <auto nx>
-static CAM::BuildingUnit<nx> create_hyper_sphere(const double _jump_parameter,
-                                                 const double _radius,
-                                                 const int _reference_field = -1,
-                                                 const int _number = -1)
+static CAM::BuildingUnit<nx> create_hyper_sphere(
+  const double _jump_parameter,
+  const double _radius,
+  const int _reference_field = -1,
+  const int _number = -1,
+  const std::array<double, nx.size() * 2> _face_values = CAM::init_default_face_values<nx>())
 {
   std::vector<unsigned int> shape = CAM::get_p_normed_shape<nx, 2>(_radius);
 
@@ -93,7 +270,7 @@ static CAM::BuildingUnit<nx> create_hyper_sphere(const double _jump_parameter,
   else
     number = _number;
 
-  return CAM::BuildingUnit<nx>(_jump_parameter, shape, reference_field, number);
+  return CAM::BuildingUnit<nx>(_jump_parameter, shape, reference_field, number, _face_values);
 }
 /*!*********************************************************************************************
  * \brief Limited hyper plane (2D: Rectangle, 3D: cuboid)
@@ -101,10 +278,12 @@ static CAM::BuildingUnit<nx> create_hyper_sphere(const double _jump_parameter,
  * \tparam nx
  **********************************************************************************************/
 template <auto nx>
-static CAM::BuildingUnit<nx> create_hyper_plane(const double _jump_parameter,
-                                                const std::array<unsigned int, nx.size()>& _extent,
-                                                const int _reference_field = -1,
-                                                const int _number = -1)
+static CAM::BuildingUnit<nx> create_hyper_plane(
+  const double _jump_parameter,
+  const std::array<unsigned int, nx.size()>& _extent,
+  const int _reference_field = -1,
+  const int _number = -1,
+  const std::array<double, nx.size() * 2> _face_values = CAM::init_default_face_values<nx>())
 {
   unsigned int size, new_move;
   std::vector<unsigned int> shape = {0};
@@ -130,8 +309,7 @@ static CAM::BuildingUnit<nx> create_hyper_plane(const double _jump_parameter,
     number = CAM::get_random_field_index<nx>();
   else
     number = _number;
-
-  return CAM::BuildingUnit<nx>(_jump_parameter, shape, reference_field, number);
+  return CAM::BuildingUnit<nx>(_jump_parameter, shape, reference_field, number, _face_values);
 }
 
 /*!*********************************************************************************************
@@ -140,10 +318,12 @@ static CAM::BuildingUnit<nx> create_hyper_plane(const double _jump_parameter,
  * \tparam nx
  **********************************************************************************************/
 template <auto nx>
-static CAM::BuildingUnit<nx> create_custom_bu(const double _jump_parameter,
-                                              const std::vector<unsigned int>& _shape,
-                                              const int _reference_field = -1,
-                                              const int _number = -1)
+static CAM::BuildingUnit<nx> create_custom_bu(
+  const double _jump_parameter,
+  const std::vector<unsigned int>& _shape,
+  const int _reference_field = -1,
+  const int _number = -1,
+  const std::array<double, nx.size() * 2> _face_values = CAM::init_default_face_values<nx>())
 {
   unsigned int reference_field, number;
   if (_reference_field < 0)
@@ -155,16 +335,18 @@ static CAM::BuildingUnit<nx> create_custom_bu(const double _jump_parameter,
   else
     number = _number;
 
-  return CAM::BuildingUnit<nx>(_jump_parameter, _shape, reference_field, number);
+  return CAM::BuildingUnit<nx>(_jump_parameter, _shape, reference_field, number, _face_values);
 }
 /*!*********************************************************************************************
  * \brief bu containing only one cell
  * \tparam nx
  **********************************************************************************************/
 template <auto nx>
-static constexpr CAM::BuildingUnit<nx> create_single_cell_bu(const double _jump_parameter,
-                                                             const int _reference_field = -1,
-                                                             const int _number = -1)
+static constexpr CAM::BuildingUnit<nx> create_single_cell_bu(
+  const double _jump_parameter,
+  const int _reference_field = -1,
+  const int _number = -1,
+  const std::array<double, nx.size() * 2> _face_values = CAM::init_default_face_values<nx>())
 {
   unsigned int reference_field, number;
   if (_reference_field < 0)
@@ -177,7 +359,7 @@ static constexpr CAM::BuildingUnit<nx> create_single_cell_bu(const double _jump_
     number = _number;
 
   const std::vector<unsigned int> shape = {0};
-  return CAM::BuildingUnit<nx>(_jump_parameter, shape, reference_field, number);
+  return CAM::BuildingUnit<nx>(_jump_parameter, shape, reference_field, number, _face_values);
 }
 
 /*!*********************************************************************************************

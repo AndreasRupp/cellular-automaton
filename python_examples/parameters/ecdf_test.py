@@ -60,20 +60,21 @@ class basic_test:
     const.nx          = self.nx
     const.debug_mode  = self.debug_mode
     self.PyCAM        = CAM.include(const)
+    self.Domain = self.PyCAM(jump_parameter)
 
     def return_distance_fct( distance_fct ):
       if distance_fct == "bulk_distance":
-        return self.PyCAM.bulk_distance
+        return self.Domain.bulk_distance
       elif distance_fct == "average_distance":
         def my_distance(a, b):
-          avg_part_a = self.PyCAM.average_particle_size(a)
-          avg_part_b = self.PyCAM.average_particle_size(b)
+          avg_part_a = self.Domain.average_particle_size(a)
+          avg_part_b = self.Domain.average_particle_size(b)
           return np.abs(avg_part_a - avg_part_b)
         return my_distance
       elif distance_fct == "particle_sizes":
         def my_distance(a, b):
-          part_sizes_a = self.PyCAM.particle_size_distribution(a)
-          part_sizes_b = self.PyCAM.particle_size_distribution(b)
+          part_sizes_a = self.Domain.particle_size_distribution(a)
+          part_sizes_b = self.Domain.particle_size_distribution(b)
           for item in part_sizes_b:
             part_sizes_a.append(item)
           return part_sizes_a
