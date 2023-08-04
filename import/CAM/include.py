@@ -8,6 +8,7 @@ from .paths import main_dir
 ## \brief   Function to import classes of the HyperHDG package using Cython.
 #
 #  \param   conf  Object of type config.
+macro_names = ["DFACE_ATTRACTIVITY", "DROTATION", "DROTATION_COMPOSITES", "DSTENCIL_4_ALL_BUS"]
 def include(conf):
   start_time = datetime.datetime.now()
   # Check that conf is appropriatelly filled.
@@ -60,6 +61,9 @@ def include(conf):
     cython_command, compile_command, link_command = compile_commands(python_class, options)
     if not (conf.debug_mode):
       compile_command += " -DNDEBUG"
+    for i in range(len(macro_names)):
+     compile_command += " -" + macro_names[i]  + "=" + str(conf.ca_settings[i]).replace('F', 'f').replace('T', 't')
+    #print(compile_command)
     #Actually compile the prepared files.
     assert os.system(cython_command) == 0
     assert os.system(compile_command) == 0

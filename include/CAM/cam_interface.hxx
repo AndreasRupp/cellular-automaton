@@ -17,7 +17,6 @@
 namespace CAM
 {
 template <auto nx,
-          auto ca_settings,
           unsigned int const_jump_parameter,
           typename fields_array_t = std::array<unsigned int, CAM::n_fields<nx>()>>
 class CAMInterface
@@ -149,7 +148,7 @@ class CAMInterface
 
   void do_cam()
   {
-    CAM::CellularAutomaton<nx, ca_settings, const_jump_parameter, fields_array_t>::apply(domain);
+    CAM::CellularAutomaton<nx, const_jump_parameter, fields_array_t>::apply(domain);
   }
 
   const fields_array_t& fields() const { return domain.domain_fields; }
