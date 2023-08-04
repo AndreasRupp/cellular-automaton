@@ -146,10 +146,7 @@ class CAMInterface
 
   void print_array() { domain.print_array(); }
 
-  void do_cam()
-  {
-    CAM::CellularAutomaton<nx, const_jump_parameter, fields_array_t>::apply(domain);
-  }
+  void do_cam() { CAM::CellularAutomaton<nx, const_jump_parameter, fields_array_t>::apply(domain); }
 
   const fields_array_t& fields() const { return domain.domain_fields; }
 

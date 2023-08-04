@@ -17,8 +17,7 @@ int main()
   constexpr std::array<unsigned int, 2> nx = {10, 10};
   const unsigned int n_moves = 5;
   const unsigned int jump_param = 1.;
-  constexpr std::array<bool, 3> ca_settings = {true, true, false};
-  CAM::CAMInterface<nx, ca_settings, jump_param> CAM;
+  CAM::CAMInterface<nx, jump_param> CAM;
 
   const double porosity = 0.5;
   const double random_seed = 0;

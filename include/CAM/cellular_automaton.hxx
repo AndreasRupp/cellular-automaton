@@ -20,6 +20,18 @@
 #include <utility>
 #include <vector>
 
+#ifndef ROTATION
+#define ROTATION false
+#endif
+#ifndef ROTATION_COMPOSITES
+#define ROTATION_COMPOSITES false
+#endif
+#ifndef FACE_ATTRACTIVITY
+#define FACE_ATTRACTIVITY false
+#endif
+#ifndef STENCIL_4_ALL_BUS
+#define STENCIL_4_ALL_BUS false
+#endif
 namespace CAM
 {
 
@@ -68,7 +80,6 @@ class CellularAutomaton
   }
 
  private:
-
   static constexpr std::array<std::array<int, CAM::n_DoF_basis_rotation<nx>()>,
                               CAM::n_DoF_basis_rotation<nx>() * 2 + 1>
   get_90_degree_rotations()
@@ -117,9 +128,9 @@ class CellularAutomaton
    **********************************************************************************************/
   static void move_bu(CAM::BuildingUnit<nx>& _unit, Domain<nx, fields_array_t>& _domain)
   {
-#if STENCIL_4_ALL_BUS 
-    constexpr std::array<unsigned int, get_stencil_size<nx, const_jump_parameter>()> possible_moves =
-      CAM::get_stencil_c<nx, const_jump_parameter>();
+#if STENCIL_4_ALL_BUS
+    constexpr std::array<unsigned int, get_stencil_size<nx, const_jump_parameter>()>
+      possible_moves = CAM::get_stencil_c<nx, const_jump_parameter>();
 #else
     const std::vector<unsigned int> possible_moves =
       CAM::get_stencil<nx>(_unit.get_jump_parameter());
