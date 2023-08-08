@@ -49,16 +49,21 @@ class CellularAutomaton
    * \param _domain domain object
    **********************************************************************************************/
 
-  static bool compare_size(const CAM::BuildingUnit<nx>& _unit_a,
-                           const CAM::BuildingUnit<nx>& _unit_b)
+  static bool compare_size_bu(const CAM::BuildingUnit<nx>& _unit_a,
+                              const CAM::BuildingUnit<nx>& _unit_b)
   {
     return _unit_a.get_shape().size() < _unit_b.get_shape().size();
+  }
+  static bool compare_size_comp(const CAM::Composite<nx>& _unit_a,
+                                const CAM::Composite<nx>& _unit_b)
+  {
+    return _unit_a.field_indices.size() < _unit_b.field_indices.size();
   }
   static void apply(Domain<nx, fields_array_t>& _domain)
   {
     // std::shuffle(_domain.building_units.begin(), _domain.building_units.end(),
     //  std::default_random_engine(std::rand()));
-    std::sort(_domain.building_units.begin(), _domain.building_units.end(), compare_size);
+    // std::sort(_domain.building_units.begin(), _domain.building_units.end(), compare_size_bu);
     // this way easier to handle deprecated bu and random bu numbers.
     _domain.field_number_2_index.resize(_domain.max_field_number + 1, _domain.max_field_number + 1);
     for (unsigned int i = 0; i < _domain.building_units.size(); i++)
@@ -71,9 +76,10 @@ class CellularAutomaton
                   [&](CAM::BuildingUnit<nx>& unit) { move_bu(unit, _domain); });
     // // std::cout << "move_bu done: " << std::endl;
     _domain.find_composites_via_bu_boundary();
-    // std::cout << "Number of composites: " << _domain.composites.size() << std::endl;
-    std::shuffle(_domain.composites.begin(), _domain.composites.end(),
-                 std::default_random_engine(std::rand()));
+    std::cout << "Number of composites: " << _domain.composites.size() << std::endl;
+    // std::sort(_domain.composites.begin(), _domain.composites.end(),compare_size_comp);
+    // std::shuffle(_domain.composites.begin(), _domain.composites.end(),
+    //  std::default_random_engine(std::rand()));
     std::for_each(_domain.composites.begin(), _domain.composites.end(),
                   [&](CAM::Composite<nx> composite) { move_composites(composite, _domain); });
     // std::cout << "move_comp done: " << std::endl;
@@ -129,8 +135,8 @@ class CellularAutomaton
   static void move_bu(CAM::BuildingUnit<nx>& _unit, Domain<nx, fields_array_t>& _domain)
   {
 #if STENCIL_4_ALL_BUS
-    constexpr std::array<unsigned int, get_stencil_size<nx, const_jump_parameter>()>
-      possible_moves = CAM::get_stencil_c<nx, const_jump_parameter>();
+    // constexpr std::array<unsigned int, get_stencil_size<nx, const_jump_parameter>()>
+    //   possible_moves = CAM::get_stencil_c<nx, get_stencil_size<nx, const_jump_parameter>()>();
 #else
     const std::vector<unsigned int> possible_moves =
       CAM::get_stencil<nx>(_unit.get_jump_parameter());
@@ -225,7 +231,8 @@ class CellularAutomaton
       indices[i] = _domain_fields[_composite.field_indices[i]];
       _domain_fields[_composite.field_indices[i]] = 0;
     }
-
+    // std::cout<<"sten"<<_composite.field_indices.size()<<"
+    // "<<_composite.jump_parameter<<std::endl;
     const std::vector<unsigned int> possible_moves =
       CAM::get_stencil<nx>(_composite.jump_parameter);
 

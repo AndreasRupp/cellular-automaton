@@ -88,7 +88,6 @@ class BuildingUnit
         if (coord > max_extent[i])
           max_extent[i] = coord;
       }
-
       if (std::find(boundary.index.begin(), boundary.index.end(), *it) != boundary.index.end())
       {
         it = shape.erase(it);

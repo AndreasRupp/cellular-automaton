@@ -148,7 +148,22 @@ class CAMInterface
 
   void do_cam() { CAM::CellularAutomaton<nx, const_jump_parameter, fields_array_t>::apply(domain); }
 
-  const fields_array_t& fields() const { return domain.domain_fields; }
+  const fields_array_t& fields()
+  {
+    domain.find_composites_via_bu_boundary();
+    std::shuffle(domain.composites.begin(), domain.composites.end(),
+                 std::default_random_engine(std::rand()));
+    for (unsigned int i = 0; i < domain.composites.size(); i++)
+    {
+      std::cout << i << std::endl;
+      for (unsigned int j : domain.composites[i].field_indices)
+      {
+        domain.domain_fields[j] = i * 10;
+      }
+    }
+
+    return domain.domain_fields;
+  }
 
   std::vector<double> eval_measures()
   {
