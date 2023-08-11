@@ -223,7 +223,7 @@ def main():
   type_i_addition = 1- 0.05
   filename = 'goethite_illite_5'
   fun_args.append(setting( domain_size, n_steps,jump_const,type_i_addition, porosity, goethite_coarse,uniform_positive, illite_fine,uniform_negative ,filename,debug_mode))
-  cam_particles(domain_size, n_steps,jump_const,type_i_addition, porosity,  goethite_coarse,uniform_positive, illite_fine,uniform_negative ,filename,debug_mode)
+  # cam_particles(domain_size, n_steps,jump_const,type_i_addition, porosity,  goethite_coarse,uniform_positive, illite_fine,uniform_negative ,filename,debug_mode)
   type_i_addition = 1 - 0.45
   filename = 'goethite_illite_45'
   fun_args.append(setting(domain_size, n_steps,jump_const,type_i_addition, porosity, goethite_coarse,uniform_positive, illite_fine,uniform_negative ,filename,debug_mode))
@@ -232,7 +232,7 @@ def main():
   type_i_addition = 1 - 0.55
   filename = 'goethite_illite_55'
   fun_args.append(setting(domain_size, n_steps,jump_const,type_i_addition, porosity, goethite_coarse,uniform_positive, illite_fine,uniform_negative ,filename,debug_mode))
-  cam_particles(domain_size, n_steps,jump_const,type_i_addition, porosity,  goethite_coarse,uniform_positive, illite_fine,uniform_negative ,filename,debug_mode)
+  # cam_particles(domain_size, n_steps,jump_const,type_i_addition, porosity,  goethite_coarse,uniform_positive, illite_fine,uniform_negative ,filename,debug_mode)
   type_i_addition = 1 - 0.95
   filename = 'goethite_illite_95'
   fun_args.append(setting( domain_size, n_steps,jump_const,type_i_addition, porosity, goethite_coarse,uniform_positive, illite_fine,uniform_negative ,filename,debug_mode))

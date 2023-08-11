@@ -140,7 +140,7 @@ def cam_particles( domain_size, n_steps, jump_parameter, distribution,porosity, 
   # plot_to_vtk(folder + filename, [plot_data[-1]], const.nx)
   text = 'SSA ' + str(round(eval_data[6],2)) + ' (L^-1), CA/V ' + str(round(eval_data[7],2)) + ' (L^-1)' + ' mean diameter ' + str(round(diameter(eval_data[5]))) + ' nm'
   plot_to_file(const.nx, plot_data[-1], folder + filename + '.png', text)
-  plot(const.nx, plot_data, 0)
+  # plot(const.nx, plot_data, 0)
   workbook.close()
   print(filename)
   print("Program ended at", end_time, "after", end_time-start_time)
@@ -177,7 +177,7 @@ def run_test_from_class(s):
 def main(d):
   debug_mode = False
   domain_size = [d,d]
-  n_steps = 250
+  n_steps = 1000
   porosity = 0.90
   jump_const = 20
   type_i_addition = 0.90
@@ -207,7 +207,7 @@ def main(d):
   type_i_addition = 1- 0.05
   filename = 'goethite_illite_5'
   fun_args.append(setting( domain_size, n_steps,jump_const,type_i_addition, porosity,  goethite_coarse,uniform_positive, illite_fine,uniform_negative ,filename,debug_mode))
-  cam_particles(domain_size, n_steps,jump_const,type_i_addition, porosity,  goethite_coarse,uniform_positive, illite_fine,uniform_negative ,filename,debug_mode)
+  # cam_particles(domain_size, n_steps,jump_const,type_i_addition, porosity,  goethite_coarse,uniform_positive, illite_fine,uniform_negative ,filename,debug_mode)
   type_i_addition = 1 - 0.45
   filename = 'goethite_illite_45'
   fun_args.append(setting(domain_size, n_steps,jump_const,type_i_addition, porosity,  goethite_coarse,uniform_positive, illite_fine,uniform_negative ,filename,debug_mode))
@@ -242,7 +242,7 @@ def main(d):
     t = multiprocessing.Process(target=run_test_from_class, args=(fun_arg,))
     processes.append(t)
     t.start()
-    time.sleep(2)
+    time.sleep(5)
 
   # while multiprocessing.active_children():
   #   val = input("Enter your value: ")
@@ -254,7 +254,7 @@ def main(d):
 
   for one_process in processes:
     one_process.join()
-    time.sleep(2)
+    time.sleep(5)
 # --------------------------------------------------------------------------------------------------
 # Define main function.
 # -------------------------------------------------------------------------------------------------- 
