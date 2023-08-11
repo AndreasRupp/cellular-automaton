@@ -4,7 +4,7 @@
  * Can be applied on a domain
  * nx
  * config_cam  FACE_ATTRACTIVITY | ROTATION | ROTATION_COMPOSITE
- * const_jump_parameter if = 0 -> define individual jump_paramters else equal parameter for all BUs
+ * const_stencil_size equal stencil_size for all BUs
  **********************************************************************************************/
 #pragma once
 
@@ -35,9 +35,7 @@
 namespace CAM
 {
 
-template <auto nx,
-          unsigned int const_jump_parameter,
-          typename fields_array_t>  //, unsigned int default_jump_parameter
+template <auto nx, unsigned int const_stencil_size, typename fields_array_t>
 class CellularAutomaton
 {
  public:
@@ -64,6 +62,7 @@ class CellularAutomaton
     // std::shuffle(_domain.building_units.begin(), _domain.building_units.end(),
     //  std::default_random_engine(std::rand()));
     // std::sort(_domain.building_units.begin(), _domain.building_units.end(), compare_size_bu);
+
     // this way easier to handle deprecated bu and random bu numbers.
     _domain.field_number_2_index.resize(_domain.max_field_number + 1, _domain.max_field_number + 1);
     for (unsigned int i = 0; i < _domain.building_units.size(); i++)
@@ -76,13 +75,12 @@ class CellularAutomaton
                   [&](CAM::BuildingUnit<nx>& unit) { move_bu(unit, _domain); });
     // // std::cout << "move_bu done: " << std::endl;
     _domain.find_composites_via_bu_boundary();
-    std::cout << "Number of composites: " << _domain.composites.size() << std::endl;
+    // std::cout << "Number of composites: " << _domain.composites.size() << std::endl;
     // std::sort(_domain.composites.begin(), _domain.composites.end(),compare_size_comp);
     // std::shuffle(_domain.composites.begin(), _domain.composites.end(),
     //  std::default_random_engine(std::rand()));
     std::for_each(_domain.composites.begin(), _domain.composites.end(),
                   [&](CAM::Composite<nx> composite) { move_composites(composite, _domain); });
-    // std::cout << "move_comp done: " << std::endl;
   }
 
  private:
@@ -135,12 +133,13 @@ class CellularAutomaton
   static void move_bu(CAM::BuildingUnit<nx>& _unit, Domain<nx, fields_array_t>& _domain)
   {
 #if STENCIL_4_ALL_BUS
-    // constexpr std::array<unsigned int, get_stencil_size<nx, const_jump_parameter>()>
-    //   possible_moves = CAM::get_stencil_c<nx, get_stencil_size<nx, const_jump_parameter>()>();
+    constexpr std::array<unsigned int, get_nof_stencil_cells<nx, const_stencil_size>()>
+      possible_moves = CAM::get_stencil_c<nx, const_stencil_size>();
 #else
     const std::vector<unsigned int> possible_moves =
       CAM::get_stencil<nx>(_unit.get_jump_parameter());
 #endif
+
     std::vector<
       std::tuple<unsigned int, std::array<int, CAM::n_DoF_basis_rotation<nx>()>, unsigned int>>
       best_move_rotation;
@@ -154,7 +153,7 @@ class CellularAutomaton
       for (const std::array<int, CAM::n_DoF_basis_rotation<nx>()>& rotation : possible_rotations)
       {
         BuildingUnit<nx> rotated_unit(_unit);
-        rotated_unit.rotate(rotation, rotation_point);  // _unit.get_center_field()
+        rotated_unit.rotate(rotation, rotation_point);
 
 #else
     std::array<int, CAM::n_DoF_basis_rotation<nx>()> rotation;

@@ -64,14 +64,17 @@ def cam_particles(domain_size,n_steps, jump_parameter, distribution,porosity, ty
       "python_functions")
     from plot import plot, plot_to_file, plot_to_vtk
 
-
+  def stencil_size(const_stencil, area):
+    return np.floor((const_stencil/(np.sqrt(area))) + 0.5)
+  
   const                 = CAM.config()
   const.nx              = domain_size
-  const.ca_settings      = [True,True, False]
-  const.const_jump_parameter = jump_parameter
+  const.ca_settings      = [True, True, False, False, False]
+  const.const_jump_parameter = stencil_size(jump_parameter,1)
   const.debug_mode      = debug_mode
   PyCAM = CAM.include(const)
-  Domain = PyCAM(jump_parameter)
+  subaggregate_threshold = 0.01
+  Domain = PyCAM(jump_parameter, subaggregate_threshold) # for composites
 
   n_fields = np.prod(const.nx)
   n_solids = round((1 - porosity) * n_fields)
@@ -87,37 +90,35 @@ def cam_particles(domain_size,n_steps, jump_parameter, distribution,porosity, ty
   n_g_d = split(n_g, n_dim)
   n_i_d = split(n_i, n_dim)
 
-  def stencil_size(const_stencil, area):
-    return np.floor((const_stencil/(np.sqrt(area))) + 0.5)
   def diameter(PS):
     return 2 * math.pow(PS * (0.025 * 1000) ** 3 / math.pi * 3 / 4, (1/3))
 
   summe = 0
   #typ 1
-  jp_g = stencil_size(jump_parameter,size_g)
+  st_si_g = stencil_size(jump_parameter,size_g)
 
   for d in range(n_dim):
     success = 0
     type_g = list(np.roll(type_g,1))
     charges_g = list(np.roll(charges_g,2))
     while success <  n_g_d[d]:
-      success = success + Domain.place_plane(jp_g,type_g,  -1, charges_g )
+      success = success + Domain.place_plane(st_si_g,type_g,  -1, charges_g )
     summe = summe + success
-  success = success + Domain.place_plane(jp_g,type_g,  -1, charges_g )
+  success = success + Domain.place_plane(st_si_g,type_g,  -1, charges_g )
   summe = summe + success
 
 
 
   #type 2
-  jp_i = stencil_size(jump_parameter,size_i)
+  st_si_i = stencil_size(jump_parameter,size_i)
   for d in range(n_dim):
     success = 0
     type_i = list(np.roll(type_i,1))
     charges_i = list(np.roll(charges_i,2))
     while success < n_i_d[d]:
-      success = success + Domain.place_plane(jp_i,type_i ,-1,charges_i)
+      success = success + Domain.place_plane(st_si_i,type_i ,-1,charges_i)
     summe = summe + success
-  success = success + Domain.place_plane(jp_i,type_i ,-1,charges_i)
+  success = success + Domain.place_plane(st_si_i,type_i ,-1,charges_i)
   summe = summe + success
 
 
@@ -147,7 +148,7 @@ def cam_particles(domain_size,n_steps, jump_parameter, distribution,porosity, ty
       for i in range(len(eval_measures_names)):
         worksheet.write(step + 2, i+1, eval_data[i])
     # save_data[step+1] = Domain.fields()
-    # print(step + 1)
+    print("Step " +str(step + 1))
   plot_data[1] = Domain.fields()
 
   end_time = datetime.now()
@@ -197,7 +198,7 @@ def run_test_from_class(s):
 # Function main.
 # --------------------------------------------------------------------------------------------------
 def main():
-  n_steps =5000
+  n_steps = 10
   porosity = 0.9
   jump_const = 20
   type_i_addition = 0.95
@@ -222,7 +223,7 @@ def main():
   type_i_addition = 1- 0.05
   filename = 'goethite_illite_5'
   fun_args.append(setting( domain_size, n_steps,jump_const,type_i_addition, porosity, goethite_coarse,uniform_positive, illite_fine,uniform_negative ,filename,debug_mode))
-  #cam_particles(domain_size, n_steps,jump_const,type_i_addition, porosity,  goethite_coarse,uniform_positive, illite_fine,uniform_negative ,filename,debug_mode)
+  cam_particles(domain_size, n_steps,jump_const,type_i_addition, porosity,  goethite_coarse,uniform_positive, illite_fine,uniform_negative ,filename,debug_mode)
   type_i_addition = 1 - 0.45
   filename = 'goethite_illite_45'
   fun_args.append(setting(domain_size, n_steps,jump_const,type_i_addition, porosity, goethite_coarse,uniform_positive, illite_fine,uniform_negative ,filename,debug_mode))
@@ -231,7 +232,7 @@ def main():
   type_i_addition = 1 - 0.55
   filename = 'goethite_illite_55'
   fun_args.append(setting(domain_size, n_steps,jump_const,type_i_addition, porosity, goethite_coarse,uniform_positive, illite_fine,uniform_negative ,filename,debug_mode))
-  # cam_particles(domain_size, n_steps,jump_const,type_i_addition, porosity,  goethite_coarse,uniform_positive, illite_fine,uniform_negative ,filename,debug_mode)
+  cam_particles(domain_size, n_steps,jump_const,type_i_addition, porosity,  goethite_coarse,uniform_positive, illite_fine,uniform_negative ,filename,debug_mode)
   type_i_addition = 1 - 0.95
   filename = 'goethite_illite_95'
   fun_args.append(setting( domain_size, n_steps,jump_const,type_i_addition, porosity, goethite_coarse,uniform_positive, illite_fine,uniform_negative ,filename,debug_mode))

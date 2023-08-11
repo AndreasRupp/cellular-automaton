@@ -30,7 +30,6 @@ struct Composite
 
   Composite operator+(const Composite& comp) const
   {
-    // std::cout<<"plus"<<this->building_units.size() + comp.building_units.size()<<std::endl;
     Composite composite;
     composite.building_units.resize(this->building_units.size() + comp.building_units.size());
     std::set_union(this->building_units.begin(), this->building_units.end(),

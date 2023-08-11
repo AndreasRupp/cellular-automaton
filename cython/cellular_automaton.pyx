@@ -2,9 +2,10 @@
 
 cdef class PythonClassName: 
   cdef CythonClassName* thisptr #hold a C++ instance which we're wrapping 
-  def __cinit__(self, jump_param_composites = "default" ):
+  def __cinit__(self, jump_param_composites = "default" , subaggregate_threshold = "default"):
     if jump_param_composites   == "default" : jump_param_composites = 5
-    self.thisptr = new CythonClassName(jump_param_composites) 
+    if subaggregate_threshold ==  "default": subaggregate_threshold= 0.01
+    self.thisptr = new CythonClassName(jump_param_composites, subaggregate_threshold) 
   def __dealloc__(self): 
     del self.thisptr 
   def print_array(self): 

@@ -17,7 +17,7 @@
 namespace CAM
 {
 template <auto nx,
-          unsigned int const_jump_parameter,
+          unsigned int const_stencil_size,
           typename fields_array_t = std::array<unsigned int, CAM::n_fields<nx>()>>
 class CAMInterface
 {
@@ -26,9 +26,11 @@ class CAMInterface
   unsigned int rand_seed;
 
  public:
-  CAMInterface(const double _jump_parameter_composites = 5)
+  CAMInterface(const double _jump_parameter_composites = 5,
+               const double _subaggregate_threshold = 0.01)
   {
     CAM::jump_parameter_composite = _jump_parameter_composites;
+    CAM::subaggregate_threshold = _subaggregate_threshold;
   }
   /*!*********************************************************************************************
    * \brief Creates domain with building units containing only one cell
@@ -146,21 +148,22 @@ class CAMInterface
 
   void print_array() { domain.print_array(); }
 
-  void do_cam() { CAM::CellularAutomaton<nx, const_jump_parameter, fields_array_t>::apply(domain); }
+  void do_cam() { CAM::CellularAutomaton<nx, const_stencil_size, fields_array_t>::apply(domain); }
 
   const fields_array_t& fields()
   {
-    domain.find_composites_via_bu_boundary();
-    std::shuffle(domain.composites.begin(), domain.composites.end(),
-                 std::default_random_engine(std::rand()));
-    for (unsigned int i = 0; i < domain.composites.size(); i++)
-    {
-      std::cout << i << std::endl;
-      for (unsigned int j : domain.composites[i].field_indices)
-      {
-        domain.domain_fields[j] = i * 10;
-      }
-    }
+    // show composites
+    // domain.find_composites_via_bu_boundary();
+    // std::shuffle(domain.composites.begin(), domain.composites.end(),
+    //              std::default_random_engine(std::rand()));
+    // for (unsigned int i = 0; i < domain.composites.size(); i++)
+    // {
+    //   std::cout << i << std::endl;
+    //   for (unsigned int j : domain.composites[i].field_indices)
+    //   {
+    //     domain.domain_fields[j] = i * 10;
+    //   }
+    // }
 
     return domain.domain_fields;
   }

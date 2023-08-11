@@ -98,6 +98,12 @@ class BuildingUnit
 
     shape.insert(shape.end(), boundary.index.begin(), boundary.index.end());
 
+    // Center_field
+    center_field = CAM::get_center_field<nx>(shape);
+
+    // center point
+    // rotation_points.push_back(center_field);
+
     // two rotation points (edge points on basal axis (maximum extent, maximum torque) )
     unsigned int max_dim =
       std::distance(max_extent.begin(), std::max_element(max_extent.begin(), max_extent.end()));
@@ -114,7 +120,7 @@ class BuildingUnit
     }
 
     rotation_points.push_back(rotation_point);
-    ;
+
     rotation_point =
       CAM::aim<nx>(0, (unsigned int)(max_extent[max_dim]) * direct_neigh<nx>(2 * max_dim + 1));
     for (unsigned int i = 0; i < nx.size(); i++)
@@ -138,7 +144,6 @@ class BuildingUnit
       // std::make_pair<unsigned int, unsigned int>(boundary.index[i], i)
       boundary.index_by_relation_to_reference.insert(pair);
     }
-    center_field = CAM::get_center_field<nx>(shape);
   }
 
   void set_reference_field(const unsigned int _reference_field)

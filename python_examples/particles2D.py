@@ -46,14 +46,18 @@ def cam_particles( domain_size, n_steps, jump_parameter, distribution,porosity, 
       "python_functions")
     from plot import plot, plot_to_file, plot_to_vtk
 
+  def stencil_size(const_stencil, area):
+    return np.floor((const_stencil/(np.sqrt(area))) + 0.5)
   
   const                 = CAM.config()
   const.nx              = domain_size
-  const.ca_settings      = [False, True, True, False, False]
-  const.const_jump_parameter = jump_parameter
+  # ["DFACE_ATTRACTIVITY", "DROTATION", "DROTATION_COMPOSITES", "DSTENCIL_4_ALL_BUS", "DSUB_COMPOSITES"]
+  const.ca_settings      = [True, True, False, False, False]
+  const.const_jump_parameter = stencil_size(jump_parameter,1) # only used when DSTENCIL_4_ALL_BUS is set
   const.debug_mode      = debug_mode
   PyCAM = CAM.include(const)
-  Domain = PyCAM(jump_parameter) # for composites
+  subaggregate_threshold = 0.01
+  Domain = PyCAM(jump_parameter, subaggregate_threshold) # for composites
   n_fields = np.prod(const.nx)
   n_solids = round((1 - porosity) * n_fields)
 
@@ -65,40 +69,36 @@ def cam_particles( domain_size, n_steps, jump_parameter, distribution,porosity, 
   n_g = round(placement_g/size_g)
   n_i = round(placement_i/size_i)
 
-  def stencil_size(const_stencil, area):
-    return np.floor((const_stencil/(np.sqrt(area))) + 0.5)
-
   def diameter(PS):
       return 2 * math.sqrt(PS * (0.025 * 1000) ** 2 / math.pi)
-
 
   #typ 1
   summe = 0
   success = 0
-  jp_g = stencil_size(jump_parameter,size_g)
+  st_si_g = stencil_size(jump_parameter,size_g)
   while success < np.floor(n_g/2):
-    success = success + Domain.place_plane(jp_g, type_g, -1, charges_g )
+    success = success + Domain.place_plane(st_si_g, type_g, -1, charges_g )
   summe = summe + success
 
   success = 0
   type_g = list(np.roll(type_g,1))
   charges_g = list(np.roll(charges_g,2))
   while success <  np.ceil(n_g/2):
-    success = success + Domain.place_plane(jp_g,type_g,  -1, charges_g )
+    success = success + Domain.place_plane(st_si_g,type_g,  -1, charges_g )
   summe = summe + success
 
   #type 2
-  jp_i = stencil_size(jump_parameter,size_i)
+  st_si_i = stencil_size(jump_parameter,size_i)
   success = 0
   while success <  np.floor(n_i/2):
-    success = success + Domain.place_plane(jp_i, type_i, -1,   charges_i)
+    success = success + Domain.place_plane(st_si_i, type_i, -1,   charges_i)
   summe = summe + success
 
   success = 0
   type_i = list(np.roll(type_i,1))
   charges_i = list(np.roll(charges_i,2))
   while success < np.ceil(n_i/2):
-    success = success + Domain.place_plane(jp_i,type_i ,-1,charges_i)
+    success = success + Domain.place_plane(st_si_i,type_i ,-1,charges_i)
   summe = summe + success
 
   # Domain.print_array()
@@ -108,7 +108,7 @@ def cam_particles( domain_size, n_steps, jump_parameter, distribution,porosity, 
   plot_data = np.zeros( (1, np.prod(const.nx)) ) 
 
   # save_data[0] = Domain.fields()
-  # plot_data[0] = Domain.fields()
+  plot_data[0] = Domain.fields()
 
   eval_data = Domain.eval_measures()
   eval_data[len(eval_measures_names)-1] = diameter(eval_data[5])
@@ -126,7 +126,7 @@ def cam_particles( domain_size, n_steps, jump_parameter, distribution,porosity, 
       for i in range(len(eval_measures_names)):
         worksheet.write(step + 2, i+1, eval_data[i])
     # save_data[step+1] = Domain.fields()
-    print("Step-----------------------------------------------------------" +str(step + 1))
+    print("Step " +str(step + 1))
 
   plot_data[-1] = Domain.fields()
   end_time = datetime.now() 
@@ -148,7 +148,7 @@ def cam_particles( domain_size, n_steps, jump_parameter, distribution,porosity, 
 class setting:
   def __init__(self,
     domain_size = [500,500],
-    n_steps = 100, 
+    n_steps = 250, 
     jump_parameter = 20, 
     distribution= 0.5,
     porosity = 0.9, 
@@ -177,7 +177,7 @@ def run_test_from_class(s):
 def main(d):
   debug_mode = False
   domain_size = [d,d]
-  n_steps = 300
+  n_steps = 250
   porosity = 0.90
   jump_const = 20
   type_i_addition = 0.90
@@ -204,57 +204,57 @@ def main(d):
 
   fun_args  = []
 
-  # type_i_addition = 1- 0.05
-  # filename = 'goethite_illite_5'
-  # fun_args.append(setting( domain_size, n_steps,jump_const,type_i_addition, porosity,  goethite_coarse,uniform_positive, illite_fine,uniform_negative ,filename,debug_mode))
-  # #cam_particles(domain_size, n_steps,jump_const,type_i_addition, porosity,  goethite_coarse,uniform_positive, illite_fine,uniform_negative ,filename,debug_mode)
-  # type_i_addition = 1 - 0.45
-  # filename = 'goethite_illite_45'
-  # fun_args.append(setting(domain_size, n_steps,jump_const,type_i_addition, porosity,  goethite_coarse,uniform_positive, illite_fine,uniform_negative ,filename,debug_mode))
-  # # cam_particles(domain_size, n_steps,jump_const,type_i_addition, porosity,  goethite_coarse,uniform_positive, illite_fine,uniform_negative ,filename,debug_mode)
-
-  # type_i_addition = 1 - 0.55
-  # filename = 'goethite_illite_55'
-  # fun_args.append(setting(domain_size, n_steps,jump_const,type_i_addition, porosity,  goethite_coarse,uniform_positive, illite_fine,uniform_negative ,filename,debug_mode))
+  type_i_addition = 1- 0.05
+  filename = 'goethite_illite_5'
+  fun_args.append(setting( domain_size, n_steps,jump_const,type_i_addition, porosity,  goethite_coarse,uniform_positive, illite_fine,uniform_negative ,filename,debug_mode))
+  cam_particles(domain_size, n_steps,jump_const,type_i_addition, porosity,  goethite_coarse,uniform_positive, illite_fine,uniform_negative ,filename,debug_mode)
+  type_i_addition = 1 - 0.45
+  filename = 'goethite_illite_45'
+  fun_args.append(setting(domain_size, n_steps,jump_const,type_i_addition, porosity,  goethite_coarse,uniform_positive, illite_fine,uniform_negative ,filename,debug_mode))
   # cam_particles(domain_size, n_steps,jump_const,type_i_addition, porosity,  goethite_coarse,uniform_positive, illite_fine,uniform_negative ,filename,debug_mode)
-  # type_i_addition = 1 - 0.95
-  # filename = 'goethite_illite_95'
-  # fun_args.append(setting( domain_size, n_steps,jump_const,type_i_addition, porosity,  goethite_coarse,uniform_positive, illite_fine,uniform_negative ,filename,debug_mode))
-  # # cam_particles(domain_size, n_steps,jump_const,type_i_addition, porosity,  goethite_coarse,uniform_positive, illite_fine,uniform_negative ,filename,debug_mode)
+
+  type_i_addition = 1 - 0.55
+  filename = 'goethite_illite_55'
+  fun_args.append(setting(domain_size, n_steps,jump_const,type_i_addition, porosity,  goethite_coarse,uniform_positive, illite_fine,uniform_negative ,filename,debug_mode))
+  # cam_particles(domain_size, n_steps,jump_const,type_i_addition, porosity,  goethite_coarse,uniform_positive, illite_fine,uniform_negative ,filename,debug_mode)
+  type_i_addition = 1 - 0.95
+  filename = 'goethite_illite_95'
+  fun_args.append(setting( domain_size, n_steps,jump_const,type_i_addition, porosity,  goethite_coarse,uniform_positive, illite_fine,uniform_negative ,filename,debug_mode))
+  # cam_particles(domain_size, n_steps,jump_const,type_i_addition, porosity,  goethite_coarse,uniform_positive, illite_fine,uniform_negative ,filename,debug_mode)
 
   type_i_addition = 0.5
-  # filename = 'illite_medium_edge_to_face'
-  # # fun_args.append(setting( domain_size, n_steps,jump_const,type_i_addition, porosity,  illite_medium, face_to_edge, illite_medium, face_to_edge ,filename, debug_mode))
+  filename = 'illite_medium_edge_to_face'
+  fun_args.append(setting( domain_size, n_steps,jump_const,type_i_addition, porosity,  illite_medium, face_to_edge, illite_medium, face_to_edge ,filename, debug_mode))
   # cam_particles(domain_size, n_steps,jump_const,type_i_addition, porosity,  illite_medium, face_to_edge, illite_medium, face_to_edge ,filename, debug_mode)
-  # filename = 'illite_fine_edge_to_face'
-  # # fun_args.append(setting(  domain_size, n_steps,jump_const,type_i_addition, porosity,  illite_fine, face_to_edge, illite_fine, face_to_edge ,filename, debug_mode))
+  filename = 'illite_fine_edge_to_face'
+  fun_args.append(setting(  domain_size, n_steps,jump_const,type_i_addition, porosity,  illite_fine, face_to_edge, illite_fine, face_to_edge ,filename, debug_mode))
   # cam_particles(domain_size, n_steps,jump_const,type_i_addition, porosity,  illite_fine, face_to_edge, illite_fine, face_to_edge ,filename, debug_mode)
 
-  # filename = 'illite_medium_face_to_face'
-  # # fun_args.append(setting( domain_size, n_steps,jump_const,type_i_addition, porosity,  illite_medium, face_to_face, illite_medium, [i * (-1) for i in face_to_face],filename,debug_mode))
+  filename = 'illite_medium_face_to_face'
+  fun_args.append(setting( domain_size, n_steps,jump_const,type_i_addition, porosity,  illite_medium, face_to_face, illite_medium, [i * (-1) for i in face_to_face],filename,debug_mode))
   # cam_particles(domain_size, n_steps,jump_const,type_i_addition, porosity,  illite_medium, face_to_face, illite_medium, [i * (-1) for i in face_to_face],filename,debug_mode)
   filename = 'illite_fine_face_to_face'
   fun_args.append(setting( domain_size, n_steps,jump_const,type_i_addition, porosity,  illite_fine, face_to_face, illite_fine, [i * (-1) for i in face_to_face] ,filename, debug_mode))
-  cam_particles(domain_size, n_steps,jump_const,type_i_addition, porosity,  illite_fine, face_to_face, illite_fine, [i * (-1) for i in face_to_face] ,filename, debug_mode)
+  # cam_particles(domain_size, n_steps,jump_const,type_i_addition, porosity,  illite_fine, face_to_face, illite_fine, [i * (-1) for i in face_to_face] ,filename, debug_mode)
 
-  # processes = []
-  # for fun_arg in fun_args:
-  #   t = multiprocessing.Process(target=run_test_from_class, args=(fun_arg,))
-  #   processes.append(t)
-  #   t.start()
-  #   time.sleep(2)
+  processes = []
+  for fun_arg in fun_args:
+    t = multiprocessing.Process(target=run_test_from_class, args=(fun_arg,))
+    processes.append(t)
+    t.start()
+    time.sleep(2)
 
-  # # while multiprocessing.active_children():
-  # #   val = input("Enter your value: ")
-  # #   if val == "kill_all_children":
-  # #     active = multiprocessing.active_children()
-  # #     for child in active:
-  # #       child.kill()
-  # #     time.sleep(2)   
+  # while multiprocessing.active_children():
+  #   val = input("Enter your value: ")
+  #   if val == "kill_all_children":
+  #     active = multiprocessing.active_children()
+  #     for child in active:
+  #       child.kill()
+  #     time.sleep(2)   
 
-  # for one_process in processes:
-  #   one_process.join()
-  #   time.sleep(2)
+  for one_process in processes:
+    one_process.join()
+    time.sleep(2)
 # --------------------------------------------------------------------------------------------------
 # Define main function.
 # -------------------------------------------------------------------------------------------------- 
