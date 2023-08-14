@@ -69,6 +69,7 @@ def plot_update(axes, data, ax=plt):
 
   if np.size(axes) == 2:
     data = (data != 0)
+    # cmap = plt.get_cmap('hot')
     cmap = colors.ListedColormap(['white', 'k'])
     # cmap = colors.ListedColormap(['white' ,'sandybrown','darkgray'])
     ax.pcolor(data[::-1], cmap=cmap,edgecolors='b', linewidths=0)#

@@ -11,11 +11,7 @@ def files(conf):
   for nx_dim in conf.nx:
     nx_string = nx_string + str(nx_dim) + ","
   nx_string    = nx_string[:-1] + "})"
-  ca_settings_string    = "std::array<bool, " + str(len(conf.ca_settings)) + ">({"
-  for setting in conf.ca_settings:
-    ca_settings_string = ca_settings_string + str(setting).replace('F', 'f').replace('T', 't') + ","
-  ca_settings_string = ca_settings_string + "})"
-  cpp_class    = "CAM::CAMInterface< " + nx_string + "," + ca_settings_string + "," + str(conf.const_jump_parameter) + ", std::vector<unsigned int> >"
+  cpp_class    = "CAM::CAMInterface< " + nx_string + "," + str(conf.const_stencil_size) + ", std::vector<unsigned int> >"
   cython_file  = cpp_class + "_deb" if conf.debug_mode else cpp_class + "_rel"
   cython_file  = re.sub(' ', '', cython_file)
   cython_file  = "mod" + str(hashlib.sha256(cython_file.encode('utf-8')).hexdigest())

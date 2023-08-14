@@ -7,7 +7,7 @@ IncludeFiles
 
 cdef extern from "<CAM/cam_interface.hxx>" : 
   cdef cppclass CythonClassName C++ClassName : 
-    CythonClassName(const double jump_param_composite) except + 
+    CythonClassName(const double jump_param_composite, const double subaggregate_threshold) except + 
     void print_array() 
     const vector[unsigned int] &fields() 
     void do_cam() 

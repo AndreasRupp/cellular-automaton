@@ -19,8 +19,16 @@
 #include <iomanip>
 #include <iostream>
 #include <limits>
+#include <unordered_map>
+#ifndef SUB_AGGREGATES
+#define SUB_AGGREGATES false
+#endif
 namespace CAM
 {
+/*!***********************************************************************************************
+ * \brief two subaggregates stick together above this value
+ ************************************************************************************************/
+static double subaggregate_threshold;
 /*!***********************************************************************************************
  * \brief   Describes one connected set of bulk cells/fields.
  * Information gathered only by analysing the domain independ of defintion of bu and composites
@@ -50,6 +58,13 @@ struct Particle
   unsigned int n_surfaces_solid_fluid;
   unsigned int n_surfaces_solid_solid;
 };
+
+/*!*********************************************************************************************
+ * \brief   Domain class
+ * TODO: implement subaggregate_threshold as template parameter
+ * clang: non-type template argument of type 'double' is not yet supported
+ **********************************************************************************************/
+// template <auto nx, double subaggregate_threshold, typename fields_array_t>
 template <auto nx, typename fields_array_t>
 class Domain
 {
@@ -114,6 +129,70 @@ class Domain
   }
   /*!*********************************************************************************************
    * \brief  Finds composites (particles containing more then one bu) in domain and stores
+   * Combining particles/subaggregates as long as the connections are above a minimum threshold
+   *defining the strength of the connection \param threshold connections/nofCells
+   ************************************************************************************************/
+  void find_sub_composites(const CAM::Composite<nx>& _composite,
+                           std::vector<CAM::Composite<nx>>& sub_composites,
+                           std::vector<std::vector<unsigned int>> _connections,
+                           double threshold)
+  {
+    for (CAM::BuildingUnit<nx>* bu : _composite.building_units)
+    {
+      CAM::Composite<nx> sub_comp;
+      sub_comp.building_units.push_back(bu);
+      for (unsigned int shape_field : bu->get_shape())
+        sub_comp.field_indices.push_back(CAM::aim<nx>(bu->get_reference_field(), shape_field));
+      sub_comp.jump_parameter = CAM::get_jump_range_composite<nx>(sub_comp.field_indices.size());
+      sub_composites.push_back(sub_comp);
+    }
+    bool combining = true;
+    while (combining)
+    {
+      combining = false;
+      unsigned int max_connection_a = 0, max_connection_b = 0;
+      double connection_value_a, connection_value_b, max_connection_value = 0;
+      for (unsigned int a = 0; a < sub_composites.size(); a++)
+      {
+        for (unsigned int b = a; b < sub_composites.size(); b++)
+        {
+          if (_connections[a][b] == 0 || a == b)
+            continue;
+          // connection value, the bigger the more connections are between two subaggregates
+          connection_value_a =
+            ((double)_connections[a][b] / 2) / (double)sub_composites[a].field_indices.size();
+          connection_value_b =
+            ((double)_connections[a][b] / 2) / (double)sub_composites[b].field_indices.size();
+
+          if ((threshold < connection_value_a) && (threshold < connection_value_b) &&
+              (max_connection_value < (connection_value_b + connection_value_b)))
+          {
+            max_connection_b = b;
+            max_connection_a = a;
+            max_connection_value = connection_value_b + connection_value_b;
+            combining = true;
+          }
+        }
+      }
+      if (combining)
+      {
+        CAM::Composite<nx> combinded_composite =
+          sub_composites[max_connection_a] + sub_composites[max_connection_b];
+        sub_composites[max_connection_a] = combinded_composite;
+        sub_composites.erase(sub_composites.begin() + max_connection_b);
+        for (unsigned int i = 0; i < _connections.size(); i++)
+        {
+          _connections[max_connection_a][i] += _connections[max_connection_b][i];
+          _connections[i][max_connection_a] += _connections[i][max_connection_b];
+        }
+        _connections.erase(_connections.begin() + max_connection_b);
+        for (std::vector<unsigned int>& arr : _connections)
+          arr.erase(arr.begin() + +max_connection_b);
+      }
+    }
+  }
+  /*!*********************************************************************************************
+   * \brief  Finds composites (particles containing more then one bu) in domain and stores
    * information in std::vector<CAM::Composite<nx>*> composites; std::vector<Particle> particles;
    * Faster version using the connected particles and their boundaries
    ************************************************************************************************/
@@ -122,7 +201,7 @@ class Domain
     fields_array_t fields = domain_fields;
     constexpr unsigned int dim = nx.size();
     unsigned int neigh_field, boundaries_size;
-    unsigned int field_number;
+    unsigned int field_number, field_number_neigh;
     unsigned int n_surfaces_solid_fluid, n_surfaces_solid_solid;
 
     std::vector<unsigned int> boundaries, found_solids, helper;
@@ -137,6 +216,18 @@ class Domain
 
       CAM::Composite<nx> new_composite;
       new_composite.building_units.push_back(&building_units[i]);
+#if SUB_COMPOSITES
+      unsigned int local_a, local_b;
+      std::vector<std::vector<unsigned int>> connections;
+      connections.resize(new_composite.building_units.size());
+      for (std::vector<unsigned int> arr : connections)
+        arr.resize(new_composite.building_units.size(), 1);
+
+      std::unordered_map<unsigned int, unsigned int> global_field_number_2_local_index;
+      std::pair<unsigned int, unsigned int> pair(building_units[i].get_number(),
+                                                 new_composite.building_units.size() - 1);
+      global_field_number_2_local_index.insert(pair);
+#endif
 
       n_surfaces_solid_fluid = 0;
       n_surfaces_solid_solid = 0;
@@ -157,24 +248,20 @@ class Domain
 
       for (unsigned int j = 0; j < boundaries_size; j++, boundaries_size = boundaries.size())
       {
+        field_number = fields[boundaries[j]];
         for (unsigned int k = 0; k < 2 * dim; ++k)
         {
           neigh_field = aim<nx>(boundaries[j], direct_neigh<nx>(k));
-          field_number = fields[neigh_field];
+          field_number_neigh = fields[neigh_field];
 
-          if (field_number == 0)
-            n_surfaces_solid_fluid += 1;
-          else if (field_number != fields[boundaries[j]])
-            n_surfaces_solid_solid += 1;
-
-          if (field_number != 0 && is_bu_visited[field_number] != true)
+          if (field_number_neigh != 0 && is_bu_visited[field_number_neigh] != true)
           {
-            is_bu_visited[field_number] = true;
-
-            unsigned int index = field_number_2_index[field_number];
+            is_bu_visited[field_number_neigh] = true;
+            unsigned int index = field_number_2_index[field_number_neigh];
 
             new_composite.building_units.push_back(&(building_units[index]));
-            composite_components.push_back(field_number);
+
+            composite_components.push_back(field_number_neigh);
 
             for (unsigned int boundary_field : (building_units[index]).get_boundary())
               boundaries.push_back(
@@ -183,6 +270,30 @@ class Domain
             for (unsigned int shape_field : (building_units[index]).get_shape())
               found_solids.push_back(
                 CAM::aim<nx>((building_units[index]).get_reference_field(), shape_field));
+#if SUB_COMPOSITES
+            // second index
+            std::pair<unsigned int, unsigned int> pair(field_number_neigh,
+                                                       new_composite.building_units.size() - 1);
+            global_field_number_2_local_index.insert(pair);
+
+            connections.resize(new_composite.building_units.size());
+            for (std::vector<unsigned int>& arr : connections)
+              arr.resize(new_composite.building_units.size(), 0);
+#endif
+          }
+
+          if (field_number_neigh == 0)
+            n_surfaces_solid_fluid += 1;
+          else if (field_number_neigh != field_number)
+          {
+            // this values have to be divided by two
+            n_surfaces_solid_solid += 1;
+#if SUB_COMPOSITES
+            local_a = (global_field_number_2_local_index.find(field_number))->second;
+            local_b = (global_field_number_2_local_index.find(field_number_neigh))->second;
+            connections[local_a][local_b]++;
+            connections[local_b][local_a]++;
+#endif
           }
         }
       }
@@ -192,7 +303,17 @@ class Domain
         new_composite.field_indices = found_solids;
         new_composite.jump_parameter =
           CAM::get_jump_range_composite<nx>(new_composite.field_indices.size());
+
+#if SUB_COMPOSITES
+        std::vector<CAM::Composite<nx>> sub_composites;
+        find_sub_composites(new_composite, sub_composites, connections,
+                            CAM::subaggregate_threshold);
+        for (CAM::Composite<nx> comp : sub_composites)
+          composites.push_back(comp);
+
+#else
         composites.push_back(new_composite);
+#endif
       }
       particles.push_back(Particle(found_solids, composite_components, n_surfaces_solid_fluid,
                                    n_surfaces_solid_solid));
@@ -203,7 +324,10 @@ class Domain
    *
    * \retval  domain_fields      Information about  status of each cell in domain
    ************************************************************************************************/
-  const fields_array_t& fields() const { return domain_fields; }
+  const fields_array_t& fields() const
+  {
+    return domain_fields;
+  }
   /*!***********************************************************************************************
    * \brief   Array of particle locations.
    ************************************************************************************************/

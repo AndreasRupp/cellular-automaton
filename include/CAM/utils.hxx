@@ -297,7 +297,7 @@ static constexpr std::vector<unsigned int> get_stencil(const double _jump_parame
   if (_jump_parameter < 1)
     return stencil;
 
-  unsigned int new_neigh, layers = std::max(1., _jump_parameter), index = 0,
+  unsigned int new_neigh, layers = std::max(1., std::ceil(_jump_parameter)), index = 0,
                           old_size = stencil.size();
   for (unsigned int lay = 0; lay < layers; ++lay)
   {
@@ -316,8 +316,14 @@ static constexpr std::vector<unsigned int> get_stencil(const double _jump_parame
   }
   return stencil;
 }
+
+/*!*********************************************************************************************
+ * \brief   Get number of cells of stencil with specific size
+ *
+ * \retval nr_of_cells
+ **********************************************************************************************/
 template <auto nx, unsigned int jump_parameter>
-static constexpr unsigned int get_stencil_size()
+static constexpr unsigned int get_nof_stencil_cells()
 {
   std::array<unsigned int, ipow((2 * jump_parameter + 1), nx.size())> stencil;
   std::fill(stencil.begin(), stencil.end(), n_fields<nx>() + 1);
@@ -346,9 +352,10 @@ static constexpr unsigned int get_stencil_size()
  * \brief   Define stencil during compile time
  **********************************************************************************************/
 template <auto nx, unsigned int jump_parameter>
-static constexpr std::array<unsigned int, get_stencil_size<nx, jump_parameter>()> get_stencil_c()
+static constexpr std::array<unsigned int, get_nof_stencil_cells<nx, jump_parameter>()>
+get_stencil_c()
 {
-  std::array<unsigned int, get_stencil_size<nx, jump_parameter>()> stencil;
+  std::array<unsigned int, get_nof_stencil_cells<nx, jump_parameter>()> stencil;
   std::fill(stencil.begin(), stencil.end(), n_fields<nx>() + 1);
   stencil[0] = 0;
 

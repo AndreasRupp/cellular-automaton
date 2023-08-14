@@ -7,7 +7,7 @@ from .paths import main_dir
 class config:
   nx                  = []
   ca_settings        = []
-  const_jump_paramter = 0
+  const_stencil_size = 0
   cython_replacements = []
   cpp_code            = ""
   include_files       = []
@@ -25,7 +25,7 @@ def consistent(conf):
   for entry in conf.ca_settings:
     if not isinstance(entry, bool):
       return False
-  if not isinstance(conf.const_jump_paramter, int):
+  if not isinstance(conf.const_stencil_size, int):
     return False
   if not isinstance(conf.cpp_code, str):
     return False

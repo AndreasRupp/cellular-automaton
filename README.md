@@ -9,7 +9,11 @@ size, i.e., the number of the edge-connected pixels. The range of the VNN of lar
 calculated as `jump_parameter` over the square-root of the larger particle's size. All particles,
 i.e., single pixels and larger particles, move in such a way that the amount of their particle
 neighbors is maximized.
-
+Furthermore the following optional properties of a building unit and CAM can be defined:
+  - Different shapes of the building unit (pre-implemented are spheres, planes/cubes and random particles based on spheres.)
+  - Boundary face weights of the building unit (attraction and repulsion effects between building units or composites can be modelled)
+  - Rotation of building units and composites (around the center or user-defined e.g. edge points of basal axis)
+  - Stability of composites (The strength of a connection between two parts of a composite (sub-aggregates) is currently defined as number of contact faces between them divided by the size of each sub-aggregate. If the connection is considered as weak by both (below a certain threshold), they can move independently of each other)
 
 # How to use cellular-automaton / CAM
 
