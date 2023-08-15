@@ -25,11 +25,11 @@ except (ImportError, ModuleNotFoundError) as error:
 # --------------------------------------------------------------------------------------------------
 # Parameter identification test.
 # --------------------------------------------------------------------------------------------------
-def ecdf_identify(nx, porosity, n_steps, jump_parameter, ecdf_type, subset_sizes, n_bins, n_runs,
+def ecdf_identify(nx, porosity, n_steps, jump_parameter, subaggregate_threshold, ecdf_type, subset_sizes, n_bins, n_runs,
   min_value_shift, max_value_shift, jump_params, distance_fct, debug_mode, file_name, is_plot):
 
-  def run_cam(jump_parameter, nx, porosity, n_steps, debug_mode=False):
-    CAM_wrapper = PyCAM(jump_parameter)
+  def run_cam(jump_parameter, subaggregate_threshold, nx, porosity, n_steps, debug_mode=False):
+    CAM_wrapper = PyCAM(jump_parameter, subaggregate_threshold)
     CAM_wrapper.place_single_cell_bu_randomly(jump_parameter, porosity , 0)
     if isinstance(n_steps, list):
       for _ in range(n_steps[0]):  CAM_wrapper.do_cam()
@@ -69,7 +69,7 @@ def ecdf_identify(nx, porosity, n_steps, jump_parameter, ecdf_type, subset_sizes
   PyCAM                 = CAM.include(CAM_config)
 
   n_fields, n_iter = np.prod(nx), np.sum(subset_sizes)
-  data = [ run_cam(jump_parameter, nx, porosity, n_steps, debug_mode) for _ in range(n_iter) ]
+  data = [ run_cam(jump_parameter,subaggregate_threshold, nx, porosity, n_steps, debug_mode) for _ in range(n_iter) ]
 
   end_time = datetime.now()
   print("CAM data acquired at", end_time, "after", end_time-start_time)
@@ -103,11 +103,11 @@ def ecdf_identify(nx, porosity, n_steps, jump_parameter, ecdf_type, subset_sizes
   means_nor = [0.] * len(jump_params)
   for _ in range(n_runs):
     if not isinstance(n_steps, list):
-      values = [ ecdf.evaluate( func, [ run_cam(jump_param, nx, porosity, n_steps, debug_mode) \
+      values = [ ecdf.evaluate( func, [ run_cam(jump_param, subaggregate_threshold, nx, porosity, n_steps, debug_mode) \
                  for _ in range(subset_sizes[0]) ] ) for jump_param in jump_params ]
     else:
       values = [ ecdf.evaluate( func, np.transpose( [ \
-        run_cam(jump_param, nx, porosity, n_steps, debug_mode) for _ in range(subset_sizes[0]) \
+        run_cam(jump_param,subaggregate_threshold, nx, porosity, n_steps, debug_mode) for _ in range(subset_sizes[0]) \
         ], (1,0,2) ) ) for jump_param in jump_params ]
     ax[0,1].plot(jump_params, values, 'ro')
     means_log = [ means_log[i] + values[i] / n_runs for i in range(len(jump_params))]
@@ -129,7 +129,7 @@ def ecdf_identify(nx, porosity, n_steps, jump_parameter, ecdf_type, subset_sizes
 
 
 def run_test_from_class(test_class):
-  ecdf_identify(test_class.nx, test_class.porosity, test_class.n_steps, test_class.jump_parameter,
+  ecdf_identify(test_class.nx, test_class.porosity, test_class.n_steps, test_class.jump_parameter, test_class.subaggregate_threshold,
     test_class.ecdf_type, test_class.subset_sizes, test_class.n_bins, test_class.n_runs,
     test_class.min_value_shift, test_class.max_value_shift, test_class.jump_params,
     test_class.distance_fct, test_class.debug_mode, test_class.file_name, test_class.is_plot)

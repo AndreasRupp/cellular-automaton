@@ -69,8 +69,8 @@ def cam_test(n_steps, debug_mode=False):
   save_data[(save_data < 2500) & (save_data > 0)] = 1
   save_data[save_data >= 2500] = 2
   if not os.path.exists('output'):  os.makedirs('output')
-  plot_to_vtk("output/cam", save_data, const.nx)
-  #plot_to_file(const.nx, save_data[-1], 'output/cam.png')
+  #plot_to_vtk("output/cam", save_data, const.nx)
+  plot_to_file(const.nx, save_data[-1], 'output/cam.png')
   #plot(const.nx, save_data, 0)
 # --------------------------------------------------------------------------------------------------
 # Function main.

@@ -53,7 +53,7 @@ def cam_particles( domain_size, n_steps, jump_parameter, distribution,porosity, 
   const.nx              = domain_size
   # ["DFACE_ATTRACTIVITY", "DROTATION", "DROTATION_COMPOSITES", "DSTENCIL_4_ALL_BUS", "DSUB_COMPOSITES"]
   const.ca_settings      = [True, True, False, False, False]
-  const.const_jump_parameter = stencil_size(jump_parameter,1) # only used when DSTENCIL_4_ALL_BUS is set
+  const.const_stencil_size = int(stencil_size(jump_parameter,1)) # only used when DSTENCIL_4_ALL_BUS is set
   const.debug_mode      = debug_mode
   PyCAM = CAM.include(const)
   subaggregate_threshold = 0.01
@@ -207,7 +207,7 @@ def main(d):
   type_i_addition = 1- 0.05
   filename = 'goethite_illite_5'
   fun_args.append(setting( domain_size, n_steps,jump_const,type_i_addition, porosity,  goethite_coarse,uniform_positive, illite_fine,uniform_negative ,filename,debug_mode))
-  # cam_particles(domain_size, n_steps,jump_const,type_i_addition, porosity,  goethite_coarse,uniform_positive, illite_fine,uniform_negative ,filename,debug_mode)
+  cam_particles(domain_size, n_steps,jump_const,type_i_addition, porosity,  goethite_coarse,uniform_positive, illite_fine,uniform_negative ,filename,debug_mode)
   type_i_addition = 1 - 0.45
   filename = 'goethite_illite_45'
   fun_args.append(setting(domain_size, n_steps,jump_const,type_i_addition, porosity,  goethite_coarse,uniform_positive, illite_fine,uniform_negative ,filename,debug_mode))

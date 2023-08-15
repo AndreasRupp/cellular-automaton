@@ -25,6 +25,11 @@ class basic_test:
     jump_params     = None,
     distance_fct    = "bulk_distance",
 
+
+    # ["DFACE_ATTRACTIVITY", "DROTATION", "DROTATION_COMPOSITES", "DSTENCIL_4_ALL_BUS", "DSUB_COMPOSITES"]
+    ca_settings      = [False, False, False, False, False],
+    const_stencil_size = 5, # only used when DSTENCIL_4_ALL_BUS is set
+    subaggregate_threshold = 0.01,
     debug_mode   = False,
     file_name    = "basic_test",
     is_plot      = False
@@ -52,6 +57,9 @@ class basic_test:
     if jump_params is None:  self.jump_params = range(jump_parameter-5, jump_parameter+6)
     else:                    self.jump_params = jump_params
 
+    self.ca_settings   = ca_settings
+    self.const_stencil_size = const_stencil_size # only used when DSTENCIL_4_ALL_BUS is set
+    self.subaggregate_threshold = subaggregate_threshold
     self.debug_mode = debug_mode
     self.file_name  = file_name
     self.is_plot    = is_plot
@@ -60,21 +68,21 @@ class basic_test:
     const.nx          = self.nx
     const.debug_mode  = self.debug_mode
     self.PyCAM        = CAM.include(const)
-    self.Domain = self.PyCAM(jump_parameter)
+    self.CAM_wrapper = self.PyCAM(jump_parameter, subaggregate_threshold)
 
     def return_distance_fct( distance_fct ):
       if distance_fct == "bulk_distance":
-        return self.Domain.bulk_distance
+        return self.CAM_wrapper.bulk_distance
       elif distance_fct == "average_distance":
         def my_distance(a, b):
-          avg_part_a = self.Domain.average_particle_size(a)
-          avg_part_b = self.Domain.average_particle_size(b)
+          avg_part_a = self.CAM_wrapper.average_particle_size(a)
+          avg_part_b = self.CAM_wrapper.average_particle_size(b)
           return np.abs(avg_part_a - avg_part_b)
         return my_distance
       elif distance_fct == "particle_sizes":
         def my_distance(a, b):
-          part_sizes_a = self.Domain.particle_size_distribution(a)
-          part_sizes_b = self.Domain.particle_size_distribution(b)
+          part_sizes_a = self.CAM_wrapper.particle_size_distribution(a)
+          part_sizes_b = self.CAM_wrapper.particle_size_distribution(b)
           for item in part_sizes_b:
             part_sizes_a.append(item)
           return part_sizes_a

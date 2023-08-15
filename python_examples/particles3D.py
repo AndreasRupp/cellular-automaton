@@ -70,7 +70,7 @@ def cam_particles(domain_size,n_steps, jump_parameter, distribution,porosity, ty
   const                 = CAM.config()
   const.nx              = domain_size
   const.ca_settings      = [True, True, False, False, False]
-  const.const_jump_parameter = stencil_size(jump_parameter,1)
+  const.const_stencil_size = int(stencil_size(jump_parameter,1))
   const.debug_mode      = debug_mode
   PyCAM = CAM.include(const)
   subaggregate_threshold = 0.01
