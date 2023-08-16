@@ -64,8 +64,8 @@ def cam_particles(domain_size,n_steps, jump_parameter, distribution,porosity, ty
       "python_functions")
     from plot import plot, plot_to_file, plot_to_vtk
 
-  def stencil_size(const_stencil, area):
-    return np.floor((const_stencil/(np.sqrt(area))) + 0.5)
+  def stencil_size(jump_param, area):
+    return np.floor((jump_param/(np.sqrt(area))) + 0.5)
   
   const                 = CAM.config()
   const.nx              = domain_size
