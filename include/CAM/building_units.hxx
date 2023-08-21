@@ -102,37 +102,37 @@ class BuildingUnit
     center_field = CAM::get_center_field<nx>(shape);
 
     // center point
-    // rotation_points.push_back(center_field);
+    rotation_points.push_back(center_field);
 
     // two rotation points (edge points on basal axis (maximum extent, maximum torque) )
-    unsigned int max_dim =
-      std::distance(max_extent.begin(), std::max_element(max_extent.begin(), max_extent.end()));
-    unsigned int rotation_point = 0;
+    // unsigned int max_dim =
+    //   std::distance(max_extent.begin(), std::max_element(max_extent.begin(), max_extent.end()));
+    // unsigned int rotation_point = 0;
 
-    for (unsigned int i = 0; i < nx.size(); i++)
-    {
-      if (i != max_dim)
-      {
-        rotation_point =
-          CAM::aim<nx>(rotation_point,
-                       (unsigned int)(((double)max_extent[i] / 2.0)) * direct_neigh<nx>(2 * i + 1));
-      }
-    }
+    // for (unsigned int i = 0; i < nx.size(); i++)
+    // {
+    //   if (i != max_dim)
+    //   {
+    //     rotation_point =
+    //       CAM::aim<nx>(rotation_point,
+    //                    (unsigned int)(((double)max_extent[i] / 2.0)) * direct_neigh<nx>(2 * i + 1));
+    //   }
+    // }
 
-    rotation_points.push_back(rotation_point);
+    // rotation_points.push_back(rotation_point);
 
-    rotation_point =
-      CAM::aim<nx>(0, (unsigned int)(max_extent[max_dim]) * direct_neigh<nx>(2 * max_dim + 1));
-    for (unsigned int i = 0; i < nx.size(); i++)
-    {
-      if (i != max_dim)
-      {
-        rotation_point =
-          CAM::aim<nx>(rotation_point,
-                       (unsigned int)(((double)max_extent[i] / 2.0)) * direct_neigh<nx>(2 * i + 1));
-      }
-    }
-    rotation_points.push_back(rotation_point);
+    // rotation_point =
+    //   CAM::aim<nx>(0, (unsigned int)(max_extent[max_dim]) * direct_neigh<nx>(2 * max_dim + 1));
+    // for (unsigned int i = 0; i < nx.size(); i++)
+    // {
+    //   if (i != max_dim)
+    //   {
+    //     rotation_point =
+    //       CAM::aim<nx>(rotation_point,
+    //                    (unsigned int)(((double)max_extent[i] / 2.0)) * direct_neigh<nx>(2 * i + 1));
+    //   }
+    // }
+    // rotation_points.push_back(rotation_point);
 
     // boundary
     boundary.face_charges.resize(boundary.index.size());

@@ -29,10 +29,10 @@ except (ImportError, ModuleNotFoundError) as error:
   from plot import plot_to_file
 
 
-illite_fine = [2, 6]
-illite_medium = [2, 30]
+illite_fine = [ 2, 6]
+illite_medium = [ 2, 30]
 goethite_fine = [1, 17]
-goethite_coarse = [2, 34]
+goethite_coarse = [2,34]
 single_cell = [1,1]
 uniform_positive = [1] * 6
 uniform_negative = [-1] * 6
@@ -64,11 +64,12 @@ def split(x, n):
 def ecdf_identify(nx, porosity, n_steps, jump_parameter, subaggregate_threshold, distribution, ecdf_type, subset_sizes, n_bins, n_runs,
   min_value_shift, max_value_shift, sigmas, distance_fct, debug_mode, file_name, is_plot):
 
-  file = "output_mcmc_particles"
+  # file = "output_mcmc_particles_goethite_illite_rot_attr"
+  file = "output_mcmc_particles_basic_10_steps"
   if not os.path.exists(file):  os.makedirs(file)
 
-  def stencil_size(jump_parameter, area):
-    return (jump_parameter/(np.sqrt(area)))
+  def stencil_size(jump_parameter, area, nx):
+    return (jump_parameter/(area ** (1.0/len(nx))))
   def run_cam(jump_parameter, subaggregate_threshold, distribution, nx, porosity, n_steps, debug_mode=False):
     CAM_wrapper = PyCAM(jump_parameter, subaggregate_threshold)
     n_fields = np.prod(nx)
@@ -76,6 +77,7 @@ def ecdf_identify(nx, porosity, n_steps, jump_parameter, subaggregate_threshold,
 
     placement_i = n_solids * distribution
     placement_g = n_solids * (1- distribution)
+    type_g = goethite_coarse
     type_g = single_cell
     type_i = illite_fine
 
@@ -93,7 +95,7 @@ def ecdf_identify(nx, porosity, n_steps, jump_parameter, subaggregate_threshold,
     summe = 0
 
     #typ 1
-    st_si_g = stencil_size(jump_parameter,size_g)
+    st_si_g = stencil_size(jump_parameter,size_g, nx)
     for d in range(n_dim):
       success = 0
       type_g = list(np.roll(type_g,1))
@@ -106,7 +108,7 @@ def ecdf_identify(nx, porosity, n_steps, jump_parameter, subaggregate_threshold,
 
 
      #type 2
-    st_si_i = stencil_size(jump_parameter,size_i)
+    st_si_i = stencil_size(jump_parameter,size_i, nx)
     for d in range(n_dim):
       success = 0
       type_i = list(np.roll(type_i,1))
@@ -161,11 +163,12 @@ def ecdf_identify(nx, porosity, n_steps, jump_parameter, subaggregate_threshold,
 
 
   #-------plot----------
-  # print("plot_start")
-  # for  [jump_parameter, distribution] in sigmas:
-  #   plot_data = run_cam(jump_parameter, subaggregate_threshold, distribution, nx, porosity, n_steps, debug_mode)
-  #   plot_to_file(nx, plot_data, file + "/" + file_name + "_jp_" + str(jump_parameter) + "_distr_" + str(distribution) + '.png')
-  # print("plot_end")
+  print("plot_start")
+  for  [jump_parameter, distribution] in sigmas:
+    plot_data = run_cam(jump_parameter, subaggregate_threshold, distribution, nx, porosity, n_steps, debug_mode)
+    plot_to_file(nx, plot_data, file + "/" + "domain_[" + str(jump_parameter) + "," + str(distribution) + '].png')
+  return
+  print("plot_end")
   #-------plot------------------
 
   n_fields, n_iter = np.prod(nx), np.sum(subset_sizes)

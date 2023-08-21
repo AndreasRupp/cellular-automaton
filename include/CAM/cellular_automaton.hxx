@@ -118,9 +118,12 @@ class CellularAutomaton
     }
     return possible_rotations;
   }
+  // static constexpr std::array<std::array<int, CAM::n_DoF_basis_rotation<nx>()>,
+  //                             CAM::n_DoF_basis_rotation<nx>()* 2 + 1>
+  //   possible_rotations = get_90_degree_rotations();
   static constexpr std::array<std::array<int, CAM::n_DoF_basis_rotation<nx>()>,
-                              CAM::n_DoF_basis_rotation<nx>()* 2 + 1>
-    possible_rotations = get_90_degree_rotations();
+                              CAM::n_DoF_basis_rotation<nx>() + 1>
+    possible_rotations = get_90_degree_rotations_symmetric();
   static constexpr std::array<int, CAM::n_DoF_basis_rotation<nx>()> no_rotation =
     get_90_degree_rotations()[CAM::n_DoF_basis_rotation<nx>() * 2];
 
