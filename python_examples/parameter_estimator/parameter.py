@@ -9,7 +9,7 @@ try:
 except (ImportError, ModuleNotFoundError) as error:
   sys.path.append(os.path.dirname(os.path.abspath(__file__)) + os.sep  + ".." + os.sep +
     "python_functions")
-  from parameter_identification_particles import run_test_from_class
+  from parameter_identification import run_test_from_class
 
 try:
   import ecdf_test
@@ -24,19 +24,19 @@ except (ImportError, ModuleNotFoundError) as error:
 if __name__ == "__main__":
   debug_mode = len(sys.argv) > 1 and sys.argv[1] == "True"
 
-  test_name    = 'particles_test_goethite_illite'
-  #test_name    = 'particles_test'
+  test_name    = 'basic_test'
+  
   distances    = [ "bulk_distance", "average_distance", "particle_sizes" ]
   n_bins       = [ 20,              8,                  10               ]
 
   n_choose_bins = range(2, 30, 4)
-  domain_sizes  = [100 ] #10, 25,  50, 
+  domain_sizes  = [ 10, 25, 50, 100 ] 
   time_points   = [  0, 10, 25,  50 ]
 
 
   fun_args  = []
   base_test = getattr(ecdf_test, test_name)
-  #run_test_from_class(base_test())
+
   fun_args.append( base_test(
     distance_fct = [ "bulk_distance", "average_distance" ],
     ecdf_type    = [ "standard",      "standard",        ],
@@ -68,7 +68,7 @@ if __name__ == "__main__":
       nx             = [size, size],
       file_name      = 'size_' + str(size)
       ) )
-  #run_test_from_class(fun_args[2])
+
   for steps in time_points:
     fun_args.append( base_test(
       n_steps      = steps,
@@ -79,7 +79,7 @@ if __name__ == "__main__":
     fun_args.append( base_test(
       n_bins    = n_choose_bin,
       file_name = 'n-bins_' + str(n_choose_bin)
-      ) )   
+      ) )
 
   for distance_index in range(len(distances)):
     distance      = distances[distance_index]
@@ -106,5 +106,3 @@ if __name__ == "__main__":
 
   for one_process in processes:
     one_process.join()
-
-

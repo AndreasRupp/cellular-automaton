@@ -103,8 +103,8 @@ def ecdf_identify(nx, porosity, n_steps, jump_parameter, subaggregate_threshold,
       while success <  n_g_d[d]:
         success = success + CAM_wrapper.place_plane(st_si_g,type_g,  -1, charges_g)
       summe = summe + success
-    success = success + CAM_wrapper.place_plane(st_si_g,type_g,  -1, charges_g)
-    summe = summe + success
+    #success = success + CAM_wrapper.place_plane(st_si_g,type_g,  -1, charges_g)
+    #summe = summe + success
 
 
      #type 2
@@ -116,8 +116,8 @@ def ecdf_identify(nx, porosity, n_steps, jump_parameter, subaggregate_threshold,
       while success < n_i_d[d]:
         success = success + CAM_wrapper.place_plane(st_si_i,type_i ,-1,charges_i)
       summe = summe + success
-    success = success + CAM_wrapper.place_plane(st_si_i,type_i ,-1,charges_i)
-    summe = summe + success
+    #success = success + CAM_wrapper.place_plane(st_si_i,type_i ,-1,charges_i)
+    #summe = summe + success
     # CAM_wrapper.place_single_cell_bu_randomly(jump_parameter, porosity , 0)
 
 
@@ -164,10 +164,10 @@ def ecdf_identify(nx, porosity, n_steps, jump_parameter, subaggregate_threshold,
 
   #-------plot----------
   print("plot_start")
-  for  [jump_parameter, distribution] in sigmas:
-    plot_data = run_cam(jump_parameter, subaggregate_threshold, distribution, nx, porosity, n_steps, debug_mode)
-    plot_to_file(nx, plot_data, file + "/" + "domain_[" + str(jump_parameter) + "," + str(distribution) + '].png')
-  return
+  #for  [jump_parameter, distribution] in sigmas:
+    #plot_data = run_cam(jump_parameter, subaggregate_threshold, distribution, nx, porosity, n_steps, debug_mode)
+    #plot_to_file(nx, plot_data, file + "/" + "domain_[" + str(jump_parameter) + "," + str(distribution) + '].png')
+  #return
   print("plot_end")
   #-------plot------------------
 
@@ -205,7 +205,6 @@ def ecdf_identify(nx, porosity, n_steps, jump_parameter, subaggregate_threshold,
 
   means_log = [0.] * len(sigmas)
   means_nor = [0.] * len(sigmas)
-
   for _ in range(n_runs):
     if not isinstance(n_steps, list):
       values = [ ecdf.evaluate( func, [ run_cam(jump_parameter, subaggregate_threshold, distribution, nx, porosity, n_steps, debug_mode) \
