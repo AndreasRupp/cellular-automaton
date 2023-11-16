@@ -218,8 +218,8 @@ class particles_test_goethite_illite:
   def __init__( self,
     nx               = [100, 100],
     porosity         = 0.9,
-    n_steps          = 1,
-    jump_parameter   = 20,
+    n_steps          = 20,
+    jump_parameter   = 10,
 
     ecdf_type       = "standard",
     subset_sizes    = [75] * 40,
@@ -229,7 +229,7 @@ class particles_test_goethite_illite:
     #distance_fct    = "bulk_distance",
     distance_fct    = "particle_sizes",
     #distance_fct    = "average_distance",
-    nsimu			= 4000,
+    nsimu			= 4000,#10000
     qcov			= np.eye(2) * 100,
     adaptint		= 100,#100
     parameter_minmax = [[0, 40], [0, 1]],
@@ -313,11 +313,14 @@ class particles_test_goethite_illite:
           return np.abs(avg_part_a - avg_part_b)
         return my_distance
       elif distance_fct == "particle_sizes":
-        def my_distance(a, b):
-          part_sizes_a = self.CAM_wrapper.particle_size_distribution(a)
-          part_sizes_b = self.CAM_wrapper.particle_size_distribution(b)
-          for item in part_sizes_b:
+        def my_distance(a, b):          
+          part_sizes_a = a[:]#self.CAM_wrapper.particle_size_distribution(a)
+          #part_sizes_b = b[:]#self.CAM_wrapper.particle_size_distribution(b)
+          for item in b:#part_sizes_b:
             part_sizes_a.append(item)
+          #print("##")
+          #print(part_sizes_a)
+          #print("---")
           return part_sizes_a
         return my_distance
 

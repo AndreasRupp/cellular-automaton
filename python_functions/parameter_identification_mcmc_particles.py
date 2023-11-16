@@ -6,7 +6,8 @@ import os, sys
 from datetime import datetime
 from pymcmcstat.MCMC import MCMC
 from pymcmcstat import mcmcplot as mcp
-
+import xlsxwriter
+import math 
 try:
   import CAM
 except (ImportError, ModuleNotFoundError) as error:
@@ -28,7 +29,7 @@ try:
 except (ImportError, ModuleNotFoundError) as error:
   sys.path.append(os.path.dirname(os.path.abspath(__file__)) + os.sep  + ".." + os.sep + 
       "python_functions")
-  from plot import plot_to_file
+  from plot import plot_to_file, plot_to_vtk
 
 def split(x, n):
   ret = [0] * n
@@ -48,7 +49,9 @@ def split(x, n):
           else:
               ret[i] = pp
   return ret
+
 jump_parameter_factor = 1
+
 # --------------------------------------------------------------------------------------------------
 # Parameter identification test.
 # --------------------------------------------------------------------------------------------------
@@ -57,6 +60,26 @@ def mcmc_identify(nx, porosity, n_steps, jump_parameter, subaggregate_threshold,
   print(filepath)
   #print("identifyjp ", jump_parameter, " dist ", distribution)
   if not os.path.exists(filepath):  os.makedirs(filepath)
+  #workbook = xlsxwriter.Workbook(filepath + "/" + "measure_jp_" + str(jump_parameter) + "_dist_"+ str(distribution)+ '.xlsx', {'nan_inf_to_errors': True})
+
+  #worksheet = workbook.add_worksheet()
+
+  #eval_measures_names = ['n_solids',
+        #  'n_particles',
+        # 'n_composites',
+         # 'n_solids_in_composites',
+         # 'n_solids_in_discrete_BUs',
+         # 'mean_particle_size',
+         # 'specific_surface_area',
+         # 'contact_area_per_volume',
+         # 'mean_diameter']
+  #worksheet.write(0, 0, 'time_step')
+  #column = 1
+  #for name in eval_measures_names:
+   # worksheet.write(0,column, name)
+    #column += 1
+  def diameter(PS):
+    return 2 * math.pow(PS * (0.025 * 1000) ** 3 / math.pi * 3 / 4, (1/3))
 
   def stencil_size(jump_parameter, area, nx):
     return (jump_parameter/(area ** (1.0/len(nx))))
@@ -72,26 +95,67 @@ def mcmc_identify(nx, porosity, n_steps, jump_parameter, subaggregate_threshold,
 
     size_g = np.prod(type_g)
     size_i = np.prod(type_i)
-    
     n_dim = len(nx)
+
     n_g = round(placement_g/size_g)
+    n_i = round((placement_i )/size_i)
+
+    ##--------------------------------------------------
+    n_fit_i = 0
+    n_fit_g = 0
+    _type_g = type_g
+    _type_i = type_i
+    for d in range(n_dim):
+      fit_i = [i <= j for i,j in zip(_type_i,nx)]
+      fit_g = [i <= j for i,j in zip(_type_g,nx)]
+      if(not False in fit_i):
+        n_fit_i = n_fit_i + 1
+      if(not False in fit_g):
+        n_fit_g = n_fit_g + 1
+      _type_g = list(np.roll(_type_g,1))
+      _type_i = list(np.roll(_type_i,1))
+
+    #print(n_fit_g, n_fit_i)
+    n_g_d = split(n_g, n_fit_g)
+    n_i_d = split(n_i, n_fit_i) 
+
+    _type_g = type_g
+    _type_i = type_i
+    #print(n_g_d, n_i_d)
+
+    for d in range(n_dim):
+      fit_i = [i <= j for i,j in zip(_type_i,nx)]
+      fit_g = [i <= j for i,j in zip(_type_g,nx)]
+      if(False in fit_i):
+        n_i_d.insert(d,0)
+      if(False in fit_g):
+        n_g_d.insert(d,0)
+      _type_g = list(np.roll(_type_g,1))
+      _type_i = list(np.roll(_type_i,1))
+
+    ##------------------------------------------------------------
+
+    #n_g = round(placement_g/size_g)
     #rest = placement_g - n_g * size_g
     #print(rest)
-    n_i = round((placement_i )/size_i)
-    n_g_d = split(n_g, n_dim)
-    n_i_d = split(n_i, n_dim)
-
+    #n_i = round((placement_i )/size_i)
+    #n_g_d = split(n_g, n_dim)
+    #n_i_d = split(n_i, n_dim)
+    
+    #print("distributon of g and i type ",n_g_d, n_i_d)
     summe = 0
 
     #typ 1
     st_si_g = stencil_size(jump_parameter,size_g, nx)
+    start_time = datetime.now()
     for d in range(n_dim):
+      #print("dim ", d)
       success = 0
-      type_g = list(np.roll(type_g,1))
-      charges_g = list(np.roll(charges_g,2))
       while success <  n_g_d[d]:
         success = success + CAM_wrapper.place_plane(st_si_g,type_g,  -1, charges_g)
       summe = summe + success
+      type_g = list(np.roll(type_g,1))
+      charges_g = list(np.roll(charges_g,2))
     #success = success + CAM_wrapper.place_plane(st_si_g,type_g,  -1, charges_g)
     #summe = summe + success
 
@@ -100,27 +164,74 @@ def mcmc_identify(nx, porosity, n_steps, jump_parameter, subaggregate_threshold,
     st_si_i = stencil_size(jump_parameter,size_i, nx)
     #print(jump_parameter, "->", st_si_i,st_si_g,"dist", distribution)
     for d in range(n_dim):
+      #print("dim ",d)
       success = 0
-      type_i = list(np.roll(type_i,1))
-      charges_i = list(np.roll(charges_i,2))
       while success < n_i_d[d]:
         success = success + CAM_wrapper.place_plane(st_si_i,type_i ,-1,charges_i)
       summe = summe + success
+      type_i = list(np.roll(type_i,1))
+      charges_i = list(np.roll(charges_i,2))
+    #print("porosity ", sum([j > 0 for j in CAM_wrapper.fields()])/np.prod(nx))
     #success = success + CAM_wrapper.place_plane(st_si_i,type_i ,-1,charges_i)
     #summe = summe + success
     # CAM_wrapper.place_single_cell_bu_randomly(jump_parameter, porosity , 0)
-
-
+    end_time = datetime.now()
+    #print("setup CAM", end_time, "after", end_time- test_start_time)
+    # particle_size_distribution_d
     if isinstance(n_steps, list):
       for _ in range(n_steps[0]):  CAM_wrapper.do_cam()
-      data = [ CAM_wrapper.fields() ]
+      data = [ CAM_wrapper.particle_size_distribution_d() ]
       for i in range(len(n_steps) - 1):
         for _ in range(n_steps[i], n_steps[i+1]): CAM_wrapper.do_cam()
-        data.append( CAM_wrapper.fields() )
+        data.append( CAM_wrapper.particle_size_distribution_d() )
       return data
     else:
-      for _ in range(n_steps):  CAM_wrapper.do_cam()
-      return CAM_wrapper.fields()
+      #plot_data = np.zeros( (n_steps + 1, np.prod(nx)) )
+      #print("porosity ", sum([j > 0 for j in CAM_wrapper.fields()])/np.prod(nx))
+      #data = CAM_wrapper.fields()
+      #plot_data[0] = data
+      for step in range(n_steps):  
+        CAM_wrapper.do_cam()
+        #data = CAM_wrapper.fields()
+        #print("porosity ", sum([j > 0 for j in CAM_wrapper.fields()])/np.prod(nx))
+        #plot_data[step + 1] = data
+      #return 0
+      return CAM_wrapper.particle_size_distribution_d()
+      #return plot_data  
+
+
+
+
+
+      #data[(data <= n_g) & (data > 0)] = 1
+      #data[data > n_g] = 2
+      #plot_data[0] = data  
+      
+      #return CAM_wrapper.particle_size_distribution_d()
+      #return CAM_wrapper.fields()
+        #data = CAM_wrapper.fields()
+        #eval_data = CAM_wrapper.eval_measures()
+        #eval_data[len(eval_measures_names)-1] = diameter(eval_data[5])
+        #worksheet.write(step + 2, 0, step+1)
+        #for i in range(len(eval_measures_names)):
+          #worksheet.write(step + 2, i+1, eval_data[i])
+        #data[(data <= n_g) & (data > 0)] = 1
+        #data[data > n_g] = 2
+        #plot_data[step + 1] = data
+      #d1 = CAM_wrapper.particle_size_distribution_d()
+      #d2 = CAM_wrapper.particle_size_distribution(CAM_wrapper.fields())
+      #print("##################################")
+      #print(d1)
+      #print('-----')
+      #print(d2)
+      #print("##################################")
+      
+
+    
+      #plot_data[(plot_data <= n_g) & (plot_data > 0)] = 1
+      #plot_data[plot_data > n_g] = 2
+      #workbook.close()
+      #return plot_data
 
   def generate_ecdf(data, subset_sizes, distance_fct, n_bins, ecdf_type, ax=None):
     #print(subset_sizes)
@@ -161,17 +272,30 @@ def mcmc_identify(nx, porosity, n_steps, jump_parameter, subaggregate_threshold,
   print("plot_start")
   jump_params = np.round(np.linspace(parameter_minmax[0][0],parameter_minmax[0][1],5, endpoint = True))
   distrib = np.round(np.linspace(parameter_minmax[1][0], parameter_minmax[1][1], 5, endpoint = True),1)
+  jump_params = jump_parameter
+  distrib = distribution
+
+  test_start_time = datetime.now()
+  plot_data = run_cam(jump_params, subaggregate_threshold, distrib,type_i, type_g, charges_i, charges_g, nx, porosity, n_steps, debug_mode)
+  # print(len(plot_data))
+  #plot_to_file(nx, plot_data[0], filepath + "/" + "domain")
+  #plot_to_vtk( filepath + "/" + "domain",plot_data, nx)
+  test_end_time = datetime.now()
+  print("1 CAM data duration", test_end_time, "after", test_end_time- test_start_time)
+  #plot_to_file(nx, plot_data, filepath + "/" + "domain")
   #print(distrib)
   #print(jump_params)
   sigmas = []
-  for jp in jump_params:
-	  for dis in distrib:
-		  sigmas.append([jp,dis])
+  # for jp in jump_params:
+	 #  for dis in distrib:
+		#   sigmas.append([jp,dis])
   #print(sigmas)  
-  #for  [jump_parameter_v, distribution_v] in sigmas:
-    #plot_data = run_cam(jump_parameter_v, subaggregate_threshold, distribution_v,type_i, type_g, charges_i, charges_g, nx, porosity, n_steps, debug_mode)
-    #print(jump_parameter_v, distribution_v)
-    #plot_to_file(nx, plot_data, filepath + "/" + "domain_[" + str(jump_parameter_v) + "," + str(distribution_v) + '].png')
+  #for nr in range(2):
+    #for  [jump_parameter_v, distribution_v] in sigmas:
+      #plot_data = run_cam(jump_parameter_v, subaggregate_threshold, distribution_v,type_i, type_g, charges_i, charges_g, nx, porosity, n_steps, debug_mode)
+      #print(plot_data)
+      #print(jump_parameter_v, distribution_v)
+      #plot_to_file(nx, plot_data, filepath + "/" + "domain_[" + str(jump_parameter_v) + "," + str(distribution_v) + ']' + str(nr)+'.png')
   #return
   print("plot_end")
   #-------plot------------------
@@ -181,9 +305,7 @@ def mcmc_identify(nx, porosity, n_steps, jump_parameter, subaggregate_threshold,
   data = [ run_cam(jump_parameter * jump_parameter_factor, subaggregate_threshold, distribution,type_i, type_g, charges_i, charges_g, nx, porosity, n_steps, debug_mode) for _ in range(n_iter) ]
   end_time = datetime.now()
   print("CAM data acquired at", end_time, "after", end_time-start_time)
- 
-
-
+  
 
   fig, ax = plt.subplots(nrows=2, ncols=2, figsize=(18, 5))
 
@@ -265,7 +387,7 @@ def mcmc_identify(nx, porosity, n_steps, jump_parameter, subaggregate_threshold,
   # s2chain = results['s2chain']  # values of the likelihood for the respective parameter chains
   names = results['names']  # parameter names
   
-  burnin = int(chain.shape[0]/2)
+  burnin = int(chain.shape[0] * 9/10) #100#int(chain.shape[0]/2)
   # display chain statistics
   stat = mcstat.chainstats(chain[burnin:, :], results, True)
   mean0 = stat['mean'][0]

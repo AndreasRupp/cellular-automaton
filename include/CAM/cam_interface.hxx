@@ -31,6 +31,7 @@ class CAMInterface
   {
     CAM::jump_parameter_composite = _jump_parameter_composites;
     CAM::subaggregate_threshold = _subaggregate_threshold;
+    CAM::stencils_precomputed = get_n_stencils<nx>(jump_parameter_composite);
   }
   /*!*********************************************************************************************
    * \brief Creates domain with building units containing only one cell

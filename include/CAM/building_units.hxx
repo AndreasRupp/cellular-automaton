@@ -15,7 +15,10 @@
 #include <iostream>
 #include <random>
 #include <unordered_map>
+#include <map>
 #include <vector>
+#include <set>
+
 namespace CAM
 {
 template <auto nx>
@@ -51,14 +54,16 @@ class BuildingUnit
   {
     std::vector<unsigned int> index;
     std::vector<std::array<double, nx.size() * 2>> face_charges;
-    std::unordered_map<unsigned int, unsigned int> index_by_relation_to_reference;
+    std::map<unsigned int, unsigned int> index_by_relation_to_reference;
   };
   double jump_parameter;
   std::vector<unsigned int> shape, rotation_points;
   unsigned int reference_field, center_field, number;
+
   Boundary boundary;
 
  public:
+  std::array<unsigned int, nx.size()> max_extent;
   /*!*********************************************************************************************
    * \brief Construct a new Building Unit object
    ************************************************************************************************/
@@ -74,19 +79,22 @@ class BuildingUnit
   {
     boundary.index = CAM::get_boundary_fields<nx>(shape);
 
-    std::array<unsigned int, nx.size()> max_extent;
+    std::array<unsigned int, nx.size()> max_extent_z;
     std::fill(max_extent.begin(), max_extent.end(), 0);
+    std::fill(max_extent_z.begin(), max_extent_z.end(), 0);
 
     unsigned int coord;
 
     std::vector<unsigned int>::iterator it;
     for (it = shape.begin(); it != shape.end();)
     {
+      //std::cout<<"it "<<*it<<std::endl;
       for (unsigned int i = 0; i < nx.size(); i++)
       {
         coord = ((*it) / direct_neigh<nx>(2 * i + 1)) % nx[i];
-        if (coord > max_extent[i])
-          max_extent[i] = coord;
+        //std::cout<<coord<<std::endl;
+        if (coord > max_extent_z[i])
+          max_extent_z[i] = coord;
       }
       if (std::find(boundary.index.begin(), boundary.index.end(), *it) != boundary.index.end())
       {
@@ -95,6 +103,13 @@ class BuildingUnit
       else
         ++it;
     }
+    //std::cout<<"extent ";
+    for(unsigned int i = 0; i < max_extent_z.size(); i++)
+    {
+      max_extent[i] = max_extent_z[i] + 1;
+      //std::cout<<max_extent[i]<< " ";
+    }
+    //std::cout<<std::endl;
 
     shape.insert(shape.end(), boundary.index.begin(), boundary.index.end());
 
@@ -106,7 +121,7 @@ class BuildingUnit
 
     // two rotation points (edge points on basal axis (maximum extent, maximum torque) )
     // unsigned int max_dim =
-    //   std::distance(max_extent.begin(), std::max_element(max_extent.begin(), max_extent.end()));
+    //   std::distance(max_extent_z.begin(), std::max_element(max_extent_z.begin(), max_extent_z.end()));
     // unsigned int rotation_point = 0;
 
     // for (unsigned int i = 0; i < nx.size(); i++)
@@ -115,21 +130,21 @@ class BuildingUnit
     //   {
     //     rotation_point =
     //       CAM::aim<nx>(rotation_point,
-    //                    (unsigned int)(((double)max_extent[i] / 2.0)) * direct_neigh<nx>(2 * i + 1));
+    //                    (unsigned int)(((double)max_extent_z[i] / 2.0)) * direct_neigh<nx>(2 * i + 1));
     //   }
     // }
 
     // rotation_points.push_back(rotation_point);
 
     // rotation_point =
-    //   CAM::aim<nx>(0, (unsigned int)(max_extent[max_dim]) * direct_neigh<nx>(2 * max_dim + 1));
+    //   CAM::aim<nx>(0, (unsigned int)(max_extent_z[max_dim]) * direct_neigh<nx>(2 * max_dim + 1));
     // for (unsigned int i = 0; i < nx.size(); i++)
     // {
     //   if (i != max_dim)
     //   {
     //     rotation_point =
     //       CAM::aim<nx>(rotation_point,
-    //                    (unsigned int)(((double)max_extent[i] / 2.0)) * direct_neigh<nx>(2 * i + 1));
+    //                    (unsigned int)(((double)max_extent_z[i] / 2.0)) * direct_neigh<nx>(2 * i + 1));
     //   }
     // }
     // rotation_points.push_back(rotation_point);
@@ -165,13 +180,16 @@ class BuildingUnit
   {
     std::fill(boundary.face_charges.begin(), boundary.face_charges.end(), _values_in_direction);
   }
-  const std::array<double, nx.size() * 2>& get_face_charges_of_boundary_cell(
+  inline const std::array<double, nx.size() * 2>& get_face_charges_of_boundary_cell(
     const unsigned int _relation_to_reference) const
   {
-    auto it = boundary.index_by_relation_to_reference.find(_relation_to_reference);
+    //std::cout <<_relation_to_reference <<std::endl;
+    /*auto it = boundary.index_by_relation_to_reference.find(_relation_to_reference);
     if (it == boundary.index_by_relation_to_reference.end())
-      std::cout << "index not found" << std::endl;
-    return boundary.face_charges[it->second];
+      std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!index not found " <<_relation_to_reference <<std::endl;
+     //only works for homogenous boundary
+    return boundary.face_charges[it->second];*/
+    return boundary.face_charges[0];
   }
 
   bool constexpr is_member(const unsigned int _index)
@@ -187,10 +205,38 @@ class BuildingUnit
    * \brief Rotate bu aroound rotation_point
    * \param _rotation rotation around each basis rotation axis
    ************************************************************************************************/
-  void rotate(const std::array<int, CAM::n_DoF_basis_rotation<nx>()>& _rotation,
+  bool rotate(const std::array<int, CAM::n_DoF_basis_rotation<nx>()>& _rotation,
               unsigned int rotation_point)
   {
+    //check if rotation is possible
+    unsigned int n_cclw_90_degree, count = 0;
+    int rot;
+    bool swap;
+    for (unsigned int i = 0; i < nx.size(); i++)
+    {
+      for (unsigned int j = i + 1; j < nx.size(); j++)
+      {
+          rot = _rotation[count] % 4;
+          n_cclw_90_degree = (rot < 0) ? 4 + rot : rot;
+          swap = n_cclw_90_degree % 2 != 0;
+          if(swap)
+            std::swap(max_extent[i], max_extent[j]);
+
+          count++;
+      }
+    }
+    for(unsigned int i = 0; i < nx.size(); i++)
+    {
+      if(max_extent[i] > nx[i])
+      {
+        //std::cout<<max_extent[i]<<std::endl;
+        return false;
+      }
+    }
+    //-----------------
+
     unsigned int n_interior_cells = shape.size() - boundary.index.size();
+    //std::cout<<"n_interior_cells "<<n_interior_cells<<" s "<<shape.size()<<" b "<<boundary.index.size()<<"rot "<<_rotation[0] <<" "<<_rotation[1] <<" "<<_rotation[2] <<std::endl;
     if (n_interior_cells != 0)
     {
       for (unsigned int i = 0; i < shape.size() - boundary.index.size(); i++)
@@ -200,8 +246,11 @@ class BuildingUnit
     }
     for (unsigned int i = 0; i < boundary.index.size(); i++)
     {
+      //std::cout<<"before "<<shape[n_interior_cells +i]<<std::endl;
       shape[n_interior_cells + i] = get_rotated_index<nx>(shape[n_interior_cells + i], _rotation);
-      boundary.index[i] = get_rotated_index<nx>(boundary.index[i], _rotation);
+      //std::cout<<"after "<<shape[n_interior_cells +i]<<std::endl;
+      boundary.index[i] = shape[n_interior_cells + i];//get_rotated_index<nx>(boundary.index[i], _rotation);
+      //std::cout<<"roated "<<boundary.index[i]<< " "<<i<<std::endl;
       std::pair<unsigned int, unsigned int> pair(boundary.index[i], i);
       boundary.index_by_relation_to_reference.insert(pair);
     }
@@ -220,9 +269,9 @@ class BuildingUnit
       rotation_points[r] = get_rotated_index<nx>(rotation_points[r], _rotation);
     }
 
-    unsigned int n_cclw_90_degree, count;
+    //unsigned int n_cclw_90_degree, count;
     std::array<double, 4> faces;
-    int rot;
+    //int rot;
     for (std::array<double, nx.size() * 2>& charges : boundary.face_charges)
     {
       count = 0;
@@ -246,6 +295,15 @@ class BuildingUnit
         }
       }
     }
+
+    /*std::set<unsigned int> shape_s(shape.begin(), shape.end());
+    if(shape_s.size() != shape.size())
+      std::cout<<"---------------------false shape "<<shape_s.size() <<std::endl;
+
+    std::set<unsigned int> boundary_index_s(boundary.index.begin(), boundary.index.end());
+    if(boundary_index_s.size() != boundary.index.size())
+      std::cout<<"---------------------false boundary.index "<<boundary_index_s.size()<<std::endl;*/
+    return true;
   }
 };
 /*!*********************************************************************************************

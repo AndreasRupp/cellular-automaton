@@ -14,6 +14,8 @@
 #include <vector>
 namespace CAM
 {
+	
+
 /*!*************************************************************************************************
  * \brief   Maximum unsigned integer.
  **************************************************************************************************/
@@ -62,6 +64,16 @@ static constexpr int direct_neigh(const unsigned int index)
     direct_neigh *= nx[i];
   return direct_neigh;
 }
+template <auto nx>
+static constexpr std::array<unsigned int,2*nx.size() + 1> get_direct_neigh_precomputed()
+{
+	std::array<unsigned int,2*nx.size() + 1> direct_neigh_precomputed;
+	for(unsigned int i = 0; i < 2*nx.size() + 1; i++)
+		direct_neigh_precomputed[i] = CAM::direct_neigh<nx>(i);
+	return direct_neigh_precomputed;
+
+}
+
 /*!*********************************************************************************************
  * \brief Constexpr power function
  **************************************************************************************************/
@@ -100,9 +112,13 @@ static constexpr unsigned int aim(const int position, const int move)
 {
   unsigned int coord, new_pos = 0;
   int direct_neigh_i;
+  constexpr std::array<unsigned int,2*nx.size() + 1> direct_neigh_precomputed = get_direct_neigh_precomputed<nx>();
   for (unsigned int i = 0; i < nx.size(); ++i)
   {
-    direct_neigh_i = direct_neigh<nx>(2 * i + 1);
+	
+    direct_neigh_i = direct_neigh_precomputed[2 * i + 1];//direct_neigh<nx>(2 * i + 1);
+    //if(direct_neigh_i != direct_neigh_precomputed[2 * i + 1])
+    //std::cout<<direct_neigh_precomputed[2 * i + 1]<<std::endl;
     coord = ((position) / direct_neigh_i + (move) / direct_neigh_i + n_fields<nx>()) % nx[i];
     new_pos += coord * direct_neigh_i;
   }
@@ -120,9 +136,12 @@ static constexpr unsigned int get_rotated_index(
   unsigned int index,
   const std::array<int, n_DoF_basis_rotation<nx>()> rotation)
 {
+  /*if(index == 9||index == 90)
+  std::cout<<"---""rot "<<rotation[0] <<" "<<rotation[1] <<" "<<rotation[2] <<std::endl;
+  unsigned int start_index = index;*/
   unsigned int coord_i, coord_j, ii, jj, n_cclw_90_degree, count = 0;
   bool swap;
-  int direction_ii, direction_jj;
+  int direction_ii, direction_jj, coord_i_new, coord_j_new;
   int rot, direct_neigh_i, direct_neigh_j, direct_neigh_jj, direct_neigh_ii;
   for (unsigned int i = 0; i < nx.size(); i++)
   {
@@ -142,18 +161,30 @@ static constexpr unsigned int get_rotated_index(
       ii = (swap) ? j : i;
       jj = (swap) ? i : j;
 
+      coord_i_new = (coord_i > nx[ii]) ? coord_i - nx[i] : coord_i;
+      coord_j_new = (coord_j > nx[jj]) ? coord_j - nx[j] : coord_j;
+
       direct_neigh_ii = (swap) ? direct_neigh_j : direct_neigh_i;
       direct_neigh_jj = (swap) ? direct_neigh_i : direct_neigh_j;
 
       direction_ii = (n_cclw_90_degree == 3) ? -1 : 1;
       direction_jj = (n_cclw_90_degree == 1) ? -1 : 1;
 
-      index += (((direction_ii * coord_i) + n_fields<nx>()) % nx[ii]) * direct_neigh_ii;
-      index += (((direction_jj * coord_j) + n_fields<nx>()) % nx[jj]) * direct_neigh_jj;
+      index += (((direction_ii * coord_i_new) + n_fields<nx>()) % nx[ii]) * direct_neigh_ii;
+      index += (((direction_jj * coord_j_new) + n_fields<nx>()) % nx[jj]) * direct_neigh_jj;
 
+      
+      /*if((start_index == 9||start_index== 90)&&(rotation[1] ==1||rotation[2]==1))
+      {
+        std::cout<<"count "<<count<<" index "<<index<<" coord "<<coord_i<<" "<<coord_j<<std::endl;
+        std::cout<<"direct_neigh "<<direct_neigh_i<<" "<<direct_neigh_j <<std::endl;
+       // std::cout<<coord_i<<" "<<coord_j <<std::endl;
+      }*/
       count++;
     }
   }
+ /* if(index == 9||index == 90)
+  std::cout<<"---"<<std::endl;*/
   return index;
 }
 template <auto nx>
@@ -291,14 +322,14 @@ static constexpr std::vector<unsigned int> get_p_normed_shape(const double _radi
  * \retval stencil
  **********************************************************************************************/
 template <auto nx>
-static constexpr std::vector<unsigned int> get_stencil(const double _jump_parameter)
+static constexpr std::vector<unsigned int> get_stencil(const double _stencil_size)
 {
-  // if (_jump_parameter < 1)
+  // if (_stencil_size < 1)
   // return stencil;
-
+  
   std::vector<unsigned int> stencil(1, 0);
 
-  unsigned int new_neigh, layers = std::max(1., _jump_parameter), index = 0,
+  unsigned int new_neigh, layers = _stencil_size, index = 0,//std::max(1., _stencil_size)
                           old_size = stencil.size();
   for (unsigned int lay = 0; lay < layers; ++lay)
   {
@@ -317,7 +348,16 @@ static constexpr std::vector<unsigned int> get_stencil(const double _jump_parame
   }
   return stencil;
 }
-
+template<auto nx>
+static constexpr std::vector<std::vector<unsigned int>> get_n_stencils(const unsigned int max_stencil_size)
+{
+	std::vector<std::vector<unsigned int>> n_stencils;
+	for(unsigned int i = 0; i <= max_stencil_size; i++)
+	{
+		n_stencils.push_back(get_stencil<nx>(i));
+	}
+	return n_stencils;
+}
 /*!*********************************************************************************************
  * \brief   Get number of cells of stencil with specific size
  *

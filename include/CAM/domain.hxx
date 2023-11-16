@@ -30,6 +30,10 @@ namespace CAM
  ************************************************************************************************/
 static double subaggregate_threshold;
 /*!***********************************************************************************************
+ * \brief precomputed stencils 
+ ************************************************************************************************/
+ std::vector<std::vector<unsigned int>> stencils_precomputed;
+/*!***********************************************************************************************
  * \brief   Describes one connected set of bulk cells/fields.
  * Information gathered only by analysing the domain independ of defintion of bu and composites
  ************************************************************************************************/
@@ -80,6 +84,7 @@ class Domain
       CAM::jump_parameter_composite = _jump_parameter_composites;
     else
       CAM::jump_parameter_composite = 5;  // double _jump_parameter_composites = 1.0
+    CAM::stencils_precomputed = get_n_stencils<nx>(jump_parameter_composite);
     if constexpr (std::is_same<fields_array_t,
                                std::vector<typename fields_array_t::value_type>>::value)
       domain_fields.resize(n_fields<nx>(), 0);
@@ -102,6 +107,7 @@ class Domain
    ************************************************************************************************/
   bool constexpr place_bu(const CAM::BuildingUnit<nx>& _unit)
   {
+
     // check if the number is already in the domain
     // auto iter = std::find_if(building_units.begin(), building_units.end(),
     //                          [&](const CAM::BuildingUnit<nx>& bu)
@@ -137,6 +143,7 @@ class Domain
                            std::vector<std::vector<unsigned int>> _connections,
                            double threshold)
   {
+
     for (CAM::BuildingUnit<nx>* bu : _composite.building_units)
     {
       CAM::Composite<nx> sub_comp;
@@ -198,12 +205,11 @@ class Domain
    ************************************************************************************************/
   void find_composites_via_bu_boundary()
   {
-    fields_array_t fields = domain_fields;
     constexpr unsigned int dim = nx.size();
     unsigned int neigh_field, boundaries_size;
     unsigned int field_number, field_number_neigh;
     unsigned int n_surfaces_solid_fluid, n_surfaces_solid_solid;
-
+    unsigned int index;
     std::vector<unsigned int> boundaries, found_solids, helper;
     particles.clear();
     composites.clear();
@@ -228,7 +234,6 @@ class Domain
                                                  new_composite.building_units.size() - 1);
       global_field_number_2_local_index.insert(pair);
 #endif
-
       n_surfaces_solid_fluid = 0;
       n_surfaces_solid_solid = 0;
       boundaries.clear();
@@ -248,16 +253,16 @@ class Domain
 
       for (unsigned int j = 0; j < boundaries_size; j++, boundaries_size = boundaries.size())
       {
-        field_number = fields[boundaries[j]];
+        field_number = domain_fields[boundaries[j]];
         for (unsigned int k = 0; k < 2 * dim; ++k)
         {
           neigh_field = aim<nx>(boundaries[j], direct_neigh<nx>(k));
-          field_number_neigh = fields[neigh_field];
+          field_number_neigh = domain_fields[neigh_field];
 
           if (field_number_neigh != 0 && is_bu_visited[field_number_neigh] != true)
           {
             is_bu_visited[field_number_neigh] = true;
-            unsigned int index = field_number_2_index[field_number_neigh];
+            index = field_number_2_index[field_number_neigh];
 
             new_composite.building_units.push_back(&(building_units[index]));
 
