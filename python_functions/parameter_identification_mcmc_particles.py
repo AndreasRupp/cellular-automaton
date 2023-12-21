@@ -6,7 +6,7 @@ import os, sys
 from datetime import datetime
 from pymcmcstat.MCMC import MCMC
 from pymcmcstat import mcmcplot as mcp
-import xlsxwriter
+#import xlsxwriter
 import math 
 try:
   import CAM
@@ -57,7 +57,7 @@ jump_parameter_factor = 1
 # --------------------------------------------------------------------------------------------------
 def mcmc_identify(nx, porosity, n_steps, jump_parameter, subaggregate_threshold, distribution, type_i, type_g, charges_i, charges_g, ecdf_type, subset_sizes, n_bins,
   min_value_shift, max_value_shift, nsimu, qcov, adaptint, parameter_minmax, method,sigma2, N0, S20, distance_fct, debug_mode, filepath, file_name, is_plot):
-  print(filepath)
+  print(filepath, flush=True)
   #print("identifyjp ", jump_parameter, " dist ", distribution)
   if not os.path.exists(filepath):  os.makedirs(filepath)
   #workbook = xlsxwriter.Workbook(filepath + "/" + "measure_jp_" + str(jump_parameter) + "_dist_"+ str(distribution)+ '.xlsx', {'nan_inf_to_errors': True})
@@ -196,7 +196,14 @@ def mcmc_identify(nx, porosity, n_steps, jump_parameter, subaggregate_threshold,
         #print("porosity ", sum([j > 0 for j in CAM_wrapper.fields()])/np.prod(nx))
         #plot_data[step + 1] = data
       #return 0
-      return CAM_wrapper.particle_size_distribution_d()
+     
+      numbers = CAM_wrapper.particle_size_distribution_d()
+      #print(numbers)
+      #print("väerndern")
+      #for i in list(set(type_g +type_i)): 
+        #numbers=[j for j in numbers if j != i] 
+      #print(numbers)
+      return numbers
       #return plot_data  
 
 
@@ -258,18 +265,18 @@ def mcmc_identify(nx, porosity, n_steps, jump_parameter, subaggregate_threshold,
   # print(len(sigmas))
 
   start_time = datetime.now()
-  print("Starting MCMC Script time is", start_time)
+  print("Starting MCMC Script time is", start_time, flush=True)
 
   CAM_config            = CAM.config()
   CAM_config.nx         = nx
   CAM_config.debug_mode = debug_mode
   PyCAM                 = CAM.include(CAM_config)
 
-  parameter_minmax[0][0] = parameter_minmax[0][0] * jump_parameter_factor
-  parameter_minmax[0][1] = parameter_minmax[0][1] * jump_parameter_factor
+  #parameter_minmax[0][0] = parameter_minmax[0][0] * jump_parameter_factor
+  #parameter_minmax[0][1] = parameter_minmax[0][1] * jump_parameter_factor
   
   #-------plot----------
-  print("plot_start")
+  #print("plot_start")
   jump_params = np.round(np.linspace(parameter_minmax[0][0],parameter_minmax[0][1],5, endpoint = True))
   distrib = np.round(np.linspace(parameter_minmax[1][0], parameter_minmax[1][1], 5, endpoint = True),1)
   jump_params = jump_parameter
@@ -277,11 +284,12 @@ def mcmc_identify(nx, porosity, n_steps, jump_parameter, subaggregate_threshold,
 
   test_start_time = datetime.now()
   plot_data = run_cam(jump_params, subaggregate_threshold, distrib,type_i, type_g, charges_i, charges_g, nx, porosity, n_steps, debug_mode)
+  #print(plot_data)
   # print(len(plot_data))
   #plot_to_file(nx, plot_data[0], filepath + "/" + "domain")
   #plot_to_vtk( filepath + "/" + "domain",plot_data, nx)
   test_end_time = datetime.now()
-  print("1 CAM data duration", test_end_time, "after", test_end_time- test_start_time)
+  print("1 CAM nx ",str(nx), " types ",str(type_i)," ",str(type_g)," data duration", test_end_time, "after", test_end_time- test_start_time, flush=True)
   #plot_to_file(nx, plot_data, filepath + "/" + "domain")
   #print(distrib)
   #print(jump_params)
@@ -297,15 +305,42 @@ def mcmc_identify(nx, porosity, n_steps, jump_parameter, subaggregate_threshold,
       #print(jump_parameter_v, distribution_v)
       #plot_to_file(nx, plot_data, filepath + "/" + "domain_[" + str(jump_parameter_v) + "," + str(distribution_v) + ']' + str(nr)+'.png')
   #return
-  print("plot_end")
+  #print("plot_end")
   #-------plot------------------
   #print("gallo")
   n_fields, n_iter = np.prod(nx), np.sum(subset_sizes)
   #print("datajp ", jump_parameter, " dist ", distribution)
-  data = [ run_cam(jump_parameter * jump_parameter_factor, subaggregate_threshold, distribution,type_i, type_g, charges_i, charges_g, nx, porosity, n_steps, debug_mode) for _ in range(n_iter) ]
+  #data = [ run_cam(jump_parameter * jump_parameter_factor, subaggregate_threshold, distribution,type_i, type_g, charges_i, charges_g, nx, porosity, n_steps, debug_mode) for _ in range(n_iter) ]
+  #with open(filepath + '/CAMdata.txt', 'a') as fp:
+    #for item in data:
+      #print(item)
+      #writeSpace = False
+      #for number in item:
+        #print(number)
+        #if(writeSpace):
+          #fp.write(" ")
+        #writeSpace=True
+        #fp.write("%s" % number)
+      #fp.write("\n")
+  data = [] 
+  file1 = open(filepath + '/CAMdata.txt', 'r')
+  Lines = file1.readlines()
+  count = 0
+  for line in Lines:
+    numbers = line.replace('\n', '').split(' ')
+    numbers = [int(i) for i in numbers]
+    #print(numbers)
+    data.append(numbers)
+    count = count + 1
+    if(count >=n_iter):
+       break
+  #return
+  #print(data)
+  #print("----------------------------")
+  print(len(data), n_iter)
+
   end_time = datetime.now()
-  print("CAM data acquired at", end_time, "after", end_time-start_time)
-  
+  print("CAM data acquired at", end_time, "after", end_time-start_time, flush=True)
 
   fig, ax = plt.subplots(nrows=2, ncols=2, figsize=(18, 5))
 
@@ -330,16 +365,19 @@ def mcmc_identify(nx, porosity, n_steps, jump_parameter, subaggregate_threshold,
   ax[1,0] = ecdf.plot_chi2_test(func, ax[1,0])
 
   end_time = datetime.now()
-  print("Objective function setup at", end_time, "after", end_time-start_time)
+  print("Objective function setup at", end_time, "after", end_time-start_time, flush=True)
 
   
   def evaluate_objective_function(theta, data=None):
-	  #print("t0" + str(theta[0]) +"t1" +str(theta[1]))
-	  if not isinstance(n_steps, list):
-		  data = [ run_cam(theta[0], subaggregate_threshold, theta[1], type_i, type_g, charges_i, charges_g, nx, porosity, n_steps, debug_mode) for _ in range(subset_sizes[0]) ]
-	  else:
-		  data = np.transpose([ run_cam(theta[0], subaggregate_threshold, theta[1], type_i, type_g, charges_i, charges_g, nx, porosity, n_steps, debug_mode) for _ in range(subset_sizes[0]) ], (1,0,2))
-	  return func.evaluate( data )
+      #print("t0" + str(theta[0]) +"t1" +str(theta[1]))
+      theta1 = 0.25
+      theta0 = 5
+      if not isinstance(n_steps, list):
+          data = [ run_cam(theta[0], subaggregate_threshold, theta[1], type_i, type_g, charges_i, charges_g, nx, porosity, n_steps, debug_mode) for _ in range(subset_sizes[0]) ]
+      else:
+          data = np.transpose([ run_cam(theta[0], subaggregate_threshold, theta[1], type_i, type_g, charges_i, charges_g, nx, porosity, n_steps, debug_mode) for _ in range(subset_sizes[0]) ], (1,0,2))
+      return func.evaluate( data )
+  
   
   # Initialize the toolbox.
   mcstat = MCMC()
@@ -352,34 +390,72 @@ def mcmc_identify(nx, porosity, n_steps, jump_parameter, subaggregate_threshold,
     #print(x)
     y = data[int(np.sum(subset_sizes[0:i])):int(np.sum(subset_sizes[0:i+1]))]
     #print(len(y))
-    mcstat.data.add_data_set(x , y)
 
+    #mcstat.data.add_data_set(x , y)
   # Add parameters for MCMC sampling with starting values., theta0=parameter_minmax[0][0],theta0= parameter_minmax[1][0],+ parameter_minmax[0][1])/2  + parameter_minmax[1][1])/2
-  #print(parameter_minmax[0][0])theta0= (parameter_minmax[1][0] +parameter_minmax[1][1])/2,
-  #print(parameter_minmax[0][1])theta0=(parameter_minmax[0][0] +parameter_minmax[0][1])/2,
-  mcstat.parameters.add_model_parameter(name='jump_parameter' , sample=True, minimum = parameter_minmax[0][0])#, maximum = parameter_minmax[0][1], prior_mu = 20
-  mcstat.parameters.add_model_parameter(name='distribution',sample=True, minimum = parameter_minmax[1][0], maximum = parameter_minmax[1][1])#
+  #print(parameter_minmax[0][0])#theta0= (parameter_minmax[1][0] +parameter_minmax[1][1])/2,
+  #print(parameter_minmax[0][1])#theta0=(parameter_minmax[0][0] +parameter_minmax[0][1])/2,
+  print("theta0 ", parameter_minmax[1][0],parameter_minmax[0][0], flush=True)
+  mcstat.parameters.add_model_parameter(name='jump_parameter',theta0=parameter_minmax[0][0], minimum = 0)#, , prior_mu = 20
+  mcstat.parameters.add_model_parameter(name='distribution',theta0 = parameter_minmax[1][0], minimum = 0, maximum = 1.0)#
 
   # Passing to the toolbox our likelihood function
-  mcstat.model_settings.define_model_settings(sos_function=evaluate_objective_function,sigma2= sigma2 , N0 = N0, S20 =S20)
+  mcstat.model_settings.define_model_settings(sos_function=evaluate_objective_function)#, sigma2= sigma2 , N0 = N0, S20 =S20
+
+  #file1 = open(filepath + '/chainfile.txt', 'r')
+  #Lines = file1.readlines()
+  #print("len ", len(Lines))
 
   # Defining simulation options
   mcstat.simulation_options.define_simulation_options(
-    nsimu=nsimu, #10000,  # number of elements in the chain
-    savesize = 1,
+    nsimu= 3000,  # number of elements in the chain
+    #method = method,
+    qcov=np.eye(2),  # initial covariance matrix (if we do not know this beforehand, we start from identity matrix)
+    adaptint=500,  # adaptation interval of the method (helps MCMC algorithm to converge faster)
     savedir = filepath,
     save_to_txt = True,
-    updatesigma=1,
-    #burnintime = 50,
-    method = method,#'mh',am
-    #alphatarget = 0.2,
-	  qcov=qcov,  # initial covariance matrix (if we do not know this beforehand, we start from identity matrix)
-	  adaptint=adaptint  # adaptation interval of the method (helps MCMC algorithm to converge faster)
-  ) 
+    savesize  =1,
+    #updatesigma=1,
+    #method = method,
+  )
   mcstat.model_settings.display_model_settings(['sos_function', 'model_function', 'sigma2', 'N', 'N0', 'S20', 'nbatch'])
 
   # Starting the simulation (the most time-consuming part)
+  print("start mcmc", flush= True)
   mcstat.run_simulation()
+
+  # while(True):
+    # file1 = open(filepath + '/chainfile.txt', 'r')
+    # Lines = file1.readlines()
+    # if(len(Lines) >= 4000):
+       # return
+    # # Defining simulation options
+    # mcstat1 = MCMC()
+    # mcstat1.data.add_data_set(x , y)
+    # mcstat1.parameters.add_model_parameter(name='jump_parameter' , sample=True, minimum = parameter_minmax[0][0], maximum = parameter_minmax[0][1])#, , prior_mu = 20
+    # mcstat1.parameters.add_model_parameter(name='distribution',sample=True, minimum = parameter_minmax[1][0], maximum = parameter_minmax[1][1])#
+    # mcstat1.model_settings.define_model_settings(sos_function=evaluate_objective_function,sigma2= sigma2 , N0 = N0, S20 =S20)
+    # mcstat1.simulation_options.define_simulation_options(
+      # nsimu=nsimu, #10000,  # number of elements in the chain
+      # savesize = 1,
+      # savedir = filepath,
+      # save_to_txt = True,
+      # json_restart_file=filepath +'/results' ,
+      # results_filename='results',
+      # save_to_json=True,
+      # save_lightly=True,
+      # method = method,
+      # #qcov=qcov,  # initial covariance matrix (if we do not know this beforehand, we start from identity matrix)
+	  # adaptint=adaptint  # adaptation interval of the method (helps MCMC algorithm to converge faster)
+    # ) 
+    # #mcstat1.model_settings.display_model_settings([ 'model_function', 'sigma2', 'N', 'N0', 'S20', 'nbatch'])
+
+    # # Starting the simulation (the most time-consuming part)
+    # print("start mcmc")
+    # mcstat1.run_simulation()
+    # #print("len ", len(Lines))
+
+
   mcstat.model_settings.display_model_settings(['sos_function', 'model_function', 'sigma2', 'N', 'N0', 'S20', 'nbatch'])
   # Extracting results
   results = mcstat.simulation_results.results
@@ -390,15 +466,15 @@ def mcmc_identify(nx, porosity, n_steps, jump_parameter, subaggregate_threshold,
   burnin = int(chain.shape[0] * 9/10) #100#int(chain.shape[0]/2)
   # display chain statistics
   stat = mcstat.chainstats(chain[burnin:, :], results, True)
-  mean0 = stat['mean'][0]
-  mean1 = stat['mean'][1]
-  std0 = stat['std'][0]
-  std1 = stat['std'][1]
+  #mean0 = stat['mean'][0]
+  #mean1 = stat['mean'][1]
+  #std0 = stat['std'][0]
+  #std1 = stat['std'][1]
   # Plotting results
   f1 = mcp.plot_chain_panel(chain, names=names)
   plt.savefig(filepath + "/" + file_name + '_chain.png')
   f2 = mcp.plot_chain_panel(chain[burnin:,:], names=names)
-  plt.savefig(filepath + "/" + file_name + '_chain_burned_mean[' +str(round(mean0,2)) +','+str(round(mean1,2))+']std[' + str(round(std0,2)) + ',' + str(round(std1,2)) + '].png')
+  plt.savefig(filepath + "/" + file_name + '_chain_burned.png')#_mean[' +str(round(mean0,2)) +','+str(round(mean1,2))+']std[' + str(round(std0,2)) + ',' + str(round(std1,2)) + ']
   f3 = mcp.plot_density_panel(chain[burnin:,:], names)
   plt.savefig(filepath + "/" + file_name + '_densitiy.png')
   #f3 = mcp.plot_chain_panel(s2chain, names=names)
@@ -406,7 +482,7 @@ def mcmc_identify(nx, porosity, n_steps, jump_parameter, subaggregate_threshold,
   f4 = mcp.plot_pairwise_correlation_panel(chain[burnin:,:], names=names)
   plt.savefig(filepath + "/" + file_name + '_pairwise_correlation.png')
   
-  print("Program ended at", end_time, "after", end_time-start_time)
+  print("Program ended at", end_time, "after", end_time-start_time, flush=True)
 
   if is_plot:  plt.show()
 

@@ -63,12 +63,14 @@ def include(conf):
       compile_command += " -DNDEBUG"
     for i in range(len(conf.ca_settings)):
      compile_command += " -" + macro_names[i]  + "=" + str(conf.ca_settings[i]).replace('F', 'f').replace('T', 't')
-    print(compile_command)
+    #print(cython_command)
+    #print(compile_command)
+    #print(link_command)
     #Actually compile the prepared files.
     assert os.system(cython_command) == 0
     assert os.system(compile_command) == 0
     assert os.system(link_command) == 0
-
+  
   try:
     mod = importlib.import_module(python_class)
   except ImportError as error:

@@ -35,7 +35,7 @@ def get_options():
       -Werror=format-security -Wdate-time -D_FORTIFY_SOURCE=2"
     opt.link_lib = "-llapack"
     opt.cython_com = "cython3"
-    opt.cython_flg = "-3 --cplus"
+    opt.cython_flg = "-3 --cplus" 
     opt.py_ver_maj = str(sys.version_info.major)
     opt.py_ver_min = str(sys.version_info.minor)
     opt.py_dir = "/usr/include/python"+str(sys.version_info.major)+"."+str(sys.version_info.minor)

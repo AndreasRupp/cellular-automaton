@@ -50,4 +50,5 @@ cdef class PythonClassName:
 
   def bulk_distance(self,vec_a, vec_b):
     return self.thisptr.bulk_distance (vec_a, vec_b)
-
+  def __getstate__(self):
+    return None

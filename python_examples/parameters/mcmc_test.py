@@ -222,7 +222,7 @@ class particles_test_goethite_illite:
     jump_parameter   = 10,
 
     ecdf_type       = "standard",
-    subset_sizes    = [75] * 40,
+    subset_sizes    = [100] * 40,##[40] * 15,#
     min_value_shift = 0.1,
     max_value_shift = -0.1,
     n_bins          = None,
@@ -232,7 +232,7 @@ class particles_test_goethite_illite:
     nsimu			= 4000,#10000
     qcov			= np.eye(2) * 100,
     adaptint		= 100,#100
-    parameter_minmax = [[0, 40], [0, 1]],
+    parameter_minmax = [[0, 25], [0, 1]],
     method = 'mh',
     sigma2 = 10** 2,
     N0 = 1,

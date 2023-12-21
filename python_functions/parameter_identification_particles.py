@@ -1,6 +1,6 @@
 from __future__ import print_function
 
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 import numpy as np
 import os, sys
 from datetime import datetime
@@ -21,12 +21,12 @@ except (ImportError, ModuleNotFoundError) as error:
     "submodules" + os.sep + "ecdf_estimator.git")
   import ecdf_estimator as ecdf
 
-try:
-  from plot import plot, plot_to_file, plot_to_vtk
-except (ImportError, ModuleNotFoundError) as error:
-  sys.path.append(os.path.dirname(os.path.abspath(__file__)) + os.sep  + ".." + os.sep + 
-      "python_functions")
-  from plot import plot_to_file
+#try:
+ # from plot import plot, plot_to_file, plot_to_vtk
+#except (ImportError, ModuleNotFoundError) as error:
+ # sys.path.append(os.path.dirname(os.path.abspath(__file__)) + os.sep  + ".." + os.sep + 
+  #    "python_functions")
+ # from plot import plot_to_file
 
 
 illite_fine = [ 2, 6]

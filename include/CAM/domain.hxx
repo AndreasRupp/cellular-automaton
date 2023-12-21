@@ -30,9 +30,9 @@ namespace CAM
  ************************************************************************************************/
 static double subaggregate_threshold;
 /*!***********************************************************************************************
- * \brief precomputed stencils 
+ * \brief precomputed stencils
  ************************************************************************************************/
- std::vector<std::vector<unsigned int>> stencils_precomputed;
+std::vector<std::vector<unsigned int>> stencils_precomputed;
 /*!***********************************************************************************************
  * \brief   Describes one connected set of bulk cells/fields.
  * Information gathered only by analysing the domain independ of defintion of bu and composites
@@ -107,7 +107,6 @@ class Domain
    ************************************************************************************************/
   bool constexpr place_bu(const CAM::BuildingUnit<nx>& _unit)
   {
-
     // check if the number is already in the domain
     // auto iter = std::find_if(building_units.begin(), building_units.end(),
     //                          [&](const CAM::BuildingUnit<nx>& bu)
@@ -143,7 +142,6 @@ class Domain
                            std::vector<std::vector<unsigned int>> _connections,
                            double threshold)
   {
-
     for (CAM::BuildingUnit<nx>* bu : _composite.building_units)
     {
       CAM::Composite<nx> sub_comp;

@@ -59,13 +59,12 @@ class CellularAutomaton
   }
   static void apply(Domain<nx, fields_array_t>& _domain)
   {
-	
     // std::shuffle(_domain.building_units.begin(), _domain.building_units.end(),
     //  std::default_random_engine(std::rand()));
     // std::sort(_domain.building_units.begin(), _domain.building_units.end(), compare_size_bu);
 
     // this way easier to handle deprecated bu and random bu numbers.
-    //auto start = std::chrono::high_resolution_clock::now();
+    // auto start = std::chrono::high_resolution_clock::now();
     _domain.field_number_2_index.resize(_domain.max_field_number + 1, _domain.max_field_number + 1);
     for (unsigned int i = 0; i < _domain.building_units.size(); i++)
     {
@@ -75,49 +74,48 @@ class CellularAutomaton
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
     std::cout << "Time taken by number2index: "
          << duration.count() << " microseconds" << std::endl;*/
-    
-    
-     //start = std::chrono::high_resolution_clock::now();
+
+    // start = std::chrono::high_resolution_clock::now();
     // std::cout << "Number of bu: " << _domain.building_units.size() << std::endl;
     std::for_each(_domain.building_units.begin(), _domain.building_units.end(),
-                  [&](CAM::BuildingUnit<nx>& unit) { 
-					  
-					  
-					  //auto start = std::chrono::high_resolution_clock::now();
-					  move_bu(unit, _domain); 
-					  
-					  /*auto stop = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-    std::cout << "Time taken by oneBU: "
-         << duration.count() << " microseconds" << std::endl;*/
-					  });
+                  [&](CAM::BuildingUnit<nx>& unit)
+                  {
+                    // auto start = std::chrono::high_resolution_clock::now();
+                    move_bu(unit, _domain);
+
+                    /*auto stop = std::chrono::high_resolution_clock::now();
+auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+std::cout << "Time taken by oneBU: "
+<< duration.count() << " microseconds" << std::endl;*/
+                  });
     // // std::cout << "move_bu done: " << std::endl;
     /*stop = std::chrono::high_resolution_clock::now();
     duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
     std::cout << "Time taken by BU: "
-         << duration.count() << " microseconds" <<"  avag BU "<< duration.count()/_domain.building_units.size() <<std::endl;
-     
+         << duration.count() << " microseconds" <<"  avag BU "<<
+    duration.count()/_domain.building_units.size() <<std::endl;
+
      start = std::chrono::high_resolution_clock::now();    */
     _domain.find_composites_via_bu_boundary();
-   /* stop = std::chrono::high_resolution_clock::now();
-    duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-    std::cout << "Time taken by findComp: "
-         << duration.count() << " microseconds" << std::endl;
-     
-     start = std::chrono::high_resolution_clock::now(); */
-      
+    /* stop = std::chrono::high_resolution_clock::now();
+     duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+     std::cout << "Time taken by findComp: "
+          << duration.count() << " microseconds" << std::endl;
+
+      start = std::chrono::high_resolution_clock::now(); */
+
     // std::cout << "Number of composites: " << _domain.composites.size() << std::endl;
     // std::sort(_domain.composites.begin(), _domain.composites.end(),compare_size_comp);
     // std::shuffle(_domain.composites.begin(), _domain.composites.end(),
     //  std::default_random_engine(std::rand()));
-    
+
     std::for_each(_domain.composites.begin(), _domain.composites.end(),
                   [&](CAM::Composite<nx> composite) { move_composites(composite, _domain); });
-   /*stop = std::chrono::high_resolution_clock::now();
-    duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-    std::cout << "Time taken by Comp: "
-         << duration.count() << " microseconds" << std::endl; 
-    std::cout<<"------ende-------"<<std::endl;*/
+    /*stop = std::chrono::high_resolution_clock::now();
+     duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+     std::cout << "Time taken by Comp: "
+          << duration.count() << " microseconds" << std::endl;
+     std::cout<<"------ende-------"<<std::endl;*/
   }
 
  private:
@@ -172,34 +170,34 @@ class CellularAutomaton
    **********************************************************************************************/
   static void move_bu(CAM::BuildingUnit<nx>& _unit, Domain<nx, fields_array_t>& _domain)
   {
-	  //auto start = std::chrono::high_resolution_clock::now();  
+    // auto start = std::chrono::high_resolution_clock::now();
 #if STENCIL_4_ALL_BUS
     constexpr std::array<unsigned int, get_nof_stencil_cells<nx, const_stencil_size>()>
-     possible_moves = CAM::get_stencil_c<nx, const_stencil_size>();
-      
+      possible_moves = CAM::get_stencil_c<nx, const_stencil_size>();
+
 #else
-	//std::cout<<_unit.get_jump_parameter()<<std::endl;
+    // std::cout<<_unit.get_jump_parameter()<<std::endl;
     /*const std::vector<unsigned int> possible_moves =
       CAM::get_stencil<nx>(_unit.get_jump_parameter());*/
-          const std::vector<unsigned int> possible_moves =
+    const std::vector<unsigned int> possible_moves =
       CAM::stencils_precomputed[_unit.get_jump_parameter()];
-      
+
     /* if(possible_moves_.size() != possible_moves.size())
-		std::cout<<"falsch "<<possible_moves_.size()<<" "<<possible_moves.size()<<std::endl;
+                std::cout<<"falsch "<<possible_moves_.size()<<" "<<possible_moves.size()<<std::endl;
       for(unsigned int i = 0; i < possible_moves.size();i++)
-	{
-		if(possible_moves_[i] != possible_moves[i])
-		std::cout<<"falsch";
-	}*/
-    
-      //std::cout<<_unit.get_jump_parameter()<<" "<<possible_moves.size()<<std::endl;
+        {
+                if(possible_moves_[i] != possible_moves[i])
+                std::cout<<"falsch";
+        }*/
+
+    // std::cout<<_unit.get_jump_parameter()<<" "<<possible_moves.size()<<std::endl;
 #endif
-//std::cout<<possible_moves.size()<<std::endl;
-/*auto stop = std::chrono::high_resolution_clock::now();
-    auto  duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-    std::cout << "Time taken by Stencil: "
-         << duration.count() << " microseconds" << std::endl;*/
-    
+    // std::cout<<possible_moves.size()<<std::endl;
+    /*auto stop = std::chrono::high_resolution_clock::now();
+        auto  duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+        std::cout << "Time taken by Stencil: "
+             << duration.count() << " microseconds" << std::endl;*/
+
     std::vector<
       std::tuple<unsigned int, std::array<int, CAM::n_DoF_basis_rotation<nx>()>, unsigned int>>
       best_move_rotation;
@@ -212,12 +210,11 @@ class CellularAutomaton
       rotation_point = CAM::aim<nx>(_unit.get_reference_field(), _unit.get_rotation_points()[r]);
       for (const std::array<int, CAM::n_DoF_basis_rotation<nx>()>& rotation : possible_rotations)
       {
-		  
-		 // auto start = std::chrono::high_resolution_clock::now(); 
+        // auto start = std::chrono::high_resolution_clock::now();
         BuildingUnit<nx> rotated_unit(_unit);
-        if(!rotated_unit.rotate(rotation, rotation_point))
+        if (!rotated_unit.rotate(rotation, rotation_point))
         {
-          //std::cout<<"nicht möglich"<<std::endl;
+          // std::cout<<"nicht möglich"<<std::endl;
           continue;
         }
         /*auto stop = std::chrono::high_resolution_clock::now();
@@ -228,21 +225,21 @@ class CellularAutomaton
     std::array<int, CAM::n_DoF_basis_rotation<nx>()> rotation;
     std::fill(rotation.begin(), rotation.end(), 0);
 #endif
-         //auto start = std::chrono::high_resolution_clock::now(); 
+        // auto start = std::chrono::high_resolution_clock::now();
         std::for_each(
           possible_moves.begin(), possible_moves.end(),
           [&](unsigned int move)
           {
-			  //auto start = std::chrono::high_resolution_clock::now(); 
+        // auto start = std::chrono::high_resolution_clock::now();
 #if ROTATION
             current_attraction = get_attraction_bu(move, rotated_unit, _domain);
 #else
         current_attraction = get_attraction_bu(move, _unit, _domain);
 #endif
-             /* auto stop = std::chrono::high_resolution_clock::now();
-    auto  duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-    std::cout << "Time taken by attraction: "
-         << duration.count() << " microseconds" << std::endl;*/
+            /* auto stop = std::chrono::high_resolution_clock::now();
+   auto  duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+   std::cout << "Time taken by attraction: "
+        << duration.count() << " microseconds" << std::endl;*/
             if (current_attraction > attraction)
             {
               best_move_rotation.clear();
@@ -256,23 +253,22 @@ class CellularAutomaton
     auto  duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
     std::cout << "Time taken by evaluate moves: "
          << duration.count() << " microseconds" << std::endl;*/
-         
-         
-              /*  auto stop = std::chrono::high_resolution_clock::now();
-    auto  duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-    std::cout << "Time taken by evaulate one rotation: "
-         << duration.count() << " microseconds " <<std::endl;*/
+
+        /*  auto stop = std::chrono::high_resolution_clock::now();
+auto  duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+std::cout << "Time taken by evaulate one rotation: "
+   << duration.count() << " microseconds " <<std::endl;*/
 #if ROTATION
       }
     }
 #endif
-//auto start = std::chrono::high_resolution_clock::now();
+    // auto start = std::chrono::high_resolution_clock::now();
     do_move_bu(best_move_rotation[std::rand() % best_move_rotation.size()], _unit,
                _domain.domain_fields);
-              /* auto stop = std::chrono::high_resolution_clock::now();
-    auto  duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-    std::cout << "Time taken by DoMove: "
-         << duration.count() << " microseconds" << std::endl;*/
+    /* auto stop = std::chrono::high_resolution_clock::now();
+auto  duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+std::cout << "Time taken by DoMove: "
+<< duration.count() << " microseconds" << std::endl;*/
   }
 
   /*!*********************************************************************************************
@@ -323,7 +319,7 @@ class CellularAutomaton
     // std::cout<<"sten"<<_composite.field_indices.size()<<"
     // "<<_composite.jump_parameter<<std::endl;
     const std::vector<unsigned int> possible_moves =
-     // CAM::get_stencil<nx>(_composite.jump_parameter);
+      // CAM::get_stencil<nx>(_composite.jump_parameter);
       CAM::stencils_precomputed[_composite.jump_parameter];
 
     std::vector<
@@ -388,7 +384,7 @@ class CellularAutomaton
    * \brief Definition of face attractivity
    **********************************************************************************************/
   inline static double get_attractivity_between_two_faces(const double charge_face1,
-                                                   const double charge_face2)
+                                                          const double charge_face2)
   {
     // return charge_face1 && charge_face2;
     return -(charge_face1 * charge_face2);
@@ -408,10 +404,10 @@ class CellularAutomaton
     double attraction = 0.;
     unsigned int aiming, neigh_index, field_index;
     unsigned int index_begin_bound = (_unit.get_shape().size() - _unit.get_boundary().size());
-#if FACE_ATTRACTIVITY	
-	unsigned int neigh_boundary_cell, opposite_face;
+#if FACE_ATTRACTIVITY
+    unsigned int neigh_boundary_cell, opposite_face;
 #endif
-	unsigned int i = 0;
+    unsigned int i = 0;
     for (; i < index_begin_bound; ++i)
     {
       field_index = CAM::aim<nx>(_unit.get_reference_field(), _unit.get_shape()[i]);
@@ -419,56 +415,54 @@ class CellularAutomaton
       if (_domain.domain_fields[aiming] != _unit.get_number() &&
           _domain.domain_fields[aiming] != 0)  // occupied by cell
         return double_min;
-      
-        
-     }
-      // boundary cell
-      //if (i >= index_begin_bound)
-     for (; i < _unit.get_shape().size(); ++i)
-      {
-	     field_index = CAM::aim<nx>(_unit.get_reference_field(), _unit.get_shape()[i]);
-       aiming = aim<nx>(field_index, move);
+    }
+    // boundary cell
+    // if (i >= index_begin_bound)
+    for (; i < _unit.get_shape().size(); ++i)
+    {
+      field_index = CAM::aim<nx>(_unit.get_reference_field(), _unit.get_shape()[i]);
+      aiming = aim<nx>(field_index, move);
       if (_domain.domain_fields[aiming] != _unit.get_number() &&
           _domain.domain_fields[aiming] != 0)  // occupied by cell
-            return double_min;
-		  
-#if FACE_ATTRACTIVITY 
-       const std::array<double, nx.size()* 2>& faces_unit =
+        return double_min;
+
+#if FACE_ATTRACTIVITY
+      const std::array<double, nx.size()* 2>& faces_unit =
         _unit.get_face_charges()[i - index_begin_bound];
 #endif
-        for (unsigned int j = 0; j < 2 * nx.size(); ++j)
-        {
-          neigh_index = aim<nx>(aiming, direct_neigh<nx>(j));
-          //bool b = (_domain.domain_fields[neigh_index] != _unit.get_number() &&
-            // _domain.domain_fields[neigh_index] != 0);
-         if ((_domain.domain_fields[neigh_index] != _unit.get_number() &&
+      for (unsigned int j = 0; j < 2 * nx.size(); ++j)
+      {
+        neigh_index = aim<nx>(aiming, direct_neigh<nx>(j));
+        // bool b = (_domain.domain_fields[neigh_index] != _unit.get_number() &&
+        //  _domain.domain_fields[neigh_index] != 0);
+        if ((_domain.domain_fields[neigh_index] != _unit.get_number() &&
              _domain.domain_fields[neigh_index] != 0))  // boundary cell with neighbor
-          {
+        {
 #if FACE_ATTRACTIVITY
-            // neigbor bu
-            const CAM::BuildingUnit<nx>& neigh_bu =
-              _domain.building_units[_domain.field_number_2_index[_domain.domain_fields[neigh_index]]];
-            // faces
-            neigh_boundary_cell =
-              CAM::aim<nx>(neigh_index, -neigh_bu.get_reference_field());
+          // neigbor bu
+          const CAM::BuildingUnit<nx>& neigh_bu =
+            _domain
+              .building_units[_domain.field_number_2_index[_domain.domain_fields[neigh_index]]];
+          // faces
+          neigh_boundary_cell = CAM::aim<nx>(neigh_index, -neigh_bu.get_reference_field());
 
-            const std::array<double, nx.size()* 2>& faces_neigh =
-              neigh_bu.get_face_charges_of_boundary_cell(neigh_boundary_cell);
+          const std::array<double, nx.size()* 2>& faces_neigh =
+            neigh_bu.get_face_charges_of_boundary_cell(neigh_boundary_cell);
 
-            // opposite face
-            opposite_face = (j % 2 == 0) ? j + 1 : j - 1;
-            
-            // attraction
+          // opposite face
+          opposite_face = (j % 2 == 0) ? j + 1 : j - 1;
 
-            attraction +=
-              get_attractivity_between_two_faces(faces_neigh[opposite_face], faces_unit[j]);
+          // attraction
+
+          attraction +=
+            get_attractivity_between_two_faces(faces_neigh[opposite_face], faces_unit[j]);
 #else
-            attraction += 1;
+          attraction += 1;
 #endif
-          }
         }
       }
-    
+    }
+
     return attraction;
   }
   /*!*********************************************************************************************
