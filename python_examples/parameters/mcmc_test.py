@@ -222,7 +222,7 @@ class particles_test_goethite_illite:
     jump_parameter   = 10,
 
     ecdf_type       = "standard",
-    subset_sizes    = [100] * 40,##[40] * 15,#
+    subset_sizes    = [75] * 40,##[40] * 15,#[100] * 40,
     min_value_shift = 0.1,
     max_value_shift = -0.1,
     n_bins          = None,

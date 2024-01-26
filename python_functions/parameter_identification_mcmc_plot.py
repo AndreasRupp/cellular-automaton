@@ -58,26 +58,9 @@ jump_parameter_factor = 1
 def mcmc_identify(nx, porosity, n_steps, jump_parameter, subaggregate_threshold, distribution, type_i, type_g, charges_i, charges_g, ecdf_type, subset_sizes, n_bins,
   min_value_shift, max_value_shift, nsimu, qcov, adaptint, parameter_minmax, method,sigma2, N0, S20, distance_fct, debug_mode, filepath, file_name, is_plot):
   print(filepath, flush=True)
-  #print("identifyjp ", jump_parameter, " dist ", distribution)
+
   if not os.path.exists(filepath):  os.makedirs(filepath)
-  #workbook = xlsxwriter.Workbook(filepath + "/" + "measure_jp_" + str(jump_parameter) + "_dist_"+ str(distribution)+ '.xlsx', {'nan_inf_to_errors': True})
 
-  #worksheet = workbook.add_worksheet()
-
-  #eval_measures_names = ['n_solids',
-        #  'n_particles',
-        # 'n_composites',
-         # 'n_solids_in_composites',
-         # 'n_solids_in_discrete_BUs',
-         # 'mean_particle_size',
-         # 'specific_surface_area',
-         # 'contact_area_per_volume',
-         # 'mean_diameter']
-  #worksheet.write(0, 0, 'time_step')
-  #column = 1
-  #for name in eval_measures_names:
-   # worksheet.write(0,column, name)
-    #column += 1
   def diameter(PS):
     return 2 * math.pow(PS * (0.025 * 1000) ** 3 / math.pi * 3 / 4, (1/3))
 
@@ -85,7 +68,7 @@ def mcmc_identify(nx, porosity, n_steps, jump_parameter, subaggregate_threshold,
     return (jump_parameter/(area ** (1.0/len(nx))))
   def run_cam(jump_parameter, subaggregate_threshold, distribution, type_i, type_g, charges_i, charges_g, nx, porosity, n_steps, debug_mode=False):
     jump_parameter = jump_parameter * 1/jump_parameter_factor
-    #print("jp ", jump_parameter, " dist ", distribution)
+
     CAM_wrapper = PyCAM(jump_parameter, subaggregate_threshold)
     n_fields = np.prod(nx)
     n_solids = round((1 - porosity) * n_fields)
@@ -135,14 +118,6 @@ def mcmc_identify(nx, porosity, n_steps, jump_parameter, subaggregate_threshold,
 
     ##------------------------------------------------------------
 
-    #n_g = round(placement_g/size_g)
-    #rest = placement_g - n_g * size_g
-    #print(rest)
-    #n_i = round((placement_i )/size_i)
-    #n_g_d = split(n_g, n_dim)
-    #n_i_d = split(n_i, n_dim)
-    
-    #print("distributon of g and i type ",n_g_d, n_i_d)
     summe = 0
 
     #typ 1
@@ -156,9 +131,6 @@ def mcmc_identify(nx, porosity, n_steps, jump_parameter, subaggregate_threshold,
       summe = summe + success
       type_g = list(np.roll(type_g,1))
       charges_g = list(np.roll(charges_g,2))
-    #success = success + CAM_wrapper.place_plane(st_si_g,type_g,  -1, charges_g)
-    #summe = summe + success
-
 
      #type 2
     st_si_i = stencil_size(jump_parameter,size_i, nx)
@@ -171,13 +143,9 @@ def mcmc_identify(nx, porosity, n_steps, jump_parameter, subaggregate_threshold,
       summe = summe + success
       type_i = list(np.roll(type_i,1))
       charges_i = list(np.roll(charges_i,2))
-    #print("porosity ", sum([j > 0 for j in CAM_wrapper.fields()])/np.prod(nx))
-    #success = success + CAM_wrapper.place_plane(st_si_i,type_i ,-1,charges_i)
-    #summe = summe + success
-    # CAM_wrapper.place_single_cell_bu_randomly(jump_parameter, porosity , 0)
+   
     end_time = datetime.now()
-    #print("setup CAM", end_time, "after", end_time- test_start_time)
-    # particle_size_distribution_d
+
     if isinstance(n_steps, list):
       for _ in range(n_steps[0]):  CAM_wrapper.do_cam()
       data = [ CAM_wrapper.particle_size_distribution_d() ]
@@ -207,39 +175,6 @@ def mcmc_identify(nx, porosity, n_steps, jump_parameter, subaggregate_threshold,
       #return plot_data  
 
 
-
-
-
-      #data[(data <= n_g) & (data > 0)] = 1
-      #data[data > n_g] = 2
-      #plot_data[0] = data  
-      
-      #return CAM_wrapper.particle_size_distribution_d()
-      #return CAM_wrapper.fields()
-        #data = CAM_wrapper.fields()
-        #eval_data = CAM_wrapper.eval_measures()
-        #eval_data[len(eval_measures_names)-1] = diameter(eval_data[5])
-        #worksheet.write(step + 2, 0, step+1)
-        #for i in range(len(eval_measures_names)):
-          #worksheet.write(step + 2, i+1, eval_data[i])
-        #data[(data <= n_g) & (data > 0)] = 1
-        #data[data > n_g] = 2
-        #plot_data[step + 1] = data
-      #d1 = CAM_wrapper.particle_size_distribution_d()
-      #d2 = CAM_wrapper.particle_size_distribution(CAM_wrapper.fields())
-      #print("##################################")
-      #print(d1)
-      #print('-----')
-      #print(d2)
-      #print("##################################")
-      
-
-    
-      #plot_data[(plot_data <= n_g) & (plot_data > 0)] = 1
-      #plot_data[plot_data > n_g] = 2
-      #workbook.close()
-      #return plot_data
-
   def generate_ecdf(data, subset_sizes, distance_fct, n_bins, ecdf_type, ax=None):
     #print(subset_sizes)
     #print(subset_sizes[0])
@@ -260,9 +195,6 @@ def mcmc_identify(nx, porosity, n_steps, jump_parameter, subaggregate_threshold,
       func = ecdf.bootstrap(data, bins, distance_fct, subset_sizes[0], subset_sizes[1])
     return func, ax
 
-  #for [jump_parameter, distribution] in sigmas:
-    #print(jump_parameter, distribution)
-  # print(len(sigmas))
 
   start_time = datetime.now()
   print("Starting MCMC Script time is", start_time, flush=True)
@@ -272,8 +204,6 @@ def mcmc_identify(nx, porosity, n_steps, jump_parameter, subaggregate_threshold,
   CAM_config.debug_mode = debug_mode
   PyCAM                 = CAM.include(CAM_config)
 
-  #parameter_minmax[0][0] = parameter_minmax[0][0] * jump_parameter_factor
-  #parameter_minmax[0][1] = parameter_minmax[0][1] * jump_parameter_factor
   
   #-------plot----------
   #print("plot_start")
@@ -284,44 +214,14 @@ def mcmc_identify(nx, porosity, n_steps, jump_parameter, subaggregate_threshold,
 
   test_start_time = datetime.now()
   plot_data = run_cam(jump_params, subaggregate_threshold, distrib,type_i, type_g, charges_i, charges_g, nx, porosity, n_steps, debug_mode)
-  #print(plot_data)
-  # print(len(plot_data))
-  #plot_to_file(nx, plot_data[0], filepath + "/" + "domain")
-  #plot_to_vtk( filepath + "/" + "domain",plot_data, nx)
+
   test_end_time = datetime.now()
   print("1 CAM nx ",str(nx), " types ",str(type_i)," ",str(type_g)," data duration", test_end_time, "after", test_end_time- test_start_time, flush=True)
-  #plot_to_file(nx, plot_data, filepath + "/" + "domain")
-  #print(distrib)
-  #print(jump_params)
+
   sigmas = []
-  # for jp in jump_params:
-	 #  for dis in distrib:
-		#   sigmas.append([jp,dis])
-  #print(sigmas)  
-  #for nr in range(2):
-    #for  [jump_parameter_v, distribution_v] in sigmas:
-      #plot_data = run_cam(jump_parameter_v, subaggregate_threshold, distribution_v,type_i, type_g, charges_i, charges_g, nx, porosity, n_steps, debug_mode)
-      #print(plot_data)
-      #print(jump_parameter_v, distribution_v)
-      #plot_to_file(nx, plot_data, filepath + "/" + "domain_[" + str(jump_parameter_v) + "," + str(distribution_v) + ']' + str(nr)+'.png')
-  #return
-  #print("plot_end")
-  #-------plot------------------
-  #print("gallo")
+
   n_fields, n_iter = np.prod(nx), np.sum(subset_sizes)
-  #print("datajp ", jump_parameter, " dist ", distribution)
-  #data = [ run_cam(jump_parameter * jump_parameter_factor, subaggregate_threshold, distribution,type_i, type_g, charges_i, charges_g, nx, porosity, n_steps, debug_mode) for _ in range(n_iter) ]
-  #with open(filepath + '/CAMdata.txt', 'a') as fp:
-    #for item in data:
-      #print(item)
-      #writeSpace = False
-      #for number in item:
-        #print(number)
-        #if(writeSpace):
-          #fp.write(" ")
-        #writeSpace=True
-        #fp.write("%s" % number)
-      #fp.write("\n")
+
   data = [] 
   file1 = open(filepath + '/CAMdata.txt', 'r')
   Lines = file1.readlines()
@@ -343,7 +243,9 @@ def mcmc_identify(nx, porosity, n_steps, jump_parameter, subaggregate_threshold,
   print("CAM data acquired at", end_time, "after", end_time-start_time, flush=True)
 
   fig, ax = plt.subplots(nrows=2, ncols=2, figsize=(18, 5))
-
+  
+  
+  
   if not isinstance(n_steps, list) and (ecdf_type == "standard" or ecdf_type == "bootstrap"):
     func, ax[0,0] = generate_ecdf(data, subset_sizes, distance_fct, n_bins, ecdf_type, ax[0,0])
   elif isinstance(n_steps, list):
@@ -377,115 +279,25 @@ def mcmc_identify(nx, porosity, n_steps, jump_parameter, subaggregate_threshold,
       else:
           data = np.transpose([ run_cam(theta[0], subaggregate_threshold, theta[1], type_i, type_g, charges_i, charges_g, nx, porosity, n_steps, debug_mode) for _ in range(subset_sizes[0]) ], (1,0,2))
       return func.evaluate( data )
-  
-  
-  # Initialize the toolbox.
-  mcstat = MCMC()
-
-  for i in range(len(subset_sizes)):    
-    #print(np.sum(subset_sizes[0:i]),np.sum(subset_sizes[0:i+1]))
-    #print(range(subset_sizes[i]))
-    # data structure 
-    x = range(subset_sizes[i])
-    #print(x)
-    y = data[int(np.sum(subset_sizes[0:i])):int(np.sum(subset_sizes[0:i+1]))]
-    #print(len(y))
-
-    #mcstat.data.add_data_set(x , y)
-  # Add parameters for MCMC sampling with starting values., theta0=parameter_minmax[0][0],theta0= parameter_minmax[1][0],+ parameter_minmax[0][1])/2  + parameter_minmax[1][1])/2
-  #print(parameter_minmax[0][0])#theta0= (parameter_minmax[1][0] +parameter_minmax[1][1])/2,
-  #print(parameter_minmax[0][1])#theta0=(parameter_minmax[0][0] +parameter_minmax[0][1])/2,
-  print("theta0 ", parameter_minmax[1][0],parameter_minmax[0][0], flush=True)
-  mcstat.parameters.add_model_parameter(name='jump_parameter',theta0=parameter_minmax[0][0], minimum = 0)#, , prior_mu = 20
-  mcstat.parameters.add_model_parameter(name='distribution',theta0 = parameter_minmax[1][0], minimum = 0, maximum = 1.0)#
-
-  # Passing to the toolbox our likelihood function
-  mcstat.model_settings.define_model_settings(sos_function=evaluate_objective_function)#, sigma2= sigma2 , N0 = N0, S20 =S20
-
-  #file1 = open(filepath + '/chainfile.txt', 'r')
-  #Lines = file1.readlines()
-  #print("len ", len(Lines))
-
-  # Defining simulation options
-  mcstat.simulation_options.define_simulation_options(
-    nsimu= nsimu,  # number of elements in the chain
-    #method = method,
-    qcov=np.eye(2),  # initial covariance matrix (if we do not know this beforehand, we start from identity matrix)
-    adaptint=500,  # adaptation interval of the method (helps MCMC algorithm to converge faster)
-    savedir = filepath,
-    save_to_txt = True,
-    savesize  =1,
-    chainfile = 'chainfile'
-    #updatesigma=1,
-    #method = method,
-  )
-  mcstat.model_settings.display_model_settings(['sos_function', 'model_function', 'sigma2', 'N', 'N0', 'S20', 'nbatch'])
-
-  # Starting the simulation (the most time-consuming part)
-  print("start mcmc", flush= True)
-  mcstat.run_simulation()
-
-  # while(True):
-    # file1 = open(filepath + '/chainfile.txt', 'r')
-    # Lines = file1.readlines()
-    # if(len(Lines) >= 4000):
-       # return
-    # # Defining simulation options
-    # mcstat1 = MCMC()
-    # mcstat1.data.add_data_set(x , y)
-    # mcstat1.parameters.add_model_parameter(name='jump_parameter' , sample=True, minimum = parameter_minmax[0][0], maximum = parameter_minmax[0][1])#, , prior_mu = 20
-    # mcstat1.parameters.add_model_parameter(name='distribution',sample=True, minimum = parameter_minmax[1][0], maximum = parameter_minmax[1][1])#
-    # mcstat1.model_settings.define_model_settings(sos_function=evaluate_objective_function,sigma2= sigma2 , N0 = N0, S20 =S20)
-    # mcstat1.simulation_options.define_simulation_options(
-      # nsimu=nsimu, #10000,  # number of elements in the chain
-      # savesize = 1,
-      # savedir = filepath,
-      # save_to_txt = True,
-      # json_restart_file=filepath +'/results' ,
-      # results_filename='results',
-      # save_to_json=True,
-      # save_lightly=True,
-      # method = method,
-      # #qcov=qcov,  # initial covariance matrix (if we do not know this beforehand, we start from identity matrix)
-	  # adaptint=adaptint  # adaptation interval of the method (helps MCMC algorithm to converge faster)
-    # ) 
-    # #mcstat1.model_settings.display_model_settings([ 'model_function', 'sigma2', 'N', 'N0', 'S20', 'nbatch'])
-
-    # # Starting the simulation (the most time-consuming part)
-    # print("start mcmc")
-    # mcstat1.run_simulation()
-    # #print("len ", len(Lines))
+  print("start sos")
+  jump_params = np.round(np.linspace(0,20,20, endpoint = True)) 
+  distrib = np.round(np.linspace(0,1, 101, endpoint = True),2)
+  sigmas = []
+  for jp in jump_params:
+    for dis in distrib:
+        sigma = [jp,dis]
+        print(sigma)
+        with open('plotSOS.txt' , 'a') as fp:
+           try:
+              fp.write('%.3f %.3f %d \n' % (jp, dis, evaluate_objective_function([jp,dis]) ))#
+           except:
+              fp.write('%.3f %.3f %d \n' % (jp, dis, 0 ))	#
 
 
-  mcstat.model_settings.display_model_settings(['sos_function', 'model_function', 'sigma2', 'N', 'N0', 'S20', 'nbatch'])
-  # Extracting results
-  results = mcstat.simulation_results.results
-  chain = results['chain']  # parameter chains
-  # s2chain = results['s2chain']  # values of the likelihood for the respective parameter chains
-  names = results['names']  # parameter names
-  
-  burnin = int(chain.shape[0] * 9/10) #100#int(chain.shape[0]/2)
-  # display chain statistics
-  stat = mcstat.chainstats(chain[burnin:, :], results, True)
-  #mean0 = stat['mean'][0]
-  #mean1 = stat['mean'][1]
-  #std0 = stat['std'][0]
-  #std1 = stat['std'][1]
-  # Plotting results
-  f1 = mcp.plot_chain_panel(chain, names=names)
-  plt.savefig(filepath + "/" + file_name + '_chain.png')
-  f2 = mcp.plot_chain_panel(chain[burnin:,:], names=names)
-  plt.savefig(filepath + "/" + file_name + '_chain_burned.png')#_mean[' +str(round(mean0,2)) +','+str(round(mean1,2))+']std[' + str(round(std0,2)) + ',' + str(round(std1,2)) + ']
-  f3 = mcp.plot_density_panel(chain[burnin:,:], names)
-  plt.savefig(filepath + "/" + file_name + '_densitiy.png')
-  #f3 = mcp.plot_chain_panel(s2chain, names=names)
-  #plt.savefig(filepath + "/" + file_name + '_s2chain.png')
-  f4 = mcp.plot_pairwise_correlation_panel(chain[burnin:,:], names=names)
-  plt.savefig(filepath + "/" + file_name + '_pairwise_correlation.png')
-  
+               
+            
   print("Program ended at", end_time, "after", end_time-start_time, flush=True)
 
-  if is_plot:  plt.show()
 
 
 def run_test_from_class(test_class):

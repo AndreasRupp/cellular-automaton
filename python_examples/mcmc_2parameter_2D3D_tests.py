@@ -58,7 +58,7 @@ if __name__ == "__main__":
   
   #number_of_cores = int(os.environ['TASKS_PER_NODE'])#SLURM_CPUS_PER_TASK
   number_of_cores = cpu_count()
-  #print(number_of_cores, flush=True)
+  print("number_of_cores ",number_of_cores, flush=True)
   #print(int(os.environ['JOB_CPUS_PER_NODE']))
   #exit(1)
   test_name    = 'particles_test_goethite_illite'
@@ -87,7 +87,7 @@ if __name__ == "__main__":
   #scenario_names = ["illite_fine_goethite_fine", "illite_fine_goethite_coarse", "illite_medium_goethite_fine", "illite_medium_goethite_coarse"]
   print(sys.argv)
   n_runs = [int(int(sys.argv[1]) / len(scenarios))]
-  n_runs = [60,61,62,63]
+  n_runs = [0,1,2,3]
   
   #n_runs = range(1,10)
   methods = ['mh', 'am', 'dr', 'dram']
@@ -148,7 +148,7 @@ if __name__ == "__main__":
                 fun_args.append( base_test(nx = nx, type_i = type_i  ,charges_i = uniform_negative_3D, type_g = type_g, charges_g = uniform_positive_3D,
   			    distribution = d,jump_parameter = j,  n_steps = n,
   			    distance_fct    = "particle_sizes",
-                	    nsimu = 4000,
+            nsimu = 10000,
   			    ca_settings = [True, True, False, False, False],
                 parameter_minmax = parameter_minmax_[run-n_runs[0]],
                 method = 'dram',
@@ -160,8 +160,8 @@ if __name__ == "__main__":
    
   
   print(len(fun_args), flush=True)
-  #run_test_from_class(fun_args[0])  
-  #exit(1)
+  run_test_from_class(fun_args[3])  
+  exit(1)
   # for n in nsteps:
   #   for d in dist: 
   #     for j in jp:
